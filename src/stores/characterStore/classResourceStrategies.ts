@@ -59,15 +59,24 @@ function guerreroResources(level: number): Record<string, ClassResourceInfo> {
 
 function monjeResources(level: number): Record<string, ClassResourceInfo> {
   if (level < 2) return {};
-  return {
+  const resources: Record<string, ClassResourceInfo> = {
     ki: {
       id: "ki",
-      nombre: "Puntos de Ki",
+      nombre: "Puntos de Concentración",
       max: level,
       current: level,
       recovery: "short_rest",
     },
   };
+  // Metabolismo Extraordinario (nivel 2+): 1 uso por descanso largo
+  resources.metabolismo_extraordinario = {
+    id: "metabolismo_extraordinario",
+    nombre: "Metabolismo Extraordinario",
+    max: 1,
+    current: 1,
+    recovery: "long_rest",
+  };
+  return resources;
 }
 
 function picaroResources(level: number): Record<string, ClassResourceInfo> {
@@ -83,13 +92,144 @@ function picaroResources(level: number): Record<string, ClassResourceInfo> {
   };
 }
 
+function paladinResources(level: number): Record<string, ClassResourceInfo> {
+  const resources: Record<string, ClassResourceInfo> = {
+    imposicion_de_manos: {
+      id: "imposicion_de_manos",
+      nombre: "Imposición de Manos (PG)",
+      max: level * 5,
+      current: level * 5,
+      recovery: "long_rest",
+    },
+  };
+  if (level >= 3) {
+    const cdMax = level >= 11 ? 3 : 2;
+    resources.canalizar_divinidad = {
+      id: "canalizar_divinidad",
+      nombre: "Canalizar Divinidad",
+      max: cdMax,
+      current: cdMax,
+      recovery: "short_rest",
+    };
+  }
+  return resources;
+}
+
+function exploradorResources(level: number): Record<string, ClassResourceInfo> {
+  // Enemigo Predilecto: Marca del Cazador sin gastar espacio (PHB'24)
+  const freeHuntersMark = level >= 14 ? 4 : level >= 6 ? 3 : 2;
+  const resources: Record<string, ClassResourceInfo> = {
+    enemigo_predilecto: {
+      id: "enemigo_predilecto",
+      nombre: "Marca del Cazador (sin espacio)",
+      max: freeHuntersMark,
+      current: freeHuntersMark,
+      recovery: "long_rest",
+    },
+  };
+  // Velo de la Naturaleza (nivel 14+): mod. SAB usos por descanso largo
+  // Se usa UNLIMITED_RESOURCE como placeholder; el mod. SAB real se aplica en el store
+  if (level >= 14) {
+    resources.velo_naturaleza = {
+      id: "velo_naturaleza",
+      nombre: "Velo de la Naturaleza",
+      max: 1,
+      current: 1,
+      recovery: "long_rest",
+    };
+  }
+  return resources;
+}
+
+function magoResources(_level: number): Record<string, ClassResourceInfo> {
+  // Recuperación Arcana: 1 uso por descanso largo (todos los niveles)
+  return {
+    recuperacion_arcana: {
+      id: "recuperacion_arcana",
+      nombre: "Recuperación Arcana",
+      max: 1,
+      current: 1,
+      recovery: "long_rest",
+    },
+  };
+}
+
+function brujoResources(level: number): Record<string, ClassResourceInfo> {
+  const resources: Record<string, ClassResourceInfo> = {};
+  // Astucia Mágica (nivel 2+): recuperar espacios de Magia de Pacto, 1 uso por descanso largo
+  if (level >= 2) {
+    resources.astucia_magica = {
+      id: "astucia_magica",
+      nombre: "Astucia Mágica",
+      max: 1,
+      current: 1,
+      recovery: "long_rest",
+    };
+  }
+  // Contactar al Patrón (nivel 9+): 1 uso por descanso largo
+  if (level >= 9) {
+    resources.contactar_patron = {
+      id: "contactar_patron",
+      nombre: "Contactar al Patrón",
+      max: 1,
+      current: 1,
+      recovery: "long_rest",
+    };
+  }
+  // Arcano Místico (nv6): nivel 11+
+  if (level >= 11) {
+    resources.arcano_mistico_6 = {
+      id: "arcano_mistico_6",
+      nombre: "Arcano Místico (nv6)",
+      max: 1,
+      current: 1,
+      recovery: "long_rest",
+    };
+  }
+  // Arcano Místico (nv7): nivel 13+
+  if (level >= 13) {
+    resources.arcano_mistico_7 = {
+      id: "arcano_mistico_7",
+      nombre: "Arcano Místico (nv7)",
+      max: 1,
+      current: 1,
+      recovery: "long_rest",
+    };
+  }
+  // Arcano Místico (nv8): nivel 15+
+  if (level >= 15) {
+    resources.arcano_mistico_8 = {
+      id: "arcano_mistico_8",
+      nombre: "Arcano Místico (nv8)",
+      max: 1,
+      current: 1,
+      recovery: "long_rest",
+    };
+  }
+  // Arcano Místico (nv9): nivel 17+
+  if (level >= 17) {
+    resources.arcano_mistico_9 = {
+      id: "arcano_mistico_9",
+      nombre: "Arcano Místico (nv9)",
+      max: 1,
+      current: 1,
+      recovery: "long_rest",
+    };
+  }
+  return resources;
+}
+
 // ─── Registry ────────────────────────────────────────────────────────
 
 /** Registry mapping class names to their resource factory functions */
 const CLASS_RESOURCE_REGISTRY: Record<string, ClassResourceFactory> = {
   barbaro: barbaroResources,
+  brujo: brujoResources,
+  explorador: exploradorResources,
   guerrero: guerreroResources,
+  mago: magoResources,
   monje: monjeResources,
+  paladin: paladinResources,
   picaro: picaroResources,
 };
 

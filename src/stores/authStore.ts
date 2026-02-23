@@ -16,6 +16,7 @@ import { create } from "zustand";
 import { Platform } from "react-native";
 import { supabase } from "@/lib/supabase";
 import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 import { makeRedirectUri } from "expo-auth-session";
 import type { Session, User, AuthChangeEvent } from "@supabase/supabase-js";
 import type { Profile, AppMode } from "@/types/master";
@@ -24,6 +25,7 @@ import { clearUserData } from "@/utils/storage";
 import { restoreFromCloud } from "@/services/supabaseService";
 import { useCharacterStore } from "./characterStore";
 import { useCampaignStore } from "./campaignStore";
+import { useCharacterListStore } from "./characterListStore";
 import { useMasterStore } from "./masterStore";
 
 // Warm up the browser on Android for faster OAuth popup
@@ -32,15 +34,23 @@ if (Platform.OS === "android") {
 }
 
 // Redirect URI for OAuth callback
-// Web: current origin; Expo Go: exp:// scheme (auto); Dev build: custom scheme
+// makeRedirectUri() auto-detects:
+//  - Expo Go    → exp://IP:PORT/--/  (IP-dependent but covered by wildcard)
+//  - Standalone → dymes://           (from app.json scheme, stable)
+//
+// The "/--/" path suffix is REQUIRED in Expo Go: Android's intent filter
+// for Expo Go only intercepts URLs matching exp://HOST:PORT/--/*.
+// Without it, the browser redirect can't return to the app.
+//
+// Supabase uses "**" (globstar) that matches ANY sequence of characters
+// including "." and "/", so "exp://**" covers "exp://IP:PORT/--/".
+//
+// Supabase Dashboard → Redirect URLs:  exp://**  and  dymes://**
 function getRedirectUri(): string {
   if (Platform.OS === "web") {
     if (globalThis.window === undefined) return "";
     return globalThis.location.origin;
   }
-  // makeRedirectUri() without arguments auto-detects:
-  //  - Expo Go → exp://192.168.x.x:8081/--/
-  //  - Dev build / standalone → dymes://
   return makeRedirectUri();
 }
 const REDIRECT_URI = getRedirectUri();
@@ -152,6 +162,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           if (restored > 0) {
             console.log(`[AuthStore] Restored ${restored} campaigns from cloud`);
             useCampaignStore.getState().loadCampaigns();
+            useCharacterListStore.getState().loadCharacters();
           }
         }
       })
@@ -164,18 +175,30 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
-      async (_event: AuthChangeEvent, session: Session | null) => {
+      (_event: AuthChangeEvent, session: Session | null) => {
+        console.log("[AuthStore] onAuthStateChange:", _event, "session:", !!session, "user:", session?.user?.email);
+        // Synchronous state update — safe to do inside the callback.
         set({ session, user: session?.user ?? null, loading: false });
+
         if (session?.user) {
-          get().fetchProfile();
-          // On SIGNED_IN event, restore cloud data if local is empty
-          if (_event === "SIGNED_IN") {
-            const restored = await restoreFromCloud(session.user.id);
-            if (restored > 0) {
-              console.log(`[AuthStore] Restored ${restored} campaigns from cloud`);
-              useCampaignStore.getState().loadCampaigns();
+          // IMPORTANT: Defer all async Supabase queries to the next tick.
+          // supabase-js v2 fires onAuthStateChange while holding an internal
+          // session lock. Any REST query (fetchProfile, restoreFromCloud)
+          // needs to read the session via the same lock → deadlock.
+          // setTimeout(0) ensures the lock is released before we query.
+          const userId = session.user.id;
+          const event = _event;
+          setTimeout(async () => {
+            await get().fetchProfile();
+            if (event === "SIGNED_IN") {
+              const restored = await restoreFromCloud(userId);
+              if (restored > 0) {
+                console.log(`[AuthStore] Restored ${restored} campaigns from cloud`);
+                useCampaignStore.getState().loadCampaigns();
+                useCharacterListStore.getState().loadCharacters();
+              }
             }
-          }
+          }, 0);
         } else {
           set({ profile: null });
         }
@@ -220,11 +243,24 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
       // 2. Open the auth URL in the system browser
       console.log("[AuthStore] Opening OAuth with REDIRECT_URI:", REDIRECT_URI);
-      console.log("[AuthStore] Auth URL (base):", data.url.split("?")[0]);
+      console.log("[AuthStore] Full auth URL:", data.url);
+      // Extract the redirect_to that Supabase will use
+      try {
+        const authUrlParsed = new URL(data.url);
+        console.log("[AuthStore] redirect_to in auth URL:", authUrlParsed.searchParams.get("redirect_to"));
+      } catch { /* ignore parse errors */ }
+
+      // ── Set up a one-shot Linking listener ──
+      // On Android / Expo Go, openAuthSessionAsync may return "dismiss"
+      // even though the redirect DID succeed. In that case the callback
+      // URL arrives as a Linking event. We capture it here so that
+      // only ONE place ever calls setSession (no race condition).
+      let linkingUrl: string | null = null;
+      const linkingSub = Linking.addEventListener("url", (event) => {
+        linkingUrl = event.url;
+      });
 
       // Wrap openAuthSessionAsync with a timeout so it never hangs forever.
-      // If Supabase's allowed Redirect URLs don't include the exp:// URI,
-      // the browser will never redirect back and the promise won't resolve.
       const BROWSER_TIMEOUT_MS = 120_000; // 2 minutes
       const browserPromise = WebBrowser.openAuthSessionAsync(
         data.url,
@@ -245,6 +281,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         WebBrowser.coolDownAsync();
       }
 
+      // Clean up the Linking listener
+      linkingSub.remove();
+
       console.log(
         "[AuthStore] WebBrowser result:",
         result.type,
@@ -257,20 +296,28 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         try { WebBrowser.dismissBrowser(); } catch { /* may not be open */ }
       }
 
-      // On success, WebBrowser returns the callback URL directly
+      // Determine the callback URL: prefer WebBrowser's result,
+      // fall back to the URL captured by the Linking listener.
+      let callbackUrl: string | null = null;
       if (result.type === "success" && "url" in result && result.url) {
-        const sessionEstablished = await extractAndSetSession(result.url);
+        callbackUrl = result.url;
+      } else if (linkingUrl) {
+        console.log("[AuthStore] WebBrowser returned", result.type, "— using Linking URL as fallback");
+        callbackUrl = linkingUrl;
+      }
+
+      if (callbackUrl) {
+        const sessionEstablished = await extractAndSetSession(callbackUrl);
         if (sessionEstablished) {
+          // Don't call fetchProfile here — the deferred onAuthStateChange
+          // callback (setTimeout) handles it after setSession's lock is released.
           set({ loading: false });
           return;
         }
       }
 
-      // On Android / Expo Go, openAuthSessionAsync often returns "dismiss"
-      // even though the redirect succeeded. The global URL handler in
-      // _layout.tsx will catch the deep link and call setSession/exchangeCode,
-      // which triggers onAuthStateChange → loading: false.
-      // Wait briefly for that to happen before giving up.
+      // Wait briefly for onAuthStateChange in case session was set
+      // through another path (e.g. cold start initial URL).
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
       // If onAuthStateChange already set the session, we're done
@@ -383,6 +430,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         loading: false,
         error: null,
       });
+      useCharacterListStore.setState({
+        characters: [],
+        loading: false,
+        error: null,
+        migrated: false,
+      });
       useMasterStore.setState({
         campaigns: [],
         activeCampaignId: null,
@@ -408,9 +461,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   // ── Fetch Profile ──
   fetchProfile: async () => {
     const user = get().user;
-    if (!user) return;
+    if (!user) {
+      console.log("[AuthStore] fetchProfile: no user, skipping");
+      return;
+    }
 
     try {
+      console.log("[AuthStore] fetchProfile: fetching for user", user.id, user.email);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -418,12 +475,42 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         .single();
 
       if (error) {
+        console.warn("[AuthStore] fetchProfile error:", error.code, error.message);
         // Table doesn't exist yet — skip silently
-        if (error.code === "42P01" || error.code === "PGRST116" || error.message?.includes("does not exist")) {
+        if (error.code === "42P01" || error.message?.includes("does not exist")) {
           return;
         }
+
+        // Profile row not found — auto-create it from user metadata
+        // (the handle_new_user trigger may not have fired for this user)
+        if (error.code === "PGRST116") {
+          console.log("[AuthStore] fetchProfile: no profile row found, creating one...");
+          const meta = user.user_metadata ?? {};
+          const nombre = meta.full_name || meta.name || user.email?.split("@")[0] || "Usuario";
+          const avatarUrl = meta.avatar_url || meta.picture || null;
+
+          const { data: created, error: insertErr } = await supabase
+            .from("profiles")
+            .upsert({
+              id: user.id,
+              nombre,
+              avatar_url: avatarUrl,
+            })
+            .select()
+            .single();
+
+          if (insertErr) {
+            console.error("[AuthStore] fetchProfile: failed to create profile:", insertErr.message);
+            return;
+          }
+          console.log("[AuthStore] fetchProfile: created profile", created?.nombre, created?.codigo_jugador);
+          set({ profile: created as Profile });
+          return;
+        }
+
         throw error;
       }
+      console.log("[AuthStore] fetchProfile: got profile", data?.nombre, data?.codigo_jugador);
       set({ profile: data as Profile });
     } catch (err) {
       console.error("[AuthStore] fetchProfile:", err);

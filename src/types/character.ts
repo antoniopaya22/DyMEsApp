@@ -362,8 +362,8 @@ export interface ConcentrationState {
 export interface Character {
   /** UUID del personaje */
   id: string;
-  /** UUID de la partida asociada */
-  campaignId: string;
+  /** UUID de la partida asociada (solo en modo master) */
+  campaignId?: string;
 
   // ── Información básica ──
   nombre: string;

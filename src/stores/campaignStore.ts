@@ -10,8 +10,8 @@ import { STORAGE_KEYS, setItem, getItem } from "@/utils/storage";
 import { now } from "@/utils/providers";
 import { useCharacterStore } from "./characterStore";
 import { deleteCreationDraft } from "./creationStore";
-import { syncLocalCampaign, deleteLocalCampaignBackup } from "@/services/supabaseService";
-import { useAuthStore } from "./authStore";
+import { syncLocalCampaign, deleteLocalCampaignBackup, deleteCharacterFromCloud } from "@/services/supabaseService";
+import { supabase } from "@/lib/supabase";
 
 // ─── Tipos del store ─────────────────────────────────────────────────
 
@@ -71,23 +71,27 @@ function sortByLastAccess(campaigns: Campaign[]): Campaign[] {
 
 /**
  * Sync a campaign to Supabase in the background (fire-and-forget).
+ * Uses supabase.auth directly to avoid a circular import with authStore.
  * Silently fails if the user is not logged in or sync fails.
  */
 function syncCampaignToCloud(campaign: Campaign): void {
-  const userId = useAuthStore.getState().user?.id;
-  if (!userId) return;
-  syncLocalCampaign(userId, campaign).catch((err) =>
-    console.warn("[CampaignStore] Cloud sync failed:", err),
-  );
+  supabase.auth.getUser().then(({ data }) => {
+    const userId = data.user?.id;
+    if (!userId) return;
+    syncLocalCampaign(userId, campaign).catch((err) =>
+      console.warn("[CampaignStore] Cloud sync failed:", err),
+    );
+  }).catch(() => {});
 }
 
 /** Delete a campaign backup from Supabase in the background */
 function deleteCampaignFromCloud(campaignId: string): void {
-  const userId = useAuthStore.getState().user?.id;
-  if (!userId) return;
-  deleteLocalCampaignBackup(campaignId).catch((err) =>
-    console.warn("[CampaignStore] Cloud delete failed:", err),
-  );
+  supabase.auth.getUser().then(({ data }) => {
+    if (!data.user?.id) return;
+    deleteLocalCampaignBackup(campaignId).catch((err) =>
+      console.warn("[CampaignStore] Cloud delete failed:", err),
+    );
+  }).catch(() => {});
 }
 
 // ─── Store ───────────────────────────────────────────────────────────
@@ -192,6 +196,10 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
         await useCharacterStore
           .getState()
           .deleteAllCharacterData(campaign.personajeId);
+        // Also remove the character from Supabase so the master sees the deletion
+        deleteCharacterFromCloud(campaign.personajeId).catch((err) =>
+          console.warn("[CampaignStore] Cloud character delete failed:", err),
+        );
       }
 
       // Eliminar borrador de creación si existe

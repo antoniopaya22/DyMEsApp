@@ -85,16 +85,16 @@ interface CreationState {
 
 interface CreationActions {
   // ── Gestión del borrador ──
-  /** Inicia un nuevo borrador para una campaña */
-  startCreation: (campaignId: string) => Promise<void>;
+  /** Inicia un nuevo borrador (campaignId opcional, por defecto "current") */
+  startCreation: (campaignId?: string) => Promise<void>;
   /** Carga un borrador existente de AsyncStorage */
-  loadDraft: (campaignId: string) => Promise<boolean>;
+  loadDraft: (campaignId?: string) => Promise<boolean>;
   /** Guarda el borrador actual en AsyncStorage */
   saveDraft: () => Promise<void>;
   /** Elimina el borrador de creación */
-  discardDraft: (campaignId: string) => Promise<void>;
-  /** Comprueba si existe un borrador para una campaña */
-  hasDraft: (campaignId: string) => Promise<boolean>;
+  discardDraft: (campaignId?: string) => Promise<void>;
+  /** Comprueba si existe un borrador */
+  hasDraft: (campaignId?: string) => Promise<boolean>;
 
   // ── Navegación entre pasos ──
   /** Avanza al siguiente paso */
@@ -177,26 +177,28 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
 
   // ── Gestión del borrador ───────────────────────────────────────────
 
-  startCreation: async (campaignId: string) => {
+  startCreation: async (campaignId?: string) => {
+    const draftId = campaignId ?? "current";
     const newDraft: CharacterCreationDraft = {
       currentStep: 1,
-      campaignId,
+      campaignId: draftId,
       lastSaved: now(),
     };
     set({ draft: newDraft, isDirty: true, error: null });
     try {
-      await setItem(STORAGE_KEYS.CREATION_DRAFT(campaignId), newDraft);
+      await setItem(STORAGE_KEYS.CREATION_DRAFT(draftId), newDraft);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`[CreationStore] startCreation: ${message}`);
     }
   },
 
-  loadDraft: async (campaignId: string) => {
+  loadDraft: async (campaignId?: string) => {
     set({ loading: true, error: null });
     try {
+      const draftId = campaignId ?? "current";
       const stored = await getItem<CharacterCreationDraft>(
-        STORAGE_KEYS.CREATION_DRAFT(campaignId)
+        STORAGE_KEYS.CREATION_DRAFT(draftId)
       );
       if (stored) {
         set({ draft: stored, loading: false, isDirty: false });
@@ -235,19 +237,21 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
     }
   },
 
-  discardDraft: async (campaignId: string) => {
+  discardDraft: async (campaignId?: string) => {
     try {
-      await removeItem(STORAGE_KEYS.CREATION_DRAFT(campaignId));
+      const draftId = campaignId ?? "current";
+      await removeItem(STORAGE_KEYS.CREATION_DRAFT(draftId));
       set(INITIAL_STATE);
     } catch (err) {
       console.warn("[CreationStore] discardDraft: error al eliminar borrador");
     }
   },
 
-  hasDraft: async (campaignId: string) => {
+  hasDraft: async (campaignId?: string) => {
     try {
+      const draftId = campaignId ?? "current";
       const stored = await getItem<CharacterCreationDraft>(
-        STORAGE_KEYS.CREATION_DRAFT(campaignId)
+        STORAGE_KEYS.CREATION_DRAFT(draftId)
       );
       return stored !== null;
     } catch {
@@ -447,7 +451,7 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
     // can re-select them through the wizard starting at step 4.
     const newDraft: CharacterCreationDraft = {
       currentStep: 4, // Start at abilities step
-      campaignId: character.campaignId,
+      campaignId: character.campaignId ?? "current",
 
       // Pre-filled: choices the user should NOT re-make
       nombre: character.nombre,
@@ -478,7 +482,7 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
 
     set({ draft: newDraft, isDirty: true, error: null });
     try {
-      await setItem(STORAGE_KEYS.CREATION_DRAFT(character.campaignId), newDraft);
+      await setItem(STORAGE_KEYS.CREATION_DRAFT(character.campaignId ?? "current"), newDraft);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`[CreationStore] startRecreation: ${message}`);
@@ -700,7 +704,7 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
     // ── Ensamblar personaje ──
     const character: Character = {
       id: characterId,
-      campaignId: draft.campaignId,
+      campaignId: draft.campaignId === "current" ? undefined : draft.campaignId,
       nombre: draft.nombre.trim(),
       raza: draft.raza,
       subraza: draft.subraza ?? null,
@@ -877,7 +881,7 @@ export function getRequiredSkillCount(
  * Exposed as a standalone function so other stores (e.g. campaignStore)
  * can delete a draft without coupling to STORAGE_KEYS.CREATION_DRAFT.
  */
-export async function deleteCreationDraft(campaignId: string): Promise<void> {
+export async function deleteCreationDraft(campaignId?: string): Promise<void> {
   try {
     await removeItem(STORAGE_KEYS.CREATION_DRAFT(campaignId));
   } catch {

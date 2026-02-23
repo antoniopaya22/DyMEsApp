@@ -106,7 +106,7 @@ export interface CustomBackgroundConfig {
 export interface CharacterCreationDraft {
   /** Paso actual del wizard (1-11) */
   currentStep: number;
-  /** UUID de la partida donde se está creando */
+  /** UUID de la partida (modo master) o "current" (modo jugador) */
   campaignId: string;
 
   // Pasos completados

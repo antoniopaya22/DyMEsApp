@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import type {
   CampanaMasterRow,
   CampanaJugadorRow,
+  CampanaJugadorInsert,
   CampanaJugadorLocalRow,
   PersonajeRow,
   ProfileRow,
@@ -206,11 +207,11 @@ export async function addPlayerToCampaign(
   playerId: string,
   personajeId?: string,
 ): Promise<CampanaJugadorRow> {
-  const payload: Record<string, unknown> = {
+  const payload: CampanaJugadorInsert = {
     campana_id: campaignId,
     jugador_id: playerId,
+    personaje_id: personajeId ?? null,
   };
-  if (personajeId) payload.personaje_id = personajeId;
 
   const { data, error } = await supabase
     .from("campana_jugadores")
@@ -275,6 +276,18 @@ export async function fetchUserCharacters(
 
   if (error) throw error;
   return (data ?? []) as PersonajeRow[];
+}
+
+/** Delete a character from Supabase (fire-and-forget, used when player deletes locally) */
+export async function deleteCharacterFromCloud(
+  characterId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("personajes")
+    .delete()
+    .eq("id", characterId);
+
+  if (error) console.warn("[supabaseService] deleteCharacterFromCloud:", error.message);
 }
 
 /** Assign (or un-assign) a character to a campaign membership */
@@ -372,18 +385,22 @@ export async function deleteLocalCampaignBackup(
 /**
  * Restore the user's campaigns and characters from Supabase into AsyncStorage.
  * Called after login when local storage is empty (first login or after sign-out).
- * Returns the number of campaigns restored, or 0 if nothing was restored.
+ * Returns the number of items restored, or 0 if nothing was restored.
  */
 export async function restoreFromCloud(userId: string): Promise<number> {
   try {
-    // Check if local data already exists — don't overwrite
+    // Check if local character list already exists — don't overwrite
+    const existingCharacterList = await getItem<unknown[]>(STORAGE_KEYS.CHARACTER_LIST);
     const existingCampaigns = await getItem<Campaign[]>(STORAGE_KEYS.CAMPAIGNS);
-    if (existingCampaigns && existingCampaigns.length > 0) {
-      console.log("[CloudRestore] Local campaigns exist, skipping restore");
+    if (
+      (existingCharacterList && existingCharacterList.length > 0) ||
+      (existingCampaigns && existingCampaigns.length > 0)
+    ) {
+      console.log("[CloudRestore] Local data exists, skipping restore");
       return 0;
     }
 
-    // 1. Fetch campaigns backed up to Supabase
+    // 1. Fetch campaigns backed up to Supabase (legacy, for master mode compat)
     const cloudCampaigns = await fetchUserLocalCampaigns(userId);
 
     // 2. Fetch all characters owned by this user
@@ -398,7 +415,20 @@ export async function restoreFromCloud(userId: string): Promise<number> {
       `[CloudRestore] Restoring ${cloudCampaigns.length} campaigns, ${cloudCharacters.length} characters`,
     );
 
-    // 3. Write characters to AsyncStorage
+    // 3. Write characters to AsyncStorage + build character list
+    interface RestoredCharacterSummary {
+      id: string;
+      nombre: string;
+      clase: string;
+      raza: string;
+      subraza: string;
+      nivel: number;
+      customRaceName?: string;
+      creadoEn: string;
+      actualizadoEn: string;
+    }
+    const characterSummaries: RestoredCharacterSummary[] = [];
+
     for (const row of cloudCharacters) {
       const datos = row.datos as Record<string, unknown>;
       // Extract the character base data (everything except underscore-prefixed extras)
@@ -411,9 +441,10 @@ export async function restoreFromCloud(userId: string): Promise<number> {
         };
 
       const charId = row.id;
+      const char = characterData as unknown as Character;
 
       // Write character
-      await setItem(STORAGE_KEYS.CHARACTER(charId), characterData as unknown as Character);
+      await setItem(STORAGE_KEYS.CHARACTER(charId), char);
 
       // Write magic state if present
       if (_magicState) {
@@ -434,9 +465,28 @@ export async function restoreFromCloud(userId: string): Promise<number> {
       if (_notes && _notes.length > 0) {
         await setItem(STORAGE_KEYS.NOTES(charId), _notes);
       }
+
+      // Build character summary for the character list
+      characterSummaries.push({
+        id: charId,
+        nombre: char.nombre || "Personaje",
+        clase: char.clase || "",
+        raza: char.raza || "",
+        subraza: char.subraza || "",
+        nivel: char.nivel || 1,
+        customRaceName: char.customRaceName,
+        creadoEn: char.creadoEn || row.actualizado_en,
+        actualizadoEn: char.actualizadoEn || row.actualizado_en,
+      });
     }
 
-    // 4. Write campaigns to AsyncStorage
+    // 4. Write character list to AsyncStorage (new single-player format)
+    if (characterSummaries.length > 0) {
+      await setItem(STORAGE_KEYS.CHARACTER_LIST, characterSummaries);
+      console.log(`[CloudRestore] Restored ${characterSummaries.length} characters to character list`);
+    }
+
+    // 5. Write campaigns to AsyncStorage (legacy format, used by migration + master mode)
     const localCampaigns: Campaign[] = cloudCampaigns.map((row) => ({
       id: row.id,
       nombre: row.nombre,
@@ -466,10 +516,13 @@ export async function restoreFromCloud(userId: string): Promise<number> {
       }
     }
 
-    await setItem(STORAGE_KEYS.CAMPAIGNS, localCampaigns);
+    if (localCampaigns.length > 0) {
+      await setItem(STORAGE_KEYS.CAMPAIGNS, localCampaigns);
+    }
 
-    console.log(`[CloudRestore] Restored ${localCampaigns.length} campaigns successfully`);
-    return localCampaigns.length;
+    const totalRestored = characterSummaries.length || localCampaigns.length;
+    console.log(`[CloudRestore] Restore complete (${totalRestored} items)`);
+    return totalRestored;
   } catch (err) {
     console.error("[CloudRestore] Failed to restore:", err);
     return 0;

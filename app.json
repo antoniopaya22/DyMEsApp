@@ -61,8 +61,9 @@
       "googleAndroidClientId": "YOUR_GOOGLE_ANDROID_CLIENT_ID_HERE",
       "googleIosClientId": "YOUR_GOOGLE_IOS_CLIENT_ID_HERE",
       "eas": {
-        "projectId": "def83db2-33fa-4d05-86ba-ee8615d66277"
+        "projectId": "e8366dc6-0987-4cbd-a42c-9eb2346c0b61"
       }
-    }
+    },
+    "owner": "payarroni"
   }
 }

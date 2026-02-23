@@ -395,21 +395,21 @@ export const CLASSES: Record<ClassId, ClassData> = {
 
     level1Features: [
       {
-        nombre: "Lanzamiento de Conjuros (Magia de Pacto)",
+        nombre: "Invocaciones Sobrenaturales",
         descripcion:
-          "Puedes lanzar conjuros de brujo usando el Carisma como aptitud mágica. Conoces 2 trucos y 2 conjuros de nivel 1. Tus espacios de conjuro se recuperan tras un descanso corto o largo.",
+          "Obtienes 1 Invocación Sobrenatural a tu elección (como Pacto del Tomo, Pacto del Filo o Pacto de la Cadena). Ganas más según tu nivel de brujo.",
         nivel: 1,
       },
       {
-        nombre: "Patrón de Otro Mundo",
+        nombre: "Magia de Pacto",
         descripcion:
-          "Has establecido un pacto con un ser de otro plano. A nivel 1 tu patrón te otorga rasgos especiales. Elige tu patrón al crear el personaje.",
+          "Conoces 2 trucos y preparas 2 conjuros de nivel 1 de brujo. Tus espacios de Magia de Pacto se recuperan tras un descanso corto o largo. CAR es tu aptitud mágica.",
         nivel: 1,
       },
     ],
 
-    subclassLevel: 1,
-    subclassLabel: "Patrón de Otro Mundo",
+    subclassLevel: 3,
+    subclassLabel: "Subclase de Brujo",
     iconName: "eye-outline",
     color: "#7c3aed",
   },
@@ -693,9 +693,9 @@ export const CLASSES: Record<ClassId, ClassData> = {
 
     casterType: "half",
     spellcastingAbility: "sab",
-    preparesSpells: false,
+    preparesSpells: true,
     cantripsAtLevel1: 0,
-    spellsAtLevel1: 0,
+    spellsAtLevel1: 2,
 
     equipmentChoices: [
       {
@@ -742,21 +742,27 @@ export const CLASSES: Record<ClassId, ClassData> = {
 
     level1Features: [
       {
-        nombre: "Enemigo Predilecto",
+        nombre: "Lanzamiento de Conjuros",
         descripcion:
-          "Tienes experiencia estudiando y rastreando un tipo de enemigo. Elige un tipo de enemigo predilecto. Tienes ventaja en pruebas de Supervivencia para rastrearlos y de Inteligencia para recordar información sobre ellos.",
+          "Has aprendido a canalizar la esencia mágica de la naturaleza para lanzar conjuros. SAB es tu aptitud mágica. Preparas conjuros de la lista de explorador.",
         nivel: 1,
       },
       {
-        nombre: "Explorador Natural",
+        nombre: "Enemigo Predilecto",
         descripcion:
-          "Estás familiarizado con un tipo de entorno natural. Mientras viajas por tu terreno predilecto: el terreno difícil no ralentiza al grupo, no os podéis perder (salvo magia), permaneces alerta incluso realizando otra actividad, etc.",
+          "Siempre tienes preparado Marca del Cazador. Puedes lanzarlo varias veces sin gastar espacio de conjuro; recuperas todos los usos tras un descanso largo.",
+        nivel: 1,
+      },
+      {
+        nombre: "Maestría con Armas",
+        descripcion:
+          "Puedes usar las propiedades de maestría de dos tipos de armas con las que tengas competencia. Puedes cambiar tus elecciones tras cada descanso largo.",
         nivel: 1,
       },
     ],
 
     subclassLevel: 3,
-    subclassLabel: "Arquetipo de Explorador",
+    subclassLabel: "Subclase de Explorador",
     iconName: "compass-outline",
     color: "#059669",
   },
@@ -1085,19 +1091,25 @@ export const CLASSES: Record<ClassId, ClassData> = {
       {
         nombre: "Lanzamiento de Conjuros",
         descripcion:
-          "Puedes lanzar conjuros de mago usando la Inteligencia como aptitud mágica. Conoces 3 trucos. Tu libro contiene 6 conjuros de nivel 1. Preparas conjuros: nivel de mago + mod. Inteligencia.",
+          "Puedes lanzar conjuros de mago usando INT como aptitud mágica. Conoces 3 trucos. Tu libro de conjuros contiene 6 conjuros de nv1. Preparas conjuros según la tabla de Mago. Ganas +2 conjuros al libro por cada nivel.",
+        nivel: 1,
+      },
+      {
+        nombre: "Adepto de Rituales",
+        descripcion:
+          "Puedes lanzar cualquier conjuro como ritual si tiene la etiqueta Ritual y está en tu libro de conjuros. No necesitas tenerlo preparado.",
         nivel: 1,
       },
       {
         nombre: "Recuperación Arcana",
         descripcion:
-          "Una vez al día, al terminar un descanso corto, puedes recuperar espacios de conjuro cuya suma de niveles sea igual o menor que la mitad de tu nivel de mago (redondeado hacia arriba), sin que ningún espacio individual sea de nivel 6 o superior.",
+          "Al terminar un descanso corto, puedes recuperar espacios de conjuro cuya suma de niveles ≤ mitad de tu nivel de mago (redondeando arriba), sin que ningún espacio sea de nv6+. Una vez por descanso largo.",
         nivel: 1,
       },
     ],
 
-    subclassLevel: 2,
-    subclassLabel: "Tradición Arcana",
+    subclassLevel: 3,
+    subclassLabel: "Subclase de Mago",
     iconName: "book-outline",
     color: "#2563eb",
   },
@@ -1107,13 +1119,16 @@ export const CLASSES: Record<ClassId, ClassData> = {
     id: "monje",
     nombre: "Monje",
     descripcion:
-      "Un maestro de las artes marciales que canaliza el poder del cuerpo para lograr perfección física y espiritual, empleando el ki como arma.",
+      "Un maestro de las artes marciales que canaliza el poder del cuerpo para lograr perfección física y espiritual, empleando la concentración como arma.",
     hitDie: "d8",
     hitDieMax: 8,
     hitDieFixed: 5,
 
     armorProficiencies: [],
-    weaponProficiencies: ["Armas sencillas", "Espadas cortas"],
+    weaponProficiencies: [
+      "Armas sencillas cuerpo a cuerpo",
+      "Armas marciales cuerpo a cuerpo con propiedad Ligera",
+    ],
     toolProficiencies: [],
     toolChoices: [
       "Herramientas de artesano (a elegir)",
@@ -1177,21 +1192,21 @@ export const CLASSES: Record<ClassId, ClassData> = {
 
     level1Features: [
       {
+        nombre: "Artes Marciales",
+        descripcion:
+          "Dominas estilos de combate con golpes desarmados y armas de monje (sencillas cuerpo a cuerpo y marciales ligeras). Sin armadura ni escudo: puedes usar DES en lugar de FUE para ataques y daño; tus armas de monje usan un d6 de daño (sube con el nivel); puedes hacer un golpe desarmado como acción adicional. También puedes usar DES en lugar de FUE para determinar la CD de Agarrar o Empujar.",
+        nivel: 1,
+      },
+      {
         nombre: "Defensa sin Armadura",
         descripcion:
           "Mientras no lleves armadura ni empuñes un escudo, tu CA es 10 + mod. Destreza + mod. Sabiduría.",
         nivel: 1,
       },
-      {
-        nombre: "Artes Marciales",
-        descripcion:
-          "Mientras estés sin armadura y sin escudo: puedes usar DES en lugar de FUE para ataques y daño con armas de monje; tus armas de monje usan un d4 de daño (sube con el nivel); cuando atacas con un arma de monje, puedes hacer un ataque desarmado como acción adicional.",
-        nivel: 1,
-      },
     ],
 
     subclassLevel: 3,
-    subclassLabel: "Tradición Monástica",
+    subclassLabel: "Subclase de Monje",
     iconName: "hand-left-outline",
     color: "#0891b2",
   },
@@ -1226,7 +1241,7 @@ export const CLASSES: Record<ClassId, ClassData> = {
     spellcastingAbility: "car",
     preparesSpells: true,
     cantripsAtLevel1: 0,
-    spellsAtLevel1: 0,
+    spellsAtLevel1: 2,
 
     equipmentChoices: [
       {
@@ -1285,21 +1300,27 @@ export const CLASSES: Record<ClassId, ClassData> = {
 
     level1Features: [
       {
-        nombre: "Sentido Divino",
+        nombre: "Imposición de Manos",
         descripcion:
-          "Puedes detectar la presencia de cualquier celestial, infernal o no muerto a 18 m de ti que no esté detrás de una cobertura total. Usos: 1 + mod. Carisma por descanso largo.",
+          "Tu toque bendito puede curar heridas. Tienes una reserva de poder curativo (5 × nivel de paladín) que se repone tras un descanso largo. Como acción adicional, restauras PG o gastas 5 puntos para eliminar la condición Envenenado.",
         nivel: 1,
       },
       {
-        nombre: "Imposición de Manos",
+        nombre: "Lanzamiento de Conjuros",
         descripcion:
-          "Tu toque bendito puede curar heridas. Tienes una reserva de poder curativo que se repone tras un descanso largo. Reserva = nivel de paladín × 5. Puedes restaurar PG (1 por 1) o gastar 5 puntos para curar una enfermedad o neutralizar un veneno.",
+          "Has aprendido a lanzar conjuros mediante oración y meditación. CAR es tu aptitud mágica. Preparas conjuros de la lista de paladín.",
+        nivel: 1,
+      },
+      {
+        nombre: "Maestría con Armas",
+        descripcion:
+          "Puedes usar las propiedades de maestría de dos tipos de armas con las que tengas competencia. Puedes cambiar tus elecciones tras cada descanso largo.",
         nivel: 1,
       },
     ],
 
     subclassLevel: 3,
-    subclassLabel: "Juramento Sagrado",
+    subclassLabel: "Subclase de Paladín",
     iconName: "sunny-outline",
     color: "#eab308",
   },
@@ -1506,19 +1527,19 @@ export const SPELLCASTING_DESCRIPTIONS: Partial<Record<ClassId, string>> = {
   bardo:
     "El Carisma es tu aptitud mágica. Conoces un número fijo de conjuros que eliges de la lista de bardo.",
   brujo:
-    "El Carisma es tu aptitud mágica. Conoces pocos conjuros, pero tus espacios se recuperan con descansos cortos.",
+    "El Carisma es tu aptitud mágica. Preparas conjuros de la lista de brujo. Tus espacios de Magia de Pacto se recuperan tras un descanso corto o largo.",
   clerigo:
     "La Sabiduría es tu aptitud mágica. Preparas conjuros cada día de entre toda la lista de clérigo.",
   druida:
     "La Sabiduría es tu aptitud mágica. Preparas conjuros cada día de entre toda la lista de druida.",
   explorador:
-    "La Sabiduría es tu aptitud mágica. Obtienes conjuros a nivel 2. Conoces un número fijo de conjuros.",
+    "La Sabiduría es tu aptitud mágica. Preparas conjuros de la lista de explorador cada descanso largo.",
   hechicero:
     "El Carisma es tu aptitud mágica. Tu magia es innata. Conoces un número fijo de conjuros y puedes usar Puntos de Hechicería para modificarlos.",
   mago:
-    "La Inteligencia es tu aptitud mágica. Registras conjuros en tu libro y preparas una selección cada día.",
+    "La Inteligencia es tu aptitud mágica. Registras conjuros en tu libro de conjuros y preparas una selección cada descanso largo. Puedes lanzar rituales del libro sin prepararlos.",
   paladin:
-    "El Carisma es tu aptitud mágica. Obtienes conjuros a nivel 2. Preparas conjuros cada día.",
+    "El Carisma es tu aptitud mágica. Preparas conjuros de la lista de paladín cada descanso largo.",
 };
 
 // ─── Constantes derivadas (fuente única de verdad) ───────────────────

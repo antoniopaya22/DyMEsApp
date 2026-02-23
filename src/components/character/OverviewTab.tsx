@@ -30,6 +30,7 @@ import {
 } from "@/types/character";
 import { getRaceData, getSubraceData } from "@/data/srd/races";
 import { getClassData } from "@/data/srd/classes";
+import { getSubclassOptions } from "@/data/srd/subclasses";
 import { getBackgroundData } from "@/data/srd/backgrounds";
 import ExperienceSection from "./ExperienceSection";
 import LevelUpModal from "./LevelUpModal";
@@ -40,6 +41,8 @@ import { CollapsibleSection, InfoBadge, ConfirmDialog } from "@/components/ui";
 import { TraitCard } from "./TraitCard";
 import { ABILITY_COLORS, ABILITY_KEYS } from "@/constants/abilities";
 import { rollD20 } from "@/utils/dice";
+import { getSkillRollModifiers } from "@/utils/skillRollModifiers";
+import type { SkillRollModifiers } from "@/utils/skillRollModifiers";
 
 if (
   Platform.OS === "android" &&
@@ -64,12 +67,47 @@ export default function OverviewTab() {
   const { dialogProps, showDialog } = useDialog();
 
   const handleRollD20 = useCallback(
-    (title: string, label: string, mod: number) => {
+    (
+      title: string,
+      label: string,
+      mod: number,
+      modifiers?: SkillRollModifiers,
+    ) => {
+      // Calcular bonificadores pasivos extra (no incluidos en mod base)
+      const extraPassive = (modifiers?.passiveBonuses ?? [])
+        .filter((pb) => !pb.includedInBase)
+        .reduce((sum, pb) => sum + pb.bonus, 0);
       const modStr = formatModifier(mod);
+      const extraModParts = (modifiers?.passiveBonuses ?? [])
+        .filter((pb) => !pb.includedInBase)
+        .map((pb) => `+${pb.bonus}`);
+      const fullModStr = extraModParts.length > 0
+        ? `${modStr} ${extraModParts.join(" ")}`
+        : modStr;
+
+      // Construir notas de rasgos activos para el diálogo de confirmación
+      const notes: string[] = [];
+      if (modifiers?.minimum) {
+        notes.push(
+          `⚡ ${modifiers.minimum.featureName}: mínimo ${modifiers.minimum.minDieValue} en el d20`,
+        );
+      }
+      if (modifiers?.rerollNat1) {
+        notes.push(
+          `🍀 ${modifiers.rerollNat1.featureName}: re-tirar 1 natural`,
+        );
+      }
+      for (const pb of modifiers?.passiveBonuses ?? []) {
+        if (!pb.includedInBase) {
+          notes.push(`✦ ${pb.featureName}: +${pb.bonus}`);
+        }
+      }
+      const noteStr = notes.length > 0 ? `\n${notes.join("\n")}` : "";
+
       showDialog({
         type: "confirm",
         title,
-        message: `¿Tirar 1d20 ${modStr} (${label})?`,
+        message: `¿Tirar 1d20 ${fullModStr} (${label})?${noteStr}`,
         icon: "dice-outline",
         buttons: [
           { text: "Cancelar", style: "cancel" },
@@ -77,17 +115,59 @@ export default function OverviewTab() {
             text: "🎲 Tirar",
             style: "default",
             onPress: () => {
-              const result = rollD20(mod);
-              const dieValue = result.rolls[0].value;
+              let result = rollD20(mod);
+              let rawDie = result.rolls[0].value;
+              const extras: string[] = [];
+
+              // 1. Retirada de 1 natural (Mediano — Afortunado)
+              if (modifiers?.rerollNat1 && rawDie === 1) {
+                const rerolled = rollD20(mod);
+                const newDie = rerolled.rolls[0].value;
+                extras.push(
+                  `🍀 ${modifiers.rerollNat1.featureName}: 1 → ${newDie}`,
+                );
+                result = rerolled;
+                rawDie = newDie;
+              }
+
+              // 2. Aplicar mínimo de d20
+              const dieMinimum = modifiers?.minimum ?? null;
+              const minApplied =
+                dieMinimum != null && rawDie < dieMinimum.minDieValue;
+              const effectiveDie = minApplied
+                ? dieMinimum.minDieValue
+                : rawDie;
+              const finalTotal = (minApplied
+                ? effectiveDie + mod
+                : result.total) + extraPassive;
+
               let emoji = "";
-              let extra = "";
               if (result.isCritical) {
                 emoji = " ✨";
-                extra = "\n\n¡CRÍTICO NATURAL!";
-              } else if (result.isFumble) {
+                extras.unshift("¡CRÍTICO NATURAL!");
+              } else if (result.isFumble && !minApplied) {
                 emoji = " 💀";
-                extra = "\n\n¡PIFIA!";
+                extras.unshift("¡PIFIA!");
               }
+              if (minApplied) {
+                extras.push(
+                  `⚡ ${dieMinimum.featureName}: ${rawDie} → ${effectiveDie}`,
+                );
+              }
+
+              // 3. Anotar bonificadores pasivos extra (no incluidos en el mod base)
+              for (const pb of modifiers?.passiveBonuses ?? []) {
+                if (!pb.includedInBase) {
+                  extras.push(`✦ ${pb.featureName}: +${pb.bonus}`);
+                }
+              }
+
+              const dieDisplay = minApplied
+                ? `${rawDie}→${effectiveDie}`
+                : `${rawDie}`;
+              const extraStr =
+                extras.length > 0 ? `\n\n${extras.join("\n")}` : "";
+
               setTimeout(() => {
                 showDialog({
                   type: result.isCritical
@@ -96,7 +176,7 @@ export default function OverviewTab() {
                       ? "danger"
                       : "info",
                   title: `${label}${emoji}`,
-                  message: `🎲 d20 [${dieValue}] ${modStr} = ${result.total}${extra}`,
+                  message: `🎲 d20 [${dieDisplay}] ${fullModStr} = ${finalTotal}${extraStr}`,
                   buttons: [{ text: "OK", style: "default" }],
                   customIconContent: createElement(
                     Text,
@@ -111,7 +191,7 @@ export default function OverviewTab() {
                             : colors.textPrimary,
                       },
                     },
-                    String(result.total),
+                    String(finalTotal),
                   ),
                 });
               }, 350);
@@ -147,8 +227,18 @@ export default function OverviewTab() {
     (key: SkillKey) => {
       if (!character) return;
       const skillName = SKILLS[key].nombre;
-      const bonus = getSkillBonus(key);
-      handleRollD20(`Tirada de ${skillName}`, skillName, bonus);
+      const baseBonus = getSkillBonus(key);
+
+      // Detectar todos los modificadores pasivos que aplican
+      const modifiers = getSkillRollModifiers(character, key);
+
+      // Pasar solo el mod base; handleRollD20 suma y muestra los extras aparte
+      handleRollD20(
+        `Tirada de ${skillName}`,
+        skillName,
+        baseBonus,
+        modifiers,
+      );
     },
     [character, getSkillBonus, handleRollD20],
   );
@@ -181,9 +271,15 @@ export default function OverviewTab() {
             // Create a recreation draft from the current character
             await startRecreation(character);
             // Navigate to the creation wizard (abilities step)
-            router.replace(
-              `/campaigns/${character.campaignId}/character/create/abilities`,
-            );
+            if (character.campaignId) {
+              // Master mode: go through campaign route
+              router.replace(
+                `/campaigns/${character.campaignId}/character/create/abilities`,
+              );
+            } else {
+              // Single player: go through direct create route
+              router.replace("/create/abilities");
+            }
           },
         },
       ],
@@ -231,7 +327,9 @@ export default function OverviewTab() {
             {character.subraza
               ? ` (${getSubraceData(character.raza, character.subraza)?.nombre ?? ""})`
               : ""}{" "}
-            · {classData.nombre} Nv. {character.nivel}
+            · {classData.nombre}{character.subclase
+              ? ` (${getSubclassOptions(character.clase).find((s) => s.id === character.subclase || s.nombre === character.subclase)?.nombre ?? character.subclase})`
+              : ""} Nv. {character.nivel}
           </Text>
         </View>
       </View>
@@ -420,10 +518,17 @@ export default function OverviewTab() {
         {sortedSkills.map((key) => {
           const skill = SKILLS[key];
           const proficiency = character.skillProficiencies[key];
-          const bonus = getSkillBonus(key);
+          const baseBonus = getSkillBonus(key);
           const isProficient = proficiency.level === "proficient";
           const isExpertise = proficiency.level === "expertise";
           const abilityColor = ABILITY_COLORS[skill.habilidad];
+
+          // Sumar bonificadores pasivos de rasgos de clase/subclase
+          const modifiers = getSkillRollModifiers(character, key);
+          const extraBonus = modifiers.passiveBonuses
+            .filter((pb) => !pb.includedInBase)
+            .reduce((sum, pb) => sum + pb.bonus, 0);
+          const bonus = baseBonus + extraBonus;
 
           return (
             <TouchableOpacity

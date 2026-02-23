@@ -70,6 +70,7 @@ export default function MasterCampaignLobby() {
   const [showAddPlayer, setShowAddPlayer] = useState(false);
   const [characterCode, setCharacterCode] = useState("");
   const [addingPlayer, setAddingPlayer] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Live character data cache (updated via realtime subscription)
   const [liveCharacters, setLiveCharacters] = useState<
@@ -113,7 +114,25 @@ export default function MasterCampaignLobby() {
         [character.id]: character,
       }));
     },
+    onDelete: (characterId) => {
+      setLiveCharacters((prev) => {
+        const next = { ...prev };
+        delete next[characterId];
+        return next;
+      });
+    },
   });
+
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    if (!campaignId) return;
+    setRefreshing(true);
+    try {
+      await loadPlayers(campaignId);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [campaignId, loadPlayers]);
 
   // Also seed live cache from initial load
   useEffect(() => {
@@ -457,6 +476,8 @@ export default function MasterCampaignLobby() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={renderEmpty}
         showsVerticalScrollIndicator={false}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
       />
 
       {/* Add Player Button */}

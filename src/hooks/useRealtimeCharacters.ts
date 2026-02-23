@@ -16,6 +16,8 @@ interface UseRealtimeCharactersOptions {
   characterIds: string[];
   /** Called whenever a character row is inserted or updated */
   onUpdate: (character: PersonajeRow) => void;
+  /** Called whenever a character row is deleted */
+  onDelete?: (characterId: string) => void;
   /** Whether the subscription is active */
   enabled?: boolean;
 }
@@ -27,16 +29,21 @@ interface UseRealtimeCharactersOptions {
 export function useRealtimeCharacters({
   characterIds,
   onUpdate,
+  onDelete,
   enabled = true,
 }: UseRealtimeCharactersOptions) {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const [status, setStatus] = useState<"idle" | "connected" | "error">("idle");
 
   const handlePayload = useCallback(
-    (payload: { new: PersonajeRow }) => {
-      onUpdate(payload.new);
+    (payload: { eventType: string; new: PersonajeRow | null; old: { id: string } | null }) => {
+      if (payload.eventType === "DELETE" && payload.old?.id) {
+        onDelete?.(payload.old.id);
+      } else if (payload.new) {
+        onUpdate(payload.new);
+      }
     },
-    [onUpdate],
+    [onUpdate, onDelete],
   );
 
   useEffect(() => {
@@ -67,7 +74,7 @@ export function useRealtimeCharacters({
           table: "personajes",
           filter,
         },
-        (payload) => handlePayload(payload as unknown as { new: PersonajeRow }),
+        (payload) => handlePayload(payload as unknown as { eventType: string; new: PersonajeRow | null; old: { id: string } | null }),
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {

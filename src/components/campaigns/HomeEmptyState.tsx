@@ -93,8 +93,8 @@ export function HomeEmptyState({ onCreateFirst }: HomeEmptyStateProps) {
           ¡Bienvenido, aventurero!
         </Text>
         <Text style={[styles.emptySubtitle, { color: colors.emptySubtitle }]}>
-          No tienes ninguna partida todavía.{"\n"}Crea tu primera campaña para
-          empezar a jugar.
+          No tienes ningún personaje todavía.{"\n"}Crea tu primer personaje
+          para empezar a jugar.
         </Text>
 
         <DragonDivider
@@ -116,7 +116,7 @@ export function HomeEmptyState({ onCreateFirst }: HomeEmptyStateProps) {
             style={styles.emptyButtonGradient}
           >
             <Ionicons name="add" size={22} color="white" />
-            <Text style={styles.emptyButtonText}>Crear primera partida</Text>
+            <Text style={styles.emptyButtonText}>Crear primer personaje</Text>
           </LinearGradient>
         </TouchableOpacity>
 

@@ -8,12 +8,13 @@ import { getSpellSlots, getPactMagicSlots } from "@/types/spell";
 import { STORAGE_KEYS, setItem } from "@/utils/storage";
 import { now } from "@/utils/providers";
 import { getClassResourcesForLevel } from "./classResourceStrategies";
+import type { ClassResourceInfo, ClassResourcesState } from "./classResourceTypes";
 
 export { rollDieRaw as rollDie } from "@/utils/dice";
 
 // Re-export so existing consumers of helpers.ts keep working
 export { UNLIMITED_RESOURCE } from "./classResourceTypes";
-export type { ClassResourceInfo, ClassResourcesState } from "./classResourceTypes";
+export type { ClassResourceInfo, ClassResourcesState };
 
 // ─── Safe Persistence ────────────────────────────────────────────────
 

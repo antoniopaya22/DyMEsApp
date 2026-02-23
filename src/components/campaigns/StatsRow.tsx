@@ -1,7 +1,7 @@
 /**
- * StatsRow - Campaign statistics summary bar
+ * StatsRow - Character statistics summary bar
  *
- * Shows total campaigns, campaigns with character, and pending count.
+ * Shows total characters and average level.
  * Extracted from app/index.tsx
  */
 
@@ -10,10 +10,10 @@ import { useTheme, useEntranceAnimation } from "@/hooks";
 
 interface StatsRowProps {
   total: number;
-  withCharacter: number;
+  averageLevel: number;
 }
 
-export function StatsRow({ total, withCharacter }: StatsRowProps) {
+export function StatsRow({ total, averageLevel }: StatsRowProps) {
   const { colors } = useTheme();
   const { opacity: fadeAnim } = useEntranceAnimation({ delay: 300 });
 
@@ -33,18 +33,7 @@ export function StatsRow({ total, withCharacter }: StatsRowProps) {
           {total}
         </Text>
         <Text style={[styles.statLabel, { color: colors.statsLabel }]}>
-          {total === 1 ? "Partida" : "Partidas"}
-        </Text>
-      </View>
-      <View
-        style={[styles.statDivider, { backgroundColor: colors.statsDivider }]}
-      />
-      <View style={styles.statItem}>
-        <Text style={[styles.statValue, { color: colors.accentGreen }]}>
-          {withCharacter}
-        </Text>
-        <Text style={[styles.statLabel, { color: colors.statsLabel }]}>
-          Con personaje
+          {total === 1 ? "Personaje" : "Personajes"}
         </Text>
       </View>
       <View
@@ -52,10 +41,10 @@ export function StatsRow({ total, withCharacter }: StatsRowProps) {
       />
       <View style={styles.statItem}>
         <Text style={[styles.statValue, { color: colors.accentGold }]}>
-          {total - withCharacter}
+          {averageLevel.toFixed(1)}
         </Text>
         <Text style={[styles.statLabel, { color: colors.statsLabel }]}>
-          Pendientes
+          Nivel medio
         </Text>
       </View>
     </Animated.View>

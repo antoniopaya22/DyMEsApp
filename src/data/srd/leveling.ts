@@ -147,16 +147,20 @@ export const CLASS_LEVEL_FEATURES: Record<ClassId, LevelFeature[]> = {
 
   // ─── BRUJO ─────────────────────────────────────────────────────────
   brujo: [
-    { nombre: "Patrón de Otro Mundo", descripcion: "Elige tu Patrón de Otro Mundo (subclase).", nivel: 1, esSubclase: true },
-    { nombre: "Magia de Pacto", descripcion: "Puedes lanzar conjuros de brujo. Tus espacios de conjuro se recuperan en descansos cortos.", nivel: 1 },
-    { nombre: "Invocaciones Sobrenaturales (2)", descripcion: "Obtienes 2 Invocaciones Sobrenaturales.", nivel: 2 },
-    { nombre: "Favor de Pacto", descripcion: "Elige un Favor de Pacto: Pacto de la Cadena, del Filo o del Tomo.", nivel: 3 },
-    { nombre: "Invocaciones extra", descripcion: "Obtienes invocaciones sobrenaturales adicionales según tu nivel.", nivel: 5 },
-    { nombre: "Rasgo de Patrón", descripcion: "Obtienes un rasgo de tu Patrón de Otro Mundo.", nivel: 6, esSubclase: true },
-    { nombre: "Rasgo de Patrón", descripcion: "Obtienes un rasgo de tu Patrón de Otro Mundo.", nivel: 10, esSubclase: true },
-    { nombre: "Arcano Místico", descripcion: "Tu patrón te otorga un conjuro de nivel 6 (uso 1/descanso largo). Ganas más a niveles superiores.", nivel: 11 },
-    { nombre: "Rasgo de Patrón", descripcion: "Obtienes un rasgo de tu Patrón de Otro Mundo.", nivel: 14, esSubclase: true },
-    { nombre: "Maestro Sobrenatural", descripcion: "Puedes suplicar a tu patrón para recuperar todos los espacios de conjuro gastados 1 vez por descanso largo.", nivel: 20 },
+    { nombre: "Invocaciones Sobrenaturales", descripcion: "Obtienes 1 Invocación Sobrenatural a tu elección (como Pacto del Tomo). Ganas más según tu nivel: 3 al nv2, 5 al nv5, 6 al nv7, 7 al nv9, 8 al nv12. Puedes reemplazar una al subir de nivel.", nivel: 1 },
+    { nombre: "Magia de Pacto", descripcion: "Conoces 2 trucos y preparas 2 conjuros de nivel 1 de brujo. Tus espacios de Magia de Pacto se recuperan tras un descanso corto o largo. CAR es tu aptitud mágica.", nivel: 1 },
+    { nombre: "Astucia Mágica", descripcion: "Puedes realizar un rito esotérico durante 1 minuto para recuperar espacios de Magia de Pacto gastados (hasta la mitad del máximo, redondeando arriba). Una vez por descanso largo.", nivel: 2 },
+    { nombre: "Subclase de Brujo", descripcion: "Ganas una subclase de Brujo a tu elección.", nivel: 3, esSubclase: true },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Brujo.", nivel: 6, esSubclase: true },
+    { nombre: "Contactar al Patrón", descripcion: "Siempre tienes preparado Contactar a Otro Plano. Puedes lanzarlo sin gastar espacio para contactar a tu patrón, superando automáticamente la salvación. Una vez por descanso largo.", nivel: 9 },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Brujo.", nivel: 10, esSubclase: true },
+    { nombre: "Arcano Místico (nv6)", descripcion: "Tu patrón te otorga un secreto mágico: elige un conjuro de brujo de nivel 6 como arcano. Puedes lanzarlo una vez sin gastar espacio; recuperas el uso tras un descanso largo. Puedes reemplazar un arcano por otro del mismo nivel al subir de nivel.", nivel: 11 },
+    { nombre: "Arcano Místico (nv7)", descripcion: "Ganas un conjuro de brujo de nivel 7 como arcano (1 uso por descanso largo).", nivel: 13 },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Brujo.", nivel: 14, esSubclase: true },
+    { nombre: "Arcano Místico (nv8)", descripcion: "Ganas un conjuro de brujo de nivel 8 como arcano (1 uso por descanso largo).", nivel: 15 },
+    { nombre: "Arcano Místico (nv9)", descripcion: "Ganas un conjuro de brujo de nivel 9 como arcano (1 uso por descanso largo).", nivel: 17 },
+    { nombre: "Don Épico", descripcion: "Obtienes la dote Don Épico de tu elección. Se recomienda Don del Destino.", nivel: 19 },
+    { nombre: "Maestro Sobrenatural", descripcion: "Cuando usas Astucia Mágica, recuperas todos los espacios de Magia de Pacto gastados (en lugar de hasta la mitad).", nivel: 20 },
   ],
 
   // ─── CLÉRIGO ───────────────────────────────────────────────────────
@@ -201,25 +205,25 @@ export const CLASS_LEVEL_FEATURES: Record<ClassId, LevelFeature[]> = {
 
   // ─── EXPLORADOR ────────────────────────────────────────────────────
   explorador: [
-    { nombre: "Enemigo Predilecto", descripcion: "Elige un tipo de enemigo predilecto. Ventaja en rastreo y recordar información sobre ellos.", nivel: 1 },
-    { nombre: "Explorador Natural", descripcion: "Elige un tipo de terreno predilecto. Beneficios al viajar y rastrear en él.", nivel: 1 },
-    { nombre: "Lanzamiento de Conjuros", descripcion: "Puedes lanzar conjuros de explorador usando SAB.", nivel: 2 },
-    { nombre: "Estilo de Combate", descripcion: "Elige un Estilo de Combate.", nivel: 2 },
-    { nombre: "Arquetipo de Explorador", descripcion: "Elige tu Arquetipo de Explorador (subclase).", nivel: 3, esSubclase: true },
-    { nombre: "Consciencia Primordial", descripcion: "Puedes detectar ciertos tipos de criaturas en 1 milla (o 6 millas en tu terreno predilecto).", nivel: 3 },
+    { nombre: "Lanzamiento de Conjuros", descripcion: "Has aprendido a canalizar la esencia mágica de la naturaleza para lanzar conjuros. SAB es tu aptitud mágica. Preparas conjuros de la lista de explorador cada descanso largo. Puedes usar un Foco Druídico.", nivel: 1 },
+    { nombre: "Enemigo Predilecto", descripcion: "Siempre tienes preparado el conjuro Marca del Cazador. Puedes lanzarlo 2 veces sin gastar espacio de conjuro (3 a nivel 6, 4 a nivel 14); recuperas todos los usos tras un descanso largo.", nivel: 1 },
+    { nombre: "Maestría con Armas", descripcion: "Puedes usar las propiedades de maestría de dos tipos de armas con las que tengas competencia. Puedes cambiar tus elecciones tras cada descanso largo.", nivel: 1 },
+    { nombre: "Explorador Hábil", descripcion: "Gracias a tus viajes, ganas Pericia en una habilidad en la que tengas competencia (y carezcas de Pericia), y aprendes dos idiomas adicionales.", nivel: 2 },
+    { nombre: "Estilo de Combate", descripcion: "Ganas una dote de Estilo de Combate a tu elección. También puedes elegir Guerrero Druídico: aprendes dos trucos de druida (cuentan como conjuros de explorador, usan SAB).", nivel: 2 },
+    { nombre: "Subclase de Explorador", descripcion: "Ganas una subclase de Explorador a tu elección.", nivel: 3, esSubclase: true },
     { nombre: "Ataque Extra", descripcion: "Puedes atacar dos veces al usar la acción de Atacar.", nivel: 5 },
-    { nombre: "Enemigo Predilecto adicional", descripcion: "Elige un enemigo predilecto adicional.", nivel: 6 },
-    { nombre: "Explorador Natural adicional", descripcion: "Elige un terreno predilecto adicional.", nivel: 6 },
-    { nombre: "Rasgo de Arquetipo", descripcion: "Obtienes un rasgo de tu Arquetipo de Explorador.", nivel: 7, esSubclase: true },
-    { nombre: "Zancada Territorial", descripcion: "Moverte por terreno difícil no natural no te cuesta movimiento extra.", nivel: 8 },
-    { nombre: "Esconderse a Plena Vista", descripcion: "Puedes intentar esconderte cuando estás ligeramente oscurecido por fenómenos naturales.", nivel: 10 },
-    { nombre: "Rasgo de Arquetipo", descripcion: "Obtienes un rasgo de tu Arquetipo de Explorador.", nivel: 11, esSubclase: true },
-    { nombre: "Enemigo Predilecto adicional", descripcion: "Elige otro enemigo predilecto.", nivel: 14 },
-    { nombre: "Rasgo de Arquetipo", descripcion: "Obtienes un rasgo de tu Arquetipo de Explorador.", nivel: 15, esSubclase: true },
-    { nombre: "Evasión", descripcion: "Si haces una salvación de DES para mitad de daño, no recibes daño en éxito y mitad en fallo.", nivel: 15 },
-    { nombre: "Sentidos Salvajes", descripcion: "No tienes desventaja en tiradas de ataque contra criaturas que no puedas ver, y conoces la ubicación de criaturas invisibles a 30 pies.", nivel: 18 },
-    { nombre: "Cazador Implacable", descripcion: "No tienes desventaja en tiradas de ataque contra criaturas a las que estés rastreando.", nivel: 20 },
-    { nombre: "Asesino de Enemigos", descripcion: "Una vez por turno, puedes sumar tu mod. SAB al daño contra tu enemigo predilecto.", nivel: 20 },
+    { nombre: "Recorrer Tierras", descripcion: "Tu velocidad aumenta en 3 m mientras no lleves armadura pesada. También ganas velocidad de Escalar y velocidad de Nadar igual a tu velocidad.", nivel: 6 },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Explorador.", nivel: 7, esSubclase: true },
+    { nombre: "Pericia", descripcion: "Elige dos de tus competencias en habilidades en las que carezcas de Pericia. Ganas Pericia en ellas.", nivel: 9 },
+    { nombre: "Incansable", descripcion: "Las fuerzas primordiales te alimentan. Como acción mágica, ganas PG temporales = 1d8 + mod. SAB (usos = mod. SAB por descanso largo). Además, al terminar un descanso corto, tu nivel de Extenuación disminuye en 1.", nivel: 10 },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Explorador.", nivel: 11, esSubclase: true },
+    { nombre: "Cazador Implacable", descripcion: "Recibir daño no puede romper tu concentración en Marca del Cazador.", nivel: 13 },
+    { nombre: "Velo de la Naturaleza", descripcion: "Como acción adicional, invocas espíritus de la naturaleza para volverte Invisible hasta el final de tu siguiente turno. Usos = mod. SAB (mín. 1) por descanso largo.", nivel: 14 },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Explorador.", nivel: 15, esSubclase: true },
+    { nombre: "Cazador Preciso", descripcion: "Tienes ventaja en tiradas de ataque contra la criatura actualmente marcada por tu Marca del Cazador.", nivel: 17 },
+    { nombre: "Sentidos Salvajes", descripcion: "Tu conexión con las fuerzas de la naturaleza te otorga Vista Ciega con un alcance de 9 m.", nivel: 18 },
+    { nombre: "Don Épico", descripcion: "Obtienes un Don Épico u otra dote a tu elección. Se recomienda Don de Viaje Dimensional.", nivel: 19 },
+    { nombre: "Asesino de Enemigos", descripcion: "El dado de daño de tu Marca del Cazador es un d10 en lugar de un d6.", nivel: 20 },
   ],
 
   // ─── GUERRERO ──────────────────────────────────────────────────────
@@ -264,59 +268,69 @@ export const CLASS_LEVEL_FEATURES: Record<ClassId, LevelFeature[]> = {
 
   // ─── MAGO ──────────────────────────────────────────────────────────
   mago: [
-    { nombre: "Lanzamiento de Conjuros", descripcion: "Puedes lanzar conjuros de mago usando INT como aptitud mágica. Usas un libro de conjuros.", nivel: 1 },
-    { nombre: "Recuperación Arcana", descripcion: "Una vez al día durante un descanso corto, puedes recuperar espacios de conjuro cuyo nivel combinado ≤ mitad de tu nivel de mago (redondeado arriba).", nivel: 1 },
-    { nombre: "Tradición Arcana", descripcion: "Elige tu Tradición Arcana (subclase).", nivel: 2, esSubclase: true },
-    { nombre: "Rasgo de Tradición", descripcion: "Obtienes un rasgo de tu Tradición Arcana.", nivel: 6, esSubclase: true },
-    { nombre: "Rasgo de Tradición", descripcion: "Obtienes un rasgo de tu Tradición Arcana.", nivel: 10, esSubclase: true },
-    { nombre: "Rasgo de Tradición", descripcion: "Obtienes un rasgo de tu Tradición Arcana.", nivel: 14, esSubclase: true },
-    { nombre: "Dominio de Conjuro", descripcion: "Elige un conjuro de mago de nivel 1. Puedes lanzarlo a nivel 1 sin gastar espacio.", nivel: 18 },
-    { nombre: "Dominio de Conjuro (2)", descripcion: "Elige un conjuro de mago de nivel 2. Puedes lanzarlo a nivel 2 sin gastar espacio.", nivel: 20 },
+    { nombre: "Lanzamiento de Conjuros", descripcion: "Puedes lanzar conjuros de mago usando INT como aptitud mágica. Usas un libro de conjuros (empieza con 6 conjuros de nv1). Preparas un número de conjuros según la tabla de Mago. Ganas +2 conjuros al libro por nivel.", nivel: 1 },
+    { nombre: "Adepto de Rituales", descripcion: "Puedes lanzar cualquier conjuro como ritual si tiene la etiqueta Ritual y está en tu libro de conjuros. No necesitas tenerlo preparado, pero debes leer del libro.", nivel: 1 },
+    { nombre: "Recuperación Arcana", descripcion: "Al terminar un descanso corto, puedes recuperar espacios de conjuro cuyo nivel combinado ≤ mitad de tu nivel de mago (redondeando arriba). Ningún espacio puede ser de nivel 6+. Una vez por descanso largo.", nivel: 1 },
+    { nombre: "Erudito", descripcion: "Mientras estudias magia, también te has especializado en otro campo. Ganas Pericia en una habilidad en la que tengas competencia: Arcanos, Historia, Investigación, Medicina, Naturaleza o Religión.", nivel: 2 },
+    { nombre: "Subclase de Mago", descripcion: "Ganas una subclase de Mago a tu elección.", nivel: 3, esSubclase: true },
+    { nombre: "Memorizar Conjuro", descripcion: "Al terminar un descanso corto, puedes estudiar tu libro y reemplazar un conjuro de nv1+ que tengas preparado por otro de nv1+ del libro.", nivel: 5 },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Mago.", nivel: 6, esSubclase: true },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Mago.", nivel: 10, esSubclase: true },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Mago.", nivel: 14, esSubclase: true },
+    { nombre: "Dominio de Conjuros", descripcion: "Elige un conjuro de mago de nv1 y otro de nv2 en tu libro con tiempo de lanzamiento de una acción. Siempre los tienes preparados y puedes lanzarlos a su nivel más bajo sin gastar espacio. Puedes reemplazar uno tras cada descanso largo.", nivel: 18 },
+    { nombre: "Don Épico", descripcion: "Obtienes la dote Don Épico de tu elección. Se recomienda Don de Recuerdo de Conjuros.", nivel: 19 },
+    { nombre: "Conjuros Insignia", descripcion: "Elige 2 conjuros de mago de nv3 en tu libro como insignias. Siempre los tienes preparados y puedes lanzar cada uno a nv3 sin gastar espacio una vez por descanso corto o largo.", nivel: 20 },
   ],
 
   // ─── MONJE ─────────────────────────────────────────────────────────
   monje: [
+    { nombre: "Artes Marciales", descripcion: "Dominas estilos de combate con golpes desarmados y armas de monje (sencillas cuerpo a cuerpo y marciales ligeras). Sin armadura ni escudo: puedes usar DES para ataques y daño; el dado de daño es 1d6 (sube con el nivel); puedes hacer un golpe desarmado como acción adicional.", nivel: 1 },
     { nombre: "Defensa sin Armadura", descripcion: "Sin armadura ni escudo, tu CA = 10 + mod. DES + mod. SAB.", nivel: 1 },
-    { nombre: "Artes Marciales", descripcion: "Puedes usar DES para golpes desarmados y armas de monje (d4 inicial). Puedes hacer un golpe desarmado como acción adicional.", nivel: 1 },
-    { nombre: "Ki (2 puntos)", descripcion: "Obtienes puntos de Ki = tu nivel de monje. Se recuperan en descansos cortos. Ráfaga de Golpes, Paso del Viento, Defensa Paciente.", nivel: 2 },
-    { nombre: "Movimiento sin Armadura (+10 pies)", descripcion: "Tu velocidad aumenta 10 pies sin armadura. Aumenta con el nivel.", nivel: 2 },
-    { nombre: "Tradición Monástica", descripcion: "Elige tu Tradición Monástica (subclase).", nivel: 3, esSubclase: true },
-    { nombre: "Desviar Proyectiles", descripcion: "Puedes usar tu reacción para reducir el daño de un ataque a distancia en 1d10 + mod. DES + nivel de monje.", nivel: 3 },
+    { nombre: "Concentración del Monje", descripcion: "Obtienes Puntos de Concentración = tu nivel de monje. Se recuperan en un descanso corto o largo. Te permiten usar: Ráfaga de Golpes (1 PC: dos golpes desarmados como acción adicional), Defensa Paciente (Desenganche gratis como acción adicional, o 1 PC para Desenganche + Esquivar) y Paso del Viento (Carrera gratis como acción adicional, o 1 PC para Desenganche + Carrera y salto duplicado).", nivel: 2 },
+    { nombre: "Movimiento sin Armadura (+10 pies)", descripcion: "Tu velocidad aumenta 10 pies sin armadura ni escudo. Aumenta con el nivel.", nivel: 2 },
+    { nombre: "Metabolismo Extraordinario", descripcion: "Al tirar Iniciativa, puedes recuperar todos tus Puntos de Concentración gastados. Al hacerlo, tiras tu dado de Artes Marciales y recuperas PG = nivel de monje + resultado. Una vez por descanso largo.", nivel: 2 },
+    { nombre: "Desviar Ataques", descripcion: "Cuando un ataque te impacta e inflige daño contundente, perforante o cortante, puedes usar tu reacción para reducir el daño en 1d10 + mod. DES + nivel de monje. Si reduces a 0, puedes gastar 1 PC para redirigir el ataque a una criatura cercana (salvación DES).", nivel: 3 },
+    { nombre: "Subclase de Monje", descripcion: "Elige tu subclase de Monje.", nivel: 3, esSubclase: true },
     { nombre: "Caída Lenta", descripcion: "Puedes usar tu reacción para reducir el daño por caída en 5 × nivel de monje.", nivel: 4 },
     { nombre: "Ataque Extra", descripcion: "Puedes atacar dos veces al usar la acción de Atacar.", nivel: 5 },
-    { nombre: "Golpe Aturdidor", descripcion: "Cuando aciertas con un ataque cuerpo a cuerpo, puedes gastar 1 punto de Ki para intentar aturdir al objetivo (salvación de CON).", nivel: 5 },
-    { nombre: "Golpes de Ki mágicos", descripcion: "Tus golpes desarmados cuentan como mágicos para superar resistencias.", nivel: 6 },
-    { nombre: "Rasgo de Tradición", descripcion: "Obtienes un rasgo de tu Tradición Monástica.", nivel: 6, esSubclase: true },
-    { nombre: "Evasión", descripcion: "Si haces una salvación de DES para mitad de daño, no recibes daño en éxito y mitad en fallo.", nivel: 7 },
-    { nombre: "Quietud Mental", descripcion: "Puedes usar tu acción para terminar un efecto de encantado o asustado sobre ti.", nivel: 7 },
-    { nombre: "Rasgo de Tradición", descripcion: "Obtienes un rasgo de tu Tradición Monástica.", nivel: 11, esSubclase: true },
-    { nombre: "Lengua del Sol y la Luna", descripcion: "Puedes entender y ser entendido por cualquier criatura que hable un idioma.", nivel: 13 },
-    { nombre: "Alma Diamantina", descripcion: "Tienes competencia en todas las tiradas de salvación. Si fallas una, puedes gastar 1 Ki para repetirla.", nivel: 14 },
-    { nombre: "Cuerpo Atemporal", descripcion: "Ya no sufres inconvenientes de la vejez y no puedes ser envejecido mágicamente. No necesitas comida ni agua.", nivel: 15 },
-    { nombre: "Rasgo de Tradición", descripcion: "Obtienes un rasgo de tu Tradición Monástica.", nivel: 17, esSubclase: true },
-    { nombre: "Cuerpo Vacío", descripcion: "Puedes gastar 4 Ki para hacerte invisible durante 1 minuto. También puedes gastar 8 Ki para lanzar Proyección Astral.", nivel: 18 },
-    { nombre: "Autoperfección", descripcion: "Cuando tires iniciativa sin puntos de Ki, recuperas 4.", nivel: 20 },
+    { nombre: "Golpe Aturdidor", descripcion: "Una vez por turno cuando impactas con un arma de monje o golpe desarmado, puedes gastar 1 PC. El objetivo hace salvación de CON: si falla, queda Aturdido hasta el inicio de tu siguiente turno; si tiene éxito, su velocidad se reduce a la mitad y el siguiente ataque contra él tiene ventaja.", nivel: 5 },
+    { nombre: "Golpes Potenciados", descripcion: "Tus golpes desarmados pueden infligir daño de Fuerza en lugar de su tipo normal (a tu elección).", nivel: 6 },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Monje.", nivel: 6, esSubclase: true },
+    { nombre: "Evasión", descripcion: "Si haces una salvación de DES para mitad de daño, no recibes daño en éxito y mitad en fallo. No funciona si estás incapacitado.", nivel: 7 },
+    { nombre: "Movimiento Acrobático", descripcion: "Sin armadura ni escudo, puedes moverte por superficies verticales y sobre líquidos en tu turno sin caer durante el movimiento.", nivel: 9 },
+    { nombre: "Concentración Elevada", descripcion: "Ráfaga de Golpes: 1 PC para 3 golpes desarmados (en vez de 2). Defensa Paciente: al gastar 1 PC, obtienes PG temporales = 2 dados de Artes Marciales. Paso del Viento: al gastar 1 PC, puedes mover a una criatura voluntaria Grande o menor contigo.", nivel: 10 },
+    { nombre: "Autorrestauración", descripcion: "Al final de cada turno, puedes eliminar de ti mismo una condición: Hechizado, Asustado o Envenenado. Además, no necesitas comida ni bebida.", nivel: 10 },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Monje.", nivel: 11, esSubclase: true },
+    { nombre: "Desviar Energía", descripcion: "Tu Desviar Ataques funciona ahora contra ataques de cualquier tipo de daño, no solo contundente, perforante o cortante.", nivel: 13 },
+    { nombre: "Superviviente Disciplinado", descripcion: "Tienes competencia en todas las tiradas de salvación. Si fallas una, puedes gastar 1 PC para repetirla (debes usar el nuevo resultado).", nivel: 14 },
+    { nombre: "Concentración Perfecta", descripcion: "Cuando tiras Iniciativa y no usas Metabolismo Extraordinario, recuperas Puntos de Concentración hasta tener 4 (si tienes 3 o menos).", nivel: 15 },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Monje.", nivel: 17, esSubclase: true },
+    { nombre: "Defensa Superior", descripcion: "Al inicio de tu turno, puedes gastar 3 PC para obtener resistencia a todo tipo de daño excepto Fuerza durante 1 minuto o hasta quedar incapacitado.", nivel: 18 },
+    { nombre: "Don Épico", descripcion: "Obtienes un Don Épico u otra dote a tu elección. Se recomienda Don de Ofensiva Irresistible.", nivel: 19 },
+    { nombre: "Cuerpo y Mente", descripcion: "Tu DES y SAB aumentan en 4, hasta un máximo de 25.", nivel: 20 },
   ],
 
   // ─── PALADÍN ───────────────────────────────────────────────────────
   paladin: [
-    { nombre: "Sentido Divino", descripcion: "Puedes detectar celestiales, demonios y muertos vivientes en 60 pies. Usos = 1 + mod. CAR por descanso largo.", nivel: 1 },
-    { nombre: "Imposición de Manos", descripcion: "Tienes una reserva de PG curativos = 5 × nivel de paladín. Puedes gastar 5 puntos para curar una enfermedad o veneno.", nivel: 1 },
-    { nombre: "Lanzamiento de Conjuros", descripcion: "Puedes lanzar conjuros de paladín usando CAR.", nivel: 2 },
-    { nombre: "Estilo de Combate", descripcion: "Elige un Estilo de Combate.", nivel: 2 },
-    { nombre: "Castigo Divino", descripcion: "Al golpear con un arma cuerpo a cuerpo, puedes gastar un espacio de conjuro para infligir 2d8 (+1d8 por nivel de espacio superior) de daño radiante.", nivel: 2 },
-    { nombre: "Juramento Sagrado", descripcion: "Elige tu Juramento Sagrado (subclase).", nivel: 3, esSubclase: true },
-    { nombre: "Salud Divina", descripcion: "Eres inmune a enfermedades.", nivel: 3 },
+    { nombre: "Imposición de Manos", descripcion: "Tu toque bendito puede curar heridas. Tienes una reserva de poder curativo que se repone tras un descanso largo, igual a 5 × tu nivel de paladín. Como acción adicional, puedes restaurar PG a una criatura que toques (incluido tú mismo). También puedes gastar 5 PG de la reserva para eliminar la condición Envenenado.", nivel: 1 },
+    { nombre: "Lanzamiento de Conjuros", descripcion: "Has aprendido a lanzar conjuros mediante oración y meditación. CAR es tu aptitud mágica. Preparas conjuros de la lista de paladín cada descanso largo.", nivel: 1 },
+    { nombre: "Maestría con Armas", descripcion: "Puedes usar las propiedades de maestría de dos tipos de armas con las que tengas competencia. Puedes cambiar tus elecciones tras cada descanso largo.", nivel: 1 },
+    { nombre: "Estilo de Combate", descripcion: "Ganas una dote de Estilo de Combate a tu elección. También puedes elegir Guerrero Bendito: aprendes dos trucos de clérigo (cuentan como conjuros de paladín, usan CAR).", nivel: 2 },
+    { nombre: "Castigo del Paladín", descripcion: "Siempre tienes preparado el conjuro Castigo Divino. Además, puedes lanzarlo una vez sin gastar espacio de conjuro; recuperas este uso tras un descanso largo.", nivel: 2 },
+    { nombre: "Canalizar Divinidad", descripcion: "Puedes canalizar energía divina para crear efectos mágicos. Comienzas con Sentido Divino: como acción adicional, detectas celestiales, infernales y muertos vivientes a 18 m durante 10 minutos, y detectas lugares consagrados o profanados. 2 usos (3 a nivel 11); recuperas 1 uso en descanso corto y todos en descanso largo.", nivel: 3 },
+    { nombre: "Subclase de Paladín", descripcion: "Ganas una subclase de Paladín a tu elección.", nivel: 3, esSubclase: true },
     { nombre: "Ataque Extra", descripcion: "Puedes atacar dos veces al usar la acción de Atacar.", nivel: 5 },
-    { nombre: "Aura de Protección", descripcion: "Tú y aliados amistosos a 10 pies sumáis tu mod. CAR (mín. +1) a tiradas de salvación.", nivel: 6 },
-    { nombre: "Rasgo de Juramento", descripcion: "Obtienes un rasgo de tu Juramento Sagrado.", nivel: 7, esSubclase: true },
-    { nombre: "Aura de Coraje", descripcion: "Tú y aliados a 10 pies no podéis ser asustados.", nivel: 10 },
-    { nombre: "Castigo Divino Mejorado", descripcion: "Todos tus golpes de arma cuerpo a cuerpo infligen 1d8 adicional de daño radiante.", nivel: 11 },
-    { nombre: "Toque Purificador", descripcion: "Puedes gastar 5 puntos de Imposición de Manos para terminar un conjuro sobre ti o un aliado.", nivel: 14 },
-    { nombre: "Rasgo de Juramento", descripcion: "Obtienes un rasgo de tu Juramento Sagrado.", nivel: 15, esSubclase: true },
-    { nombre: "Aura de Protección (30 pies)", descripcion: "El rango de tu Aura de Protección aumenta a 30 pies.", nivel: 18 },
-    { nombre: "Aura de Coraje (30 pies)", descripcion: "El rango de tu Aura de Coraje aumenta a 30 pies.", nivel: 18 },
-    { nombre: "Rasgo de Juramento", descripcion: "Obtienes el rasgo culminante de tu Juramento Sagrado.", nivel: 20, esSubclase: true },
+    { nombre: "Corcel Fiel", descripcion: "Siempre tienes preparado el conjuro Encontrar Corcel. Además, puedes lanzarlo una vez sin gastar espacio de conjuro; recuperas este uso tras un descanso largo.", nivel: 5 },
+    { nombre: "Aura de Protección", descripcion: "Irradias un aura protectora en una Emanación de 3 m. Tú y tus aliados en el aura sumáis tu mod. CAR (mín. +1) a las tiradas de salvación. Inactiva si estás incapacitado.", nivel: 6 },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Paladín.", nivel: 7, esSubclase: true },
+    { nombre: "Expulsar Enemigos", descripcion: "Como acción mágica, gastas un uso de Canalizar Divinidad para abrumar enemigos. Elige un número de criaturas igual a tu mod. CAR (mín. 1) a 18 m. Cada una: salvación de SAB o Asustada 1 minuto o hasta recibir daño. Mientras asustada, solo puede moverse, actuar O usar acción adicional en su turno.", nivel: 9 },
+    { nombre: "Aura de Coraje", descripcion: "Tú y tus aliados tenéis inmunidad a la condición Asustado mientras estéis en tu Aura de Protección.", nivel: 10 },
+    { nombre: "Golpes Radiantes", descripcion: "Cuando impactas con una tirada de ataque usando un arma cuerpo a cuerpo o un Golpe sin Armas, el objetivo recibe 1d8 de daño radiante adicional.", nivel: 11 },
+    { nombre: "Toque Restaurador", descripcion: "Al usar Imposición de Manos, puedes eliminar una o más de estas condiciones: Cegado, Hechizado, Ensordecido, Asustado, Paralizado o Aturdido. Debes gastar 5 PG de la reserva por cada condición eliminada (no restauran PG).", nivel: 14 },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes un rasgo de tu subclase de Paladín.", nivel: 15, esSubclase: true },
+    { nombre: "Expansión del Aura", descripcion: "Tu Aura de Protección es ahora una Emanación de 9 m.", nivel: 18 },
+    { nombre: "Don Épico", descripcion: "Obtienes un Don Épico u otra dote a tu elección. Se recomienda Don de Visión Verdadera.", nivel: 19 },
+    { nombre: "Rasgo de Subclase", descripcion: "Obtienes el rasgo culminante de tu subclase de Paladín.", nivel: 20, esSubclase: true },
   ],
 
   // ─── PÍCARO ────────────────────────────────────────────────────────
@@ -382,21 +396,21 @@ export const RAGE_DAMAGE: Record<number, number> = {
 // ─── Dado de Artes Marciales del Monje por nivel ─────────────────────
 
 export const MARTIAL_ARTS_DIE: Record<number, string> = {
-  1: "1d4", 2: "1d4", 3: "1d4", 4: "1d4",
-  5: "1d6", 6: "1d6", 7: "1d6", 8: "1d6", 9: "1d6", 10: "1d6",
-  11: "1d8", 12: "1d8", 13: "1d8", 14: "1d8", 15: "1d8", 16: "1d8",
-  17: "1d10", 18: "1d10", 19: "1d10", 20: "1d10",
+  1: "1d6", 2: "1d6", 3: "1d6", 4: "1d6",
+  5: "1d8", 6: "1d8", 7: "1d8", 8: "1d8", 9: "1d8", 10: "1d8",
+  11: "1d10", 12: "1d10", 13: "1d10", 14: "1d10", 15: "1d10", 16: "1d10",
+  17: "1d12", 18: "1d12", 19: "1d12", 20: "1d12",
 };
 
 // ─── Invocaciones Sobrenaturales del Brujo por nivel ─────────────────
 
 export const WARLOCK_INVOCATIONS: Record<number, number> = {
-  1: 0, 2: 2, 3: 2, 4: 2,
-  5: 3, 6: 3,
-  7: 4, 8: 4,
-  9: 5, 10: 5, 11: 5,
-  12: 6, 13: 6, 14: 6,
-  15: 7, 16: 7, 17: 7,
+  1: 1, 2: 3, 3: 3, 4: 3,
+  5: 5, 6: 5,
+  7: 6, 8: 6,
+  9: 7, 10: 7, 11: 7,
+  12: 8, 13: 8, 14: 8,
+  15: 8, 16: 8, 17: 8,
   18: 8, 19: 8, 20: 8,
 };
 
@@ -623,7 +637,7 @@ export function getSpellLearningInfo(
   const oldCantrips = cantripsTable?.[oldLevel] ?? 0;
   const newCantrips = Math.max(0, totalCantrips - oldCantrips);
 
-  // ── Hechizos conocidos (para clases que "conocen": bardo, brujo, hechicero, explorador) ──
+  // ── Hechizos conocidos/preparados (bardo, brujo, hechicero: conocen; explorador: prepara) ──
   const spellsTable = SPELLS_KNOWN[classId];
   const totalSpellsKnown = spellsTable?.[newLevel] ?? 0;
   const oldSpellsKnown = spellsTable?.[oldLevel] ?? 0;
@@ -632,7 +646,7 @@ export function getSpellLearningInfo(
   // ── Libro de conjuros del mago: +2 conjuros al libro por nivel ──
   const newSpellbookSpells = classId === "mago" ? 2 : 0;
 
-  // ── ¿Puede intercambiar un hechizo? (bardo, hechicero, brujo, explorador al subir de nivel) ──
+  // ── ¿Puede intercambiar un hechizo? (bardo, hechicero, brujo al subir de nivel) ──
   const canSwapSpell = prepType === "known" && newLevel > 1;
 
   // ── Nivel máximo de hechizo ──

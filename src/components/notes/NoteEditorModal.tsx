@@ -126,7 +126,7 @@ export function NoteEditorModal({
       } else {
         await addNote({
           personajeId: character!.id,
-          partidaId: character!.campaignId,
+          partidaId: character!.campaignId ?? character!.id,
           titulo: title.trim(),
           contenido: content.trim(),
           tipo: noteType,

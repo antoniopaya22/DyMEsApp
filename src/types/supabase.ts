@@ -12,36 +12,41 @@ export interface Database {
         Row: ProfileRow;
         Insert: ProfileInsert;
         Update: ProfileUpdate;
+        Relationships: [];
       };
       personajes: {
         Row: PersonajeRow;
         Insert: PersonajeInsert;
         Update: PersonajeUpdate;
+        Relationships: [];
       };
       campanas_master: {
         Row: CampanaMasterRow;
         Insert: CampanaMasterInsert;
         Update: CampanaMasterUpdate;
+        Relationships: [];
       };
       campana_jugadores: {
         Row: CampanaJugadorRow;
         Insert: CampanaJugadorInsert;
         Update: CampanaJugadorUpdate;
+        Relationships: [];
       };
       campanas_jugador: {
         Row: CampanaJugadorLocalRow;
         Insert: CampanaJugadorLocalInsert;
         Update: CampanaJugadorLocalUpdate;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
     Functions: Record<string, never>;
-    Enums: Record<string, never>;
   };
 }
 
 // ─── Profiles ────────────────────────────────────────────────────────
 
-export interface ProfileRow {
+export type ProfileRow = {
   id: string;
   nombre: string;
   avatar_url: string | null;
@@ -50,29 +55,30 @@ export interface ProfileRow {
   modo_actual: "jugador" | "master";
   creado_en: string;
   actualizado_en: string;
-}
+};
 
 export type ProfileInsert = Partial<Omit<ProfileRow, "id">> & { id: string };
 export type ProfileUpdate = Partial<Omit<ProfileRow, "id">>;
 
 // ─── Personajes sincronizados ────────────────────────────────────────
 
-export interface PersonajeRow {
+export type PersonajeRow = {
   id: string;
   usuario_id: string;
   datos: Record<string, unknown>;
   codigo_personaje: string;
   actualizado_en: string;
-}
+};
 
-export type PersonajeInsert = Omit<PersonajeRow, "actualizado_en"> & {
+export type PersonajeInsert = Omit<PersonajeRow, "actualizado_en" | "codigo_personaje"> & {
   actualizado_en?: string;
+  codigo_personaje?: string;
 };
 export type PersonajeUpdate = Partial<Omit<PersonajeRow, "id">>;
 
 // ─── Campañas del Master ─────────────────────────────────────────────
 
-export interface CampanaMasterRow {
+export type CampanaMasterRow = {
   id: string;
   master_id: string;
   nombre: string;
@@ -80,7 +86,7 @@ export interface CampanaMasterRow {
   imagen: string | null;
   creado_en: string;
   actualizado_en: string;
-}
+};
 
 export type CampanaMasterInsert = Omit<
   CampanaMasterRow,
@@ -97,13 +103,13 @@ export type CampanaMasterUpdate = Partial<
 
 // ─── Relación campaña ↔ jugador ──────────────────────────────────────
 
-export interface CampanaJugadorRow {
+export type CampanaJugadorRow = {
   id: string;
   campana_id: string;
   jugador_id: string;
   personaje_id: string | null;
   unido_en: string;
-}
+};
 
 export type CampanaJugadorInsert = Omit<CampanaJugadorRow, "id" | "unido_en"> & {
   id?: string;
@@ -116,7 +122,7 @@ export type CampanaJugadorUpdate = Partial<
 
 // ─── Campañas locales sincronizadas ──────────────────────────────────
 
-export interface CampanaJugadorLocalRow {
+export type CampanaJugadorLocalRow = {
   id: string;
   usuario_id: string;
   nombre: string;
@@ -125,7 +131,7 @@ export interface CampanaJugadorLocalRow {
   personaje_id: string | null;
   creado_en: string;
   actualizado_en: string;
-}
+};
 
 export type CampanaJugadorLocalInsert = Omit<
   CampanaJugadorLocalRow,

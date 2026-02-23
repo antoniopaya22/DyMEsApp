@@ -10,11 +10,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const STORAGE_KEYS = {
   CAMPAIGNS: "dyd:campaigns",
+  CHARACTER_LIST: "dyd:character_list",
   CHARACTER: (id: string) => `dyd:character:${id}`,
   INVENTORY: (id: string) => `dyd:inventory:${id}`,
   NOTES: (characterId: string) => `dyd:notes:${characterId}`,
   CUSTOM_TAGS: "dyd:custom_tags",
-  CREATION_DRAFT: (campaignId: string) => `dyd:draft:${campaignId}`,
+  CREATION_DRAFT: (draftId?: string) => `dyd:draft:${draftId ?? "current"}`,
   SETTINGS: "dyd:settings",
   SPELL_FAVORITES: (characterId: string) => `dyd:spell_favs:${characterId}`,
   MAGIC_STATE: (characterId: string) => `dyd:magic:${characterId}`,

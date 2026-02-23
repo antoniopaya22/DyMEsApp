@@ -210,15 +210,15 @@ function getGuerreroAbilities(level: number): ClassAbilityResource[] {
 // ─── Monje ───────────────────────────────────────────────────────────
 
 function getMonjeAbilities(level: number): ClassAbilityResource[] {
-  const martialDie = MARTIAL_ARTS_DIE[level] ?? "1d4";
-  const kiPoints = level >= 2 ? level : 0;
-  const kiCost = (
+  const martialDie = MARTIAL_ARTS_DIE[level] ?? "1d6";
+  const focusPoints = level >= 2 ? level : 0;
+  const fpCost = (
     amount: number,
     label?: string,
   ): ClassAbilityResource["resourceCost"] => ({
     resourceId: "ki",
     amount,
-    label: label ?? `${amount} Ki`,
+    label: label ?? `${amount} PC`,
     color: "#0891b2",
   });
 
@@ -227,7 +227,7 @@ function getMonjeAbilities(level: number): ClassAbilityResource[] {
       id: "artes_marciales",
       nombre: "Artes Marciales",
       descripcion:
-        "Puedes usar DES en lugar de FUE para ataques y daño con armas de monje. Puedes hacer un golpe desarmado como acción adicional tras atacar con un arma de monje.",
+        "Dominas estilos de combate con golpes desarmados y armas de monje (sencillas cuerpo a cuerpo y marciales ligeras). Sin armadura ni escudo: puedes usar DES para ataques y daño; puedes hacer un golpe desarmado como acción adicional.",
       escala: {
         label: "Dado de Artes Marciales",
         value: martialDie,
@@ -244,13 +244,13 @@ function getMonjeAbilities(level: number): ClassAbilityResource[] {
   if (level >= 2) {
     abilities.push({
       id: "ki",
-      nombre: "Puntos de Ki",
+      nombre: "Puntos de Concentración",
       descripcion:
-        "Canalizas tu energía interior en forma de puntos de Ki. Se recuperan tras un descanso corto o largo.",
+        "Canalizas tu energía interior en forma de Puntos de Concentración. Se recuperan tras un descanso corto o largo. CD de salvación = 8 + mod. SAB + bonificador de competencia.",
       recurso: {
-        label: "Puntos de Ki",
-        current: kiPoints,
-        max: kiPoints,
+        label: "Puntos de Concentración",
+        current: focusPoints,
+        max: focusPoints,
         color: "#0891b2",
         recovery: "Descanso corto o largo",
       },
@@ -260,22 +260,35 @@ function getMonjeAbilities(level: number): ClassAbilityResource[] {
       id: "rafaga_golpes",
       nombre: "Ráfaga de Golpes",
       descripcion:
-        "Inmediatamente después de usar la acción de Atacar, puedes gastar 1 punto de Ki para realizar dos golpes desarmados como acción adicional.",
-      resourceCost: kiCost(1),
-    });
-    abilities.push({
-      id: "paso_del_viento",
-      nombre: "Paso del Viento",
-      descripcion:
-        "Puedes gastar 1 punto de Ki para usar Desenganche o Carrera como acción adicional. Tu distancia de salto se duplica este turno.",
-      resourceCost: kiCost(1),
+        "Puedes gastar 1 PC para realizar dos golpes desarmados como acción adicional.",
+      resourceCost: fpCost(1),
     });
     abilities.push({
       id: "defensa_paciente",
       nombre: "Defensa Paciente",
       descripcion:
-        "Puedes gastar 1 punto de Ki para usar Esquivar como acción adicional en tu turno.",
-      resourceCost: kiCost(1),
+        "Puedes usar Desenganche como acción adicional (gratis). O puedes gastar 1 PC para usar Desenganche y Esquivar como acción adicional.",
+      resourceCost: fpCost(1, "0-1 PC"),
+    });
+    abilities.push({
+      id: "paso_del_viento",
+      nombre: "Paso del Viento",
+      descripcion:
+        "Puedes usar Carrera como acción adicional (gratis). O puedes gastar 1 PC para usar Desenganche y Carrera como acción adicional, y tu distancia de salto se duplica este turno.",
+      resourceCost: fpCost(1, "0-1 PC"),
+    });
+
+    abilities.push({
+      id: "metabolismo_extraordinario",
+      nombre: "Metabolismo Extraordinario",
+      descripcion: `Al tirar Iniciativa, puedes recuperar todos tus PC gastados. Tiras tu dado de Artes Marciales y recuperas PG = ${level} + resultado.`,
+      recurso: {
+        label: "Metabolismo Extraordinario",
+        current: 1,
+        max: 1,
+        color: "#059669",
+        recovery: "Descanso largo",
+      },
     });
   }
 
@@ -283,16 +296,16 @@ function getMonjeAbilities(level: number): ClassAbilityResource[] {
     abilities.push({
       id: "movimiento_sin_armadura",
       nombre: "Movimiento sin Armadura",
-      descripcion: `Tu velocidad aumenta ${level >= 18 ? "+30" : level >= 14 ? "+25" : level >= 10 ? "+20" : level >= 6 ? "+15" : "+10"} pies sin armadura. A nivel 9, puedes moverte por superficies verticales y líquidas sin caer.`,
+      descripcion: `Tu velocidad aumenta ${level >= 18 ? "+30" : level >= 14 ? "+25" : level >= 10 ? "+20" : level >= 6 ? "+15" : "+10"} pies sin armadura ni escudo.`,
     });
   }
 
   if (level >= 3) {
     abilities.push({
-      id: "desviar_proyectiles",
-      nombre: "Desviar Proyectiles",
-      descripcion: `Puedes usar tu reacción para reducir el daño de un ataque a distancia en 1d10 + ${level} + mod. DES. Si reduces a 0, puedes gastar 1 Ki para devolver el ataque.`,
-      resourceCost: kiCost(1, "1 Ki (devolver)"),
+      id: "desviar_ataques",
+      nombre: "Desviar Ataques",
+      descripcion: `Puedes usar tu reacción cuando un ataque te impacta e inflige daño contundente, perforante o cortante para reducir el daño en 1d10 + ${level} + mod. DES.${level >= 13 ? " (Funciona contra cualquier tipo de daño.)" : ""} Si reduces a 0, puedes gastar 1 PC para redirigir el ataque.`,
+      resourceCost: fpCost(1, "1 PC (redirigir)"),
     });
   }
 
@@ -314,17 +327,17 @@ function getMonjeAbilities(level: number): ClassAbilityResource[] {
       id: "golpe_aturdidor",
       nombre: "Golpe Aturdidor",
       descripcion:
-        "Cuando aciertas con un ataque cuerpo a cuerpo, puedes gastar 1 punto de Ki para intentar aturdir al objetivo (salvación de CON).",
-      resourceCost: kiCost(1),
+        "Una vez por turno al impactar con un arma de monje o golpe desarmado, puedes gastar 1 PC. Salvación de CON: fallo → Aturdido hasta el inicio de tu siguiente turno; éxito → velocidad reducida a la mitad y el siguiente ataque contra él tiene ventaja.",
+      resourceCost: fpCost(1),
     });
   }
 
   if (level >= 6) {
     abilities.push({
-      id: "golpes_ki_magicos",
-      nombre: "Golpes de Ki Mágicos",
+      id: "golpes_potenciados",
+      nombre: "Golpes Potenciados",
       descripcion:
-        "Tus golpes desarmados cuentan como mágicos para superar resistencias e inmunidades.",
+        "Tus golpes desarmados pueden infligir daño de Fuerza en lugar de su tipo normal (a tu elección).",
     });
   }
 
@@ -333,66 +346,68 @@ function getMonjeAbilities(level: number): ClassAbilityResource[] {
       id: "evasion_monje",
       nombre: "Evasión",
       descripcion:
-        "Si haces una salvación de DES para mitad de daño, no recibes daño en éxito y mitad en fallo.",
-    });
-    abilities.push({
-      id: "quietud_mental",
-      nombre: "Quietud Mental",
-      descripcion:
-        "Puedes usar tu acción para terminar un efecto de encantado o asustado sobre ti.",
+        "Si haces una salvación de DES para mitad de daño, no recibes daño en éxito y mitad en fallo. No funciona si estás incapacitado.",
     });
   }
 
-  if (level >= 13) {
+  if (level >= 9) {
     abilities.push({
-      id: "lengua_sol_luna",
-      nombre: "Lengua del Sol y la Luna",
+      id: "movimiento_acrobatico",
+      nombre: "Movimiento Acrobático",
       descripcion:
-        "Puedes entender y ser entendido por cualquier criatura que hable un idioma.",
+        "Sin armadura ni escudo, puedes moverte por superficies verticales y sobre líquidos en tu turno sin caer durante el movimiento.",
+    });
+  }
+
+  if (level >= 10) {
+    abilities.push({
+      id: "concentracion_elevada",
+      nombre: "Concentración Elevada",
+      descripcion:
+        "Ráfaga de Golpes: 1 PC para 3 golpes desarmados (en vez de 2). Defensa Paciente: al gastar 1 PC, obtienes PG temporales = 2 dados de Artes Marciales. Paso del Viento: al gastar 1 PC, puedes mover a una criatura voluntaria Grande o menor contigo (no provoca ataques de oportunidad).",
+    });
+    abilities.push({
+      id: "autorrestauracion",
+      nombre: "Autorrestauración",
+      descripcion:
+        "Al final de cada turno, puedes eliminar una condición de ti mismo: Hechizado, Asustado o Envenenado. Además, no necesitas comida ni bebida.",
     });
   }
 
   if (level >= 14) {
     abilities.push({
-      id: "alma_diamantina",
-      nombre: "Alma Diamantina",
+      id: "superviviente_disciplinado",
+      nombre: "Superviviente Disciplinado",
       descripcion:
-        "Tienes competencia en todas las tiradas de salvación. Si fallas una, puedes gastar 1 Ki para repetirla.",
-      resourceCost: kiCost(1),
+        "Tienes competencia en todas las tiradas de salvación. Si fallas una, puedes gastar 1 PC para repetirla (debes usar el nuevo resultado).",
+      resourceCost: fpCost(1),
     });
   }
 
   if (level >= 15) {
     abilities.push({
-      id: "cuerpo_atemporal",
-      nombre: "Cuerpo Atemporal",
+      id: "concentracion_perfecta",
+      nombre: "Concentración Perfecta",
       descripcion:
-        "Ya no sufres inconvenientes de la vejez y no puedes ser envejecido mágicamente. No necesitas comida ni agua.",
+        "Cuando tiras Iniciativa y no usas Metabolismo Extraordinario, recuperas PC hasta tener 4 (si tienes 3 o menos).",
     });
   }
 
   if (level >= 18) {
     abilities.push({
-      id: "cuerpo_vacio_invisible",
-      nombre: "Cuerpo Vacío — Invisibilidad",
+      id: "defensa_superior",
+      nombre: "Defensa Superior",
       descripcion:
-        "Puedes gastar 4 Ki para hacerte invisible durante 1 minuto.",
-      resourceCost: kiCost(4),
-    });
-    abilities.push({
-      id: "cuerpo_vacio_astral",
-      nombre: "Cuerpo Vacío — Proyección Astral",
-      descripcion:
-        "Puedes gastar 8 Ki para lanzar Proyección Astral sin componentes materiales.",
-      resourceCost: kiCost(8),
+        "Al inicio de tu turno, puedes gastar 3 PC para obtener resistencia a todo tipo de daño excepto Fuerza durante 1 minuto o hasta quedar incapacitado.",
+      resourceCost: fpCost(3),
     });
   }
 
   if (level >= 20) {
     abilities.push({
-      id: "autoperfeccion",
-      nombre: "Autoperfección",
-      descripcion: "Cuando tires iniciativa sin puntos de Ki, recuperas 4.",
+      id: "cuerpo_y_mente",
+      nombre: "Cuerpo y Mente",
+      descripcion: "Tu DES y SAB aumentan en 4, hasta un máximo de 25.",
     });
   }
 
@@ -456,7 +471,7 @@ function getPicaroAbilities(level: number): ClassAbilityResource[] {
     });
   }
 
-  if (level >= 11) {
+  if (level >= 7) {
     abilities.push({
       id: "talento_fiable",
       nombre: "Talento Fiable",

@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -11,8 +11,12 @@ import {
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCampaignStore } from "@/stores/campaignStore";
+import {
+  useCharacterListStore,
+  type CharacterSummary,
+} from "@/stores/characterListStore";
 import { getClassData } from "@/data/srd/classes";
+import { getRaceData, getSubraceData } from "@/data/srd/races";
 import {
   ConfirmDialog,
   Toast,
@@ -23,10 +27,7 @@ import {
   AppHeader,
 } from "@/components/ui";
 import { useTheme, useDialog, useToast } from "@/hooks";
-import { getItem, STORAGE_KEYS } from "@/utils/storage";
-import type { Campaign } from "@/types/campaign";
-import type { Character, ClassId } from "@/types/character";
-import { CampaignCard, HomeEmptyState, StatsRow } from "@/components/campaigns";
+import { CharacterCard, HomeEmptyState, StatsRow } from "@/components/campaigns";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -35,112 +36,85 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 export default function HomeScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
-  const { campaigns, loadCampaigns, deleteCampaign } = useCampaignStore();
+  const { characters, loadCharacters, deleteCharacter } =
+    useCharacterListStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [campaignClassMap, setCampaignClassMap] = useState<
-    Record<string, ClassId | null>
-  >({});
   const { dialogProps, showDestructive } = useDialog();
   const { toastProps, showSuccess } = useToast();
 
   useFocusEffect(
     useCallback(() => {
-      loadCampaigns();
-    }, [loadCampaigns]),
+      loadCharacters();
+    }, [loadCharacters]),
   );
 
-  useEffect(() => {
-    let active = true;
-
-    const loadCampaignClasses = async () => {
-      const entries = await Promise.all(
-        campaigns.map(async (campaign) => {
-          if (!campaign.personajeId) {
-            return [campaign.id, null] as const;
-          }
-          const character = await getItem<Character>(
-            STORAGE_KEYS.CHARACTER(campaign.personajeId),
-          );
-          return [campaign.id, character?.clase ?? null] as const;
-        }),
-      );
-
-      if (!active) return;
-
-      const nextMap: Record<string, ClassId | null> = {};
-      for (const [id, classId] of entries) {
-        nextMap[id] = classId;
-      }
-      setCampaignClassMap(nextMap);
-    };
-
-    loadCampaignClasses();
-
-    return () => {
-      active = false;
-    };
-  }, [campaigns]);
-
-  const filteredCampaigns = campaigns.filter((c) =>
+  const filteredCharacters = characters.filter((c) =>
     c.nombre.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const campaignsWithCharacter = campaigns.filter(
-    (c) => !!c.personajeId,
-  ).length;
+  const averageLevel =
+    characters.length > 0
+      ? characters.reduce((sum, c) => sum + c.nivel, 0) / characters.length
+      : 0;
 
-  const handleDeleteCampaign = (campaign: Campaign) => {
+  const handleDeleteCharacter = (char: CharacterSummary) => {
     showDestructive(
-      "Eliminar partida",
-      `¿Estás seguro de que quieres eliminar "${campaign.nombre}"? Se perderá el personaje asociado de forma permanente.`,
+      "Eliminar personaje",
+      `¿Estás seguro de que quieres eliminar "${char.nombre}"? Se perderán todos los datos de forma permanente.`,
       () => {
-        deleteCampaign(campaign.id);
+        deleteCharacter(char.id);
         showSuccess(
-          "Partida eliminada",
-          `"${campaign.nombre}" ha sido eliminada`,
+          "Personaje eliminado",
+          `"${char.nombre}" ha sido eliminado`,
         );
       },
       { confirmText: "Eliminar", cancelText: "Cancelar" },
     );
   };
 
-  const handlePressCampaign = (campaign: Campaign) => {
-    if (campaign.personajeId) {
-      // Skip intermediate page — go straight to the character sheet
-      router.push(`/campaigns/${campaign.id}/character/sheet`);
-    } else {
-      router.push(`/campaigns/${campaign.id}`);
-    }
+  const handlePressCharacter = (char: CharacterSummary) => {
+    router.push(`/character/${char.id}`);
   };
 
-  const renderCampaignCard = ({
+  const renderCharacterCard = ({
     item,
     index,
   }: {
-    item: Campaign;
+    item: CharacterSummary;
     index: number;
   }) => {
-    const classId = campaignClassMap[item.id];
-    const classTheme = classId ? getClassData(classId) : null;
+    const classData = item.clase ? getClassData(item.clase) : null;
+    const raceData = item.raza ? getRaceData(item.raza) : null;
+    const subraceData =
+      item.raza && item.subraza
+        ? getSubraceData(item.raza, item.subraza)
+        : null;
+
+    const raceName =
+      item.customRaceName ??
+      subraceData?.nombre ??
+      raceData?.nombre ??
+      "—";
 
     return (
-      <CampaignCard
+      <CharacterCard
         item={item}
         index={index}
-        classTheme={classTheme}
-        onPress={() => handlePressCampaign(item)}
-        onLongPress={() => handleDeleteCampaign(item)}
+        classTheme={classData}
+        raceName={raceName}
+        onPress={() => handlePressCharacter(item)}
+        onLongPress={() => handleDeleteCharacter(item)}
       />
     );
   };
 
   const renderEmptyList = () => (
-    <HomeEmptyState onCreateFirst={() => router.push("/campaigns/new")} />
+    <HomeEmptyState onCreateFirst={() => router.push("/create")} />
   );
 
   const renderLongPressHint = () => {
-    if (campaigns.length === 0) return null;
+    if (characters.length === 0) return null;
     return (
       <View style={styles.longPressHintRow}>
         <Ionicons
@@ -149,24 +123,21 @@ export default function HomeScreen() {
           color={colors.textMuted}
         />
         <Text style={[styles.longPressHintText, { color: colors.textMuted }]}>
-          Mantén presionado una partida para más opciones
+          Mantén presionado un personaje para más opciones
         </Text>
       </View>
     );
   };
 
   const renderListHeader = () => {
-    if (campaigns.length === 0) return null;
+    if (characters.length === 0) return null;
     return (
       <View style={styles.listHeaderContainer}>
-        <StatsRow
-          total={campaigns.length}
-          withCharacter={campaignsWithCharacter}
-        />
-        {filteredCampaigns.length !== campaigns.length && (
+        <StatsRow total={characters.length} averageLevel={averageLevel} />
+        {filteredCharacters.length !== characters.length && (
           <Text style={[styles.filterResultText, { color: colors.textMuted }]}>
-            {filteredCampaigns.length}{" "}
-            {filteredCampaigns.length === 1 ? "resultado" : "resultados"}
+            {filteredCharacters.length}{" "}
+            {filteredCharacters.length === 1 ? "resultado" : "resultados"}
           </Text>
         )}
       </View>
@@ -225,22 +196,22 @@ export default function HomeScreen() {
 
       {/* Header */}
       <AppHeader showBack>
-        {campaigns.length > 0 && (
+        {characters.length > 0 && (
           <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
             onClear={() => setSearchQuery("")}
-            placeholder="Buscar partida..."
+            placeholder="Buscar personaje..."
             style={{ marginTop: 10 }}
           />
         )}
       </AppHeader>
 
-      {/* Campaign list */}
+      {/* Character list */}
       <FlatList
-        data={filteredCampaigns}
+        data={filteredCharacters}
         keyExtractor={(item) => item.id}
-        renderItem={renderCampaignCard}
+        renderItem={renderCharacterCard}
         ListHeaderComponent={renderListHeader}
         ListEmptyComponent={renderEmptyList}
         ListFooterComponent={renderLongPressHint}
@@ -248,7 +219,7 @@ export default function HomeScreen() {
           paddingHorizontal: 20,
           paddingTop: 12,
           paddingBottom: 100,
-          flexGrow: campaigns.length === 0 ? 1 : undefined,
+          flexGrow: characters.length === 0 ? 1 : undefined,
         }}
         showsVerticalScrollIndicator={false}
         initialNumToRender={8}
@@ -257,7 +228,7 @@ export default function HomeScreen() {
             refreshing={refreshing}
             onRefresh={async () => {
               setRefreshing(true);
-              await loadCampaigns();
+              await loadCharacters();
               setRefreshing(false);
             }}
             tintColor={colors.accentGold}
@@ -266,10 +237,10 @@ export default function HomeScreen() {
         }
       />
 
-      {/* FAB — New campaign */}
+      {/* FAB — New character */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.push("/campaigns/new")}
+        onPress={() => router.push("/create")}
         activeOpacity={0.85}
       >
         <LinearGradient

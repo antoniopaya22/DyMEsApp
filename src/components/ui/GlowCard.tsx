@@ -92,7 +92,7 @@ export default function GlowCard({
 
   // Resolve theme-aware defaults
   const resolvedGlowColor = glowColor ?? colors.accentRed;
-  const resolvedAccentColors: [string, string, string] = accentColors ?? [
+  const resolvedAccentColors: [string, string, ...string[]] = accentColors ?? [
     colors.accentRed,
     "#d32f2f",
     "#ef5350",
@@ -224,7 +224,7 @@ export default function GlowCard({
           ]}
         >
           <LinearGradient
-            colors={accentColors}
+            colors={resolvedAccentColors}
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
             style={styles.accentGradientLeft}
@@ -242,7 +242,7 @@ export default function GlowCard({
           ]}
         >
           <LinearGradient
-            colors={accentColors}
+            colors={resolvedAccentColors}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
             style={styles.accentGradientTop}

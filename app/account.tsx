@@ -23,14 +23,14 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import {
   useAuthStore,
-  selectAppMode,
   selectIsPremium,
 } from "@/stores/authStore";
+import { useCampaignStore } from "@/stores/campaignStore";
 import {
   ScreenContainer,
   PageHeader,
 } from "@/components/ui";
-import { fetchUserCharacters } from "@/services/supabaseService";
+import { fetchUserCharacters, deleteCharacterFromCloud } from "@/services/supabaseService";
 import { useTheme, useEntranceAnimation } from "@/hooks";
 import type { PersonajeRow } from "@/types/supabase";
 import type { Character } from "@/types/character";
@@ -41,8 +41,8 @@ export default function AccountScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { profile, signOut, user } = useAuthStore();
-  const appMode = useAuthStore(selectAppMode);
   const isPremium = useAuthStore(selectIsPremium);
+  const { campaigns } = useCampaignStore();
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -56,26 +56,46 @@ export default function AccountScreen() {
     };
   }, []);
 
-  // Fetch synced characters from Supabase
+  // Fetch synced characters from Supabase, filtered against local campaigns
   const loadCharacters = useCallback(async () => {
     if (!user) return;
     setLoadingChars(true);
     try {
+      // IDs de personajes que existen localmente
+      const localCharIds = new Set(
+        campaigns
+          .map((c) => c.personajeId)
+          .filter((id): id is string => !!id),
+      );
       const chars = await fetchUserCharacters(user.id);
-      setCharacters(chars);
+
+      // Limpiar personajes huérfanos en Supabase (existen en la nube
+      // pero ya no en ninguna campaña local). Solo si hay campañas
+      // locales (para no borrar datos en una instalación nueva).
+      if (localCharIds.size > 0) {
+        const orphans = chars.filter((c) => !localCharIds.has(c.id));
+        for (const orphan of orphans) {
+          deleteCharacterFromCloud(orphan.id).catch((err) =>
+            console.warn("[AccountScreen] Orphan cleanup failed:", err),
+          );
+        }
+      }
+
+      // Solo mostrar personajes que aún existen en campañas locales
+      setCharacters(chars.filter((c) => localCharIds.has(c.id)));
     } catch (err) {
       console.error("[AccountScreen] Error fetching characters:", err);
     } finally {
       setLoadingChars(false);
     }
-  }, [user]);
+  }, [user, campaigns]);
 
   useEffect(() => {
     loadCharacters();
   }, [loadCharacters]);
 
   // ── Not logged in ──
-  if (!user || !profile) {
+  if (!user) {
     return (
       <ScreenContainer>
         <PageHeader title="Cuenta" onBack={() => router.back()} />
@@ -114,6 +134,21 @@ export default function AccountScreen() {
               Iniciar sesión
             </Text>
           </TouchableOpacity>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  // ── Profile loading ──
+  if (!profile) {
+    return (
+      <ScreenContainer>
+        <PageHeader title="Cuenta" onBack={() => router.back()} />
+        <View style={styles.centeredContainer}>
+          <ActivityIndicator size="large" color={colors.accentGold} />
+          <Text style={[styles.notLoggedDesc, { color: colors.textMuted, marginTop: 16 }]}>
+            Cargando perfil…
+          </Text>
         </View>
       </ScreenContainer>
     );
@@ -217,40 +252,6 @@ export default function AccountScreen() {
             <Text style={[styles.profileEmail, { color: colors.textMuted }]}>
               {user.email}
             </Text>
-
-            {/* Current mode badge */}
-            <View
-              style={[
-                styles.modeBadge,
-                {
-                  backgroundColor:
-                    appMode === "master"
-                      ? `${colors.accentGold}15`
-                      : `${colors.accentRed}15`,
-                },
-              ]}
-            >
-              <Ionicons
-                name={appMode === "master" ? "trophy" : "shield"}
-                size={14}
-                color={
-                  appMode === "master" ? colors.accentGold : colors.accentRed
-                }
-              />
-              <Text
-                style={[
-                  styles.modeBadgeText,
-                  {
-                    color:
-                      appMode === "master"
-                        ? colors.accentGold
-                        : colors.accentRed,
-                  },
-                ]}
-              >
-                Modo {appMode === "master" ? "Master" : "Jugador"}
-              </Text>
-            </View>
           </View>
 
           {/* ── Character Codes ── */}
@@ -375,53 +376,6 @@ export default function AccountScreen() {
               },
             ]}
           >
-            {/* Change Mode */}
-            <TouchableOpacity
-              style={[
-                styles.actionRow,
-                { borderBottomColor: colors.borderSeparator },
-              ]}
-              onPress={() => router.push("/mode-select" as any)}
-            >
-              <View style={styles.actionLeft}>
-                <View
-                  style={[
-                    styles.actionIcon,
-                    { backgroundColor: `${colors.accentGold}15` },
-                  ]}
-                >
-                  <Ionicons
-                    name="swap-horizontal-outline"
-                    size={20}
-                    color={colors.accentGold}
-                  />
-                </View>
-                <View>
-                  <Text
-                    style={[
-                      styles.actionTitle,
-                      { color: colors.textPrimary },
-                    ]}
-                  >
-                    Cambiar modo
-                  </Text>
-                  <Text
-                    style={[
-                      styles.actionSubtitle,
-                      { color: colors.textMuted },
-                    ]}
-                  >
-                    Alterna entre Jugador y Master
-                  </Text>
-                </View>
-              </View>
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color={colors.chevronColor}
-              />
-            </TouchableOpacity>
-
             {/* Settings shortcut */}
             <TouchableOpacity
               style={styles.actionRow}

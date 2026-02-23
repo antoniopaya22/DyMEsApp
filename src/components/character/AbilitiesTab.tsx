@@ -6,7 +6,7 @@
  * puntos de hechicería.
  *
  * Para no-lanzadores: muestra habilidades de clase específicas como Furia
- * (bárbaro), Puntos de Ki (monje), Ataque Furtivo (pícaro), etc.
+ * (bárbaro), Puntos de Concentración (monje), Ataque Furtivo (pícaro), etc.
  *
  * This is the orchestrator shell — all section UI lives in ./abilities/*.
  */

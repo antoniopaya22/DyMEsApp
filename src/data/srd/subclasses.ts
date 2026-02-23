@@ -145,53 +145,53 @@ export const SUBCLASS_OPTIONS: Record<ClassId, SubclassOption[]> = {
   // ─── BRUJO ─────────────────────────────────────────────────────────
   brujo: [
     {
-      id: "patron_infernal",
-      nombre: "El Infernal",
-      descripcion:
-        "Has hecho un pacto con un señor infernal. Ganas poder para castigar y destruir con fuego y fuerza oscura.",
-      fuente: "PHB",
-    },
-    {
       id: "patron_feerico",
-      nombre: "El Feérico",
+      nombre: "Patrón Feérico",
       descripcion:
-        "Tu patrón es un señor feérico que te otorga el poder de fascinar, encantar y engañar a otros seres.",
-      fuente: "PHB",
-    },
-    {
-      id: "patron_gran_antiguo",
-      nombre: "El Gran Antiguo",
-      descripcion:
-        "Tu patrón es una entidad incomprensible del más allá. Obtienes poder telepático y la capacidad de doblegar mentes.",
-      fuente: "PHB",
+        "Tu pacto se nutre del poder del Feywild. Tu patrón es un archihada caprichosa e insondable que te otorga magia de encantamiento y teletransportación.",
+      fuente: "PHB'24",
     },
     {
       id: "patron_celestial",
-      nombre: "El Celestial",
+      nombre: "Patrón Celestial",
       descripcion:
-        "Tu patrón es un ser celestial que te otorga poderes curativos y de protección junto con fuego sagrado.",
-      fuente: "XGtE",
+        "Tu pacto se nutre de los Planos Superiores. Tu patrón es un ser celestial que te otorga magia curativa y energía radiante.",
+      fuente: "PHB'24",
     },
     {
-      id: "patron_hexblade",
-      nombre: "El Hexblade",
+      id: "patron_infernal",
+      nombre: "Patrón Infernal",
       descripcion:
-        "Tu patrón se manifiesta a través de un arma maldita. Puedes usar Carisma para ataques y maldecir a tus enemigos.",
-      fuente: "XGtE",
+        "Tu pacto se nutre de los Planos Inferiores. Tu patrón es un señor demoníaco o diablo que te otorga poder destructivo y resistencia infernal.",
+      fuente: "PHB'24",
     },
     {
-      id: "patron_genio",
-      nombre: "El Genio",
+      id: "patron_gran_antiguo",
+      nombre: "Patrón Gran Antiguo",
       descripcion:
-        "Tu patrón es un genio elemental. Ganas un refugio especial y poderes vinculados al elemento de tu genio.",
-      fuente: "TCoE",
+        "Tu pacto se nutre de saber prohibido de seres inefables del Reino Lejano. Tu patrón te otorga poder telepático y magia psíquica.",
+      fuente: "PHB'24",
     },
     {
       id: "patron_insondable",
       nombre: "El Insondable",
       descripcion:
-        "Tu patrón es una entidad de las profundidades oceánicas, otorgándote poder sobre el agua y las criaturas marinas.",
-      fuente: "TCoE",
+        "Tu patrón es una entidad de las profundidades oceánicas, otorgándote poder sobre el agua y tentáculos espectrales.",
+      fuente: "TCE",
+    },
+    {
+      id: "patron_genio",
+      nombre: "El Genio",
+      descripcion:
+        "Tu patrón es un genio elemental noble. Ganas un refugio especial y poderes vinculados al elemento de tu genio.",
+      fuente: "TCE",
+    },
+    {
+      id: "patron_hexblade",
+      nombre: "El Hexblade",
+      descripcion:
+        "Tu patrón se manifiesta a través de armas mágicas de la Shadowfell. Puedes usar Carisma para ataques y maldecir a tus enemigos.",
+      fuente: "XGE",
     },
   ],
 
@@ -342,15 +342,29 @@ export const SUBCLASS_OPTIONS: Record<ClassId, SubclassOption[]> = {
       id: "cazador",
       nombre: "Cazador",
       descripcion:
-        "Aceptas el desafío de proteger la civilización contra las amenazas más peligrosas de la naturaleza.",
-      fuente: "PHB",
+        "Proteges la naturaleza y a las personas de las fuerzas que las destruirían, acechando a tu presa en las tierras salvajes y más allá.",
+      fuente: "PHB'24",
     },
     {
       id: "senor_bestias",
       nombre: "Señor de las Bestias",
       descripcion:
-        "Estableces un vínculo extraordinario con un compañero animal que lucha y explora a tu lado.",
-      fuente: "PHB",
+        "Forjas un vínculo místico con una bestia primordial, canalizando magia primordial y una conexión profunda con el mundo natural.",
+      fuente: "PHB'24",
+    },
+    {
+      id: "errante_feerico",
+      nombre: "Errante Feérico",
+      descripcion:
+        "Una mística feérica te rodea. Tu risa alegre ilumina a los abatidos y tu destreza marcial aterroriza a tus enemigos.",
+      fuente: "PHB'24",
+    },
+    {
+      id: "acechador_sombrio",
+      nombre: "Acechador Sombrío",
+      descripcion:
+        "Estás como en casa en los lugares más oscuros, empuñando magia del Shadowfell para combatir enemigos que acechan en la oscuridad.",
+      fuente: "PHB'24",
     },
     {
       id: "acechador_horizonte",
@@ -363,29 +377,15 @@ export const SUBCLASS_OPTIONS: Record<ClassId, SubclassOption[]> = {
       id: "asesino_monstruos",
       nombre: "Asesino de Monstruos",
       descripcion:
-        "Te especializas en cazar monstruos poderosos. Tu magia y tácticas están optimizadas para criaturas únicas.",
+        "Te especializas en cazar criaturas de la noche y portadores de magia siniestra: vampiros, dragones, infernales y otras amenazas mágicas.",
       fuente: "XGtE",
-    },
-    {
-      id: "errante_feerico",
-      nombre: "Errante Feérico",
-      descripcion:
-        "Has forjado un vínculo con las fuerzas feéricas que te permite manipular la magia de los dominios encantados.",
-      fuente: "TCoE",
     },
     {
       id: "caminante_enjambre",
       nombre: "Caminante del Enjambre",
       descripcion:
-        "Te rodeas de un enjambre de espíritus que puedes comandar para atacar, defender y explorar.",
+        "Un enjambre de espíritus de la naturaleza se ha vinculado a ti, asistiéndote en batalla y sirviendo como compañía.",
       fuente: "TCoE",
-    },
-    {
-      id: "drakewarden",
-      nombre: "Guardián Dracónico",
-      descripcion:
-        "Estableciste un vínculo con un drake que crece y evoluciona contigo, luchando a tu lado en batalla.",
-      fuente: "FToD",
     },
   ],
 
@@ -504,68 +504,78 @@ export const SUBCLASS_OPTIONS: Record<ClassId, SubclassOption[]> = {
 
   // ─── MAGO ──────────────────────────────────────────────────────────
   mago: [
+    // ── PHB'24 ──
     {
       id: "escuela_abjuracion",
       nombre: "Escuela de Abjuración",
       descripcion:
-        "Te especializas en magia protectora. Creas escudos arcanos que te protegen a ti y a tus aliados.",
-      fuente: "PHB",
-    },
-    {
-      id: "escuela_conjuracion",
-      nombre: "Escuela de Conjuración",
-      descripcion:
-        "Dominas la invocación de criaturas y objetos. Puedes teletransportarte y crear cosas de la nada.",
-      fuente: "PHB",
+        "Te especializas en magia protectora. Ganas un Escudo Arcano de PG temporales que se recarga al lanzar conjuros de abjuración.",
+      fuente: "PHB'24",
     },
     {
       id: "escuela_adivinacion",
       nombre: "Escuela de Adivinación",
       descripcion:
-        "Percibes el futuro y lo oculto. Puedes cambiar tiradas de dado con tus visiones proféticas (Portento).",
-      fuente: "PHB",
+        "Percibes el futuro y lo oculto. Tras cada descanso largo tiras dados de Portento que puedes usar para reemplazar tiradas de ataque, salvación o aptitud.",
+      fuente: "PHB'24",
+    },
+    {
+      id: "escuela_evocacion",
+      nombre: "Escuela de Evocación",
+      descripcion:
+        "Dominas la energía destructiva pura. Tus trucos de daño hieren incluso si el objetivo supera la salvación, y puedes esculpir estallar conjuros para proteger aliados.",
+      fuente: "PHB'24",
+    },
+    {
+      id: "escuela_ilusion",
+      nombre: "Escuela de Ilusión",
+      descripcion:
+        "Creas engaños mágicos cada vez más realistas. Tus ilusiones mejoran y pueden llegar a hacerse parcialmente reales.",
+      fuente: "PHB'24",
+    },
+    // ── PHB'14 (legacy) ──
+    {
+      id: "escuela_conjuracion",
+      nombre: "Escuela de Conjuración",
+      descripcion:
+        "Dominas la invocación de criaturas y objetos. Puedes teletransportarte y crear cosas de la nada.",
+      fuente: "PHB'14",
     },
     {
       id: "escuela_encantamiento",
       nombre: "Escuela de Encantamiento",
       descripcion:
         "Manipulas mentes y emociones. Tus hechizos de encantamiento son más poderosos y difíciles de resistir.",
-      fuente: "PHB",
-    },
-    {
-      id: "escuela_evocacion",
-      nombre: "Escuela de Evocación",
-      descripcion:
-        "Dominas la energía destructiva pura. Tus hechizos de daño son más potentes y puedes proteger a tus aliados.",
-      fuente: "PHB",
-    },
-    {
-      id: "escuela_ilusion",
-      nombre: "Escuela de Ilusión",
-      descripcion:
-        "Creas engaños mágicos cada vez más realistas. Tus ilusiones pueden llegar a hacerse parcialmente reales.",
-      fuente: "PHB",
+      fuente: "PHB'14",
     },
     {
       id: "escuela_nigromancia",
       nombre: "Escuela de Nigromancia",
       descripcion:
         "Manipulas las fuerzas de la vida y la muerte. Puedes drenar vitalidad y crear siervos no muertos.",
-      fuente: "PHB",
+      fuente: "PHB'14",
     },
     {
       id: "escuela_transmutacion",
       nombre: "Escuela de Transmutación",
       descripcion:
         "Alteras la forma y propiedades de la materia. Puedes crear la Piedra del Transmutador con propiedades especiales.",
-      fuente: "PHB",
+      fuente: "PHB'14",
+    },
+    // ── Otros suplementos ──
+    {
+      id: "orden_escribas",
+      nombre: "Orden de los Escribas",
+      descripcion:
+        "Usas un Despertar de tu libro de conjuros que cobra vida propia. Puedes cambiar tipos de daño y crear pergaminos mágicos.",
+      fuente: "TCoE",
     },
     {
       id: "mago_guerra",
       nombre: "Mago de Guerra",
       descripcion:
-        "Combinas el combate marcial con la magia arcana. Usas una canción de espada que potencia tus ataques y defensa.",
-      fuente: "TCoE",
+        "Combinas defensa mágica con ofensiva arcana. Tu Oleada Arcana potencia tu iniciativa y tu Desviación Táctica mejora tu CA y salvaciones.",
+      fuente: "XGE",
     },
     {
       id: "cronurgista",
@@ -579,38 +589,45 @@ export const SUBCLASS_OPTIONS: Record<ClassId, SubclassOption[]> = {
   // ─── MONJE ─────────────────────────────────────────────────────────
   monje: [
     {
-      id: "camino_mano_abierta",
-      nombre: "Camino de la Mano Abierta",
+      id: "guerrero_mano_abierta",
+      nombre: "Guerrero de la Mano Abierta",
       descripcion:
-        "Dominas las técnicas de combate desarmado. Tus golpes pueden derribar, empujar o impedir reacciones.",
+        "Dominas las técnicas de combate desarmado. Tus golpes pueden impedir reacciones, empujar o derribar enemigos.",
       fuente: "PHB",
     },
     {
-      id: "camino_sombra",
-      nombre: "Camino de la Sombra",
+      id: "guerrero_sombra",
+      nombre: "Guerrero de la Sombra",
       descripcion:
-        "Usas el ki para manipular las sombras. Puedes lanzar oscuridad, silencio y teletransportarte entre sombras.",
+        "Canalizas el poder del Shadowfell para manipular sombras, teletransportarte y volverte invisible.",
       fuente: "PHB",
     },
     {
-      id: "camino_cuatro_elementos",
-      nombre: "Camino de los Cuatro Elementos",
+      id: "guerrero_elementos",
+      nombre: "Guerrero de los Elementos",
       descripcion:
-        "Canalizas los elementos a través del ki para lanzar conjuros elementales como bolas de fuego y muros de piedra.",
+        "Canalizas el poder de los Planos Elementales para potenciar tus golpes con ácido, frío, fuego, rayo o trueno.",
       fuente: "PHB",
     },
     {
-      id: "camino_misericordia",
-      nombre: "Camino de la Misericordia",
+      id: "guerrero_misericordia",
+      nombre: "Guerrero de la Misericordia",
       descripcion:
-        "Dominas tanto el arte de curar como el de infligir dolor, manipulando la energía vital con tu ki.",
+        "Manipulas la fuerza vital ajena: curas heridas con un toque y traes la muerte con el otro. A menudo lleváis máscara.",
+      fuente: "PHB",
+    },
+    {
+      id: "camino_yo_astral",
+      nombre: "Camino del Yo Astral",
+      descripcion:
+        "Crees que tu cuerpo es una ilusión y tu yo astral es tu verdadera forma. Manifiestas brazos, rostro y cuerpo espectrales.",
       fuente: "TCoE",
     },
     {
-      id: "camino_alma_solar",
-      nombre: "Camino del Alma Solar",
+      id: "camino_maestro_borracho",
+      nombre: "Camino del Maestro Borracho",
       descripcion:
-        "Canalizas la energía radiante del sol a través de tu ki para lanzar rayos de luz y crear escudos ardientes.",
+        "Te mueves con la torpeza impredecible de un borracho, ocultando un combate maestro tras tropiezos y tambaleos.",
       fuente: "XGtE",
     },
     {
@@ -621,77 +638,63 @@ export const SUBCLASS_OPTIONS: Record<ClassId, SubclassOption[]> = {
       fuente: "XGtE",
     },
     {
-      id: "camino_asceta",
-      nombre: "Camino del Asceta",
+      id: "camino_alma_solar",
+      nombre: "Camino del Alma Solar",
       descripcion:
-        "A través de la meditación y el entrenamiento extremo alcanzas un estado de perfección física y espiritual.",
-      fuente: "TCoE",
-    },
-    {
-      id: "camino_muerte_larga",
-      nombre: "Camino de la Muerte Larga",
-      descripcion:
-        "Estudias la muerte misma y extraes poder de ella. El miedo y la cercanía a la muerte potencian tu ki.",
-      fuente: "SCAG",
+        "Canalizas la energía radiante del sol a través de tu ki para lanzar rayos de luz y crear escudos ardientes.",
+      fuente: "XGtE",
     },
   ],
 
   // ─── PALADÍN ───────────────────────────────────────────────────────
   paladin: [
     {
-      id: "juramento_entrega",
-      nombre: "Juramento de Entrega",
+      id: "juramento_devocion",
+      nombre: "Juramento de Devoción",
       descripcion:
-        "Dedicado a los ideales más nobles de justicia, virtud y orden. Eres un faro de esperanza y protección.",
-      fuente: "PHB",
+        "Dedicado a los ideales de justicia y orden. Eres un faro de esperanza, protección y virtud, el arquetipo del caballero de armadura reluciente.",
+      fuente: "PHB'24",
     },
     {
       id: "juramento_antiguos",
       nombre: "Juramento de los Antiguos",
       descripcion:
-        "Proteges la luz y la vida contra las fuerzas de la oscuridad. Tu poder proviene de la naturaleza y las hadas.",
-      fuente: "PHB",
+        "Proteges la luz y la vida en el mundo. Amas lo bello y lo vivificante más que cualquier principio de honor o justicia.",
+      fuente: "PHB'24",
+    },
+    {
+      id: "juramento_gloria",
+      nombre: "Juramento de Gloria",
+      descripcion:
+        "Aspiras a las alturas del heroísmo. Tú y tus compañeros estáis destinados a lograr la gloria mediante hazañas heroicas.",
+      fuente: "PHB'24",
     },
     {
       id: "juramento_venganza",
       nombre: "Juramento de Venganza",
       descripcion:
-        "Juraste castigar a quienes cometieron pecados atroces. Tu furia sagrada se dirige contra el mal.",
-      fuente: "PHB",
-    },
-    {
-      id: "juramento_corona",
-      nombre: "Juramento de la Corona",
-      descripcion:
-        "Sirves a la civilización y al orden legítimo. Tu deber es proteger a la sociedad y obedecer la ley.",
-      fuente: "SCAG",
+        "Juraste castigar a quienes cometieron actos gravemente malvados. Tu furia sagrada se dirige contra el mal a cualquier coste.",
+      fuente: "PHB'24",
     },
     {
       id: "juramento_conquista",
       nombre: "Juramento de Conquista",
       descripcion:
-        "Aplastas el caos con fuerza implacable. Tu aura de miedo y tu voluntad de hierro doblegan a tus enemigos.",
+        "Aplastas el caos con fuerza implacable. Buscas gloria en batalla y la subyugación de tus enemigos.",
       fuente: "XGtE",
     },
     {
       id: "juramento_redencion",
       nombre: "Juramento de Redención",
       descripcion:
-        "Crees que incluso los más malvados pueden redimirse. Usas la paz, la diplomacia y la misericordia antes que la espada.",
+        "Crees que incluso los más malvados pueden redimirse. Usas la violencia solo como último recurso y la diplomacia como camino a la paz.",
       fuente: "XGtE",
     },
     {
-      id: "juramento_gloria",
-      nombre: "Juramento de Gloria",
+      id: "juramento_vigilantes",
+      nombre: "Juramento de los Vigilantes",
       descripcion:
-        "Aspiras a las hazañas legendarias. Tu presencia inspira a aliados y tu destreza atlética es sobrenatural.",
-      fuente: "TCoE",
-    },
-    {
-      id: "juramento_centinela",
-      nombre: "Juramento del Centinela",
-      descripcion:
-        "Tu juramento es proteger a quienes no pueden protegerse. Eres un guardián incansable contra el peligro.",
+        "Tu juramento es proteger los reinos mortales de las depredaciones de criaturas extraplanarias. Perfeccionas mente, espíritu y cuerpo como arma definitiva.",
       fuente: "TCoE",
     },
   ],

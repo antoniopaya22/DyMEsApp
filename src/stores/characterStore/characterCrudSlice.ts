@@ -210,6 +210,7 @@ export function createCharacterCrudSlice(
       } else if (proficiency.level === "proficient") {
         return abilityMod + profBonus;
       }
+
       return abilityMod;
     },
 

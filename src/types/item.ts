@@ -3,6 +3,7 @@
  */
 
 import type { AbilityKey, DamageType } from "./character";
+import { EQUIPMENT_PACK_IDS } from "@/constants/items";
 
 // Re-export constants (moved to @/constants/items)
 export {

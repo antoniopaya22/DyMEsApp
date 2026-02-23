@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ConfirmDialog } from "@/components/ui";
 import { useTheme, useDialog, useScrollToTop } from "@/hooks";
@@ -17,7 +17,7 @@ import {
   STEP_NAMES,
   calcTotalScoresPreview,
 } from "@/stores/creationStore";
-import { useCampaignStore } from "@/stores/campaignStore";
+import { useCharacterListStore } from "@/stores/characterListStore";
 import { getRaceData, getClassData, getBackgroundData } from "@/data/srd";
 import { buildRaceDataFromCustom } from "@/data/srd/races";
 import {
@@ -43,7 +43,6 @@ export default function SummaryStep() {
   const { colors, isDark } = useTheme();
   const themed = getCreationThemeOverrides(colors);
   const router = useRouter();
-  const { id: campaignId } = useLocalSearchParams<{ id: string }>();
   const { dialogProps, showConfirm, showSuccess, showError } = useDialog();
 
   const {
@@ -56,7 +55,7 @@ export default function SummaryStep() {
     loadDraft,
   } = useCreationStore();
 
-  const { linkCharacter, loadCampaigns } = useCampaignStore();
+  const { addCharacter, loadCharacters } = useCharacterListStore();
 
   const [creating, setCreating] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -64,12 +63,11 @@ export default function SummaryStep() {
   useFocusEffect(
     useCallback(() => {
       const init = async () => {
-        if (!campaignId) return;
-        await loadDraft(campaignId);
+        await loadDraft();
         setInitialized(true);
       };
       init();
-    }, [campaignId]),
+    }, []),
   );
 
   const completedSteps = initialized ? getCompletedSteps() : [];
@@ -164,11 +162,11 @@ export default function SummaryStep() {
             console.log("[SummaryStep] Inventario creado");
           }
 
-          await linkCharacter(campaignId!, character.id);
-          console.log("[SummaryStep] Personaje vinculado a campaña");
+          await addCharacter(character);
+          console.log("[SummaryStep] Personaje añadido a la lista");
 
           const charName = character.nombre;
-          const cId = campaignId!;
+          const charId = character.id;
 
           console.log("[SummaryStep] Mostrando diálogo de éxito...");
 
@@ -181,17 +179,15 @@ export default function SummaryStep() {
               : `${charName} ha sido creado exitosamente. ¡Buena aventura!`,
             async () => {
               console.log("[SummaryStep] OK pulsado, navegando...");
-              // Clean up draft and reload campaigns
+              // Clean up draft and reload character list
               try {
-                await discardDraft(cId);
-                await loadCampaigns();
+                await discardDraft();
+                await loadCharacters();
               } catch (e) {
                 console.warn("[SummaryStep] Error limpiando draft:", e);
               }
-              // Navigate directly to the character sheet (tabs view).
-              // `replace` swaps the wizard stack for the sheet screen so
-              // the user lands on the "General" tab right away.
-              router.replace(`/campaigns/${cId}/character/sheet`);
+              // Navigate directly to the character sheet.
+              router.replace(`/character/${charId}`);
             },
           );
 
@@ -230,10 +226,7 @@ export default function SummaryStep() {
     };
     const route = routes[step];
     if (route) {
-      router.push({
-        pathname: `/campaigns/[id]/character/create/${route}` as any,
-        params: { id: campaignId },
-      });
+      router.push(`/create/${route}`);
     }
   };
 

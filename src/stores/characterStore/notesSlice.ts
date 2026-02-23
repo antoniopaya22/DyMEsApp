@@ -115,7 +115,7 @@ export function createNotesSlice(
       const noteId = randomUUID();
       const newNote = createQuickNote(noteId, {
         personajeId: character.id,
-        partidaId: character.campaignId,
+        partidaId: character.campaignId ?? character.id,
         contenido: content,
       });
 
