@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Animated,
+  Easing,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -28,6 +30,66 @@ export default function CharacterNameStep() {
   const [sexo, setSexoLocal] = useState<Sexo | undefined>(undefined);
   const [initialized, setInitialized] = useState(false);
   const { dialogProps, showDestructive } = useDialog();
+
+  // ── Entrance animations ──
+  const progressBarAnim = useRef(new Animated.Value(0)).current;
+  const iconAnim = useRef(new Animated.Value(0)).current;
+  const iconScale = useRef(new Animated.Value(0.5)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
+  const titleSlide = useRef(new Animated.Value(15)).current;
+  const inputAnim = useRef(new Animated.Value(0)).current;
+  const inputSlide = useRef(new Animated.Value(15)).current;
+  const sexAnim = useRef(new Animated.Value(0)).current;
+  const sexSlide = useRef(new Animated.Value(15)).current;
+  const suggestionsAnim = useRef(new Animated.Value(0)).current;
+  const suggestionsSlide = useRef(new Animated.Value(15)).current;
+  const footerAnim = useRef(new Animated.Value(0)).current;
+  const footerSlide = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    if (!initialized) return;
+    // Staggered entrance
+    Animated.stagger(90, [
+      // Icon bounce
+      Animated.parallel([
+        Animated.spring(iconScale, { toValue: 1, friction: 5, tension: 120, useNativeDriver: true }),
+        Animated.timing(iconAnim, { toValue: 1, duration: 350, useNativeDriver: true }),
+      ]),
+      // Title + subtitle
+      Animated.parallel([
+        Animated.timing(titleAnim, { toValue: 1, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(titleSlide, { toValue: 0, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+      // Input field
+      Animated.parallel([
+        Animated.timing(inputAnim, { toValue: 1, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(inputSlide, { toValue: 0, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+      // Sex selector
+      Animated.parallel([
+        Animated.timing(sexAnim, { toValue: 1, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(sexSlide, { toValue: 0, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+      // Suggestions
+      Animated.parallel([
+        Animated.timing(suggestionsAnim, { toValue: 1, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(suggestionsSlide, { toValue: 0, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+      // Footer
+      Animated.parallel([
+        Animated.timing(footerAnim, { toValue: 1, duration: 400, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(footerSlide, { toValue: 0, duration: 400, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+    ]).start();
+    // Animated progress bar fill
+    Animated.timing(progressBarAnim, {
+      toValue: progressPercent / 100,
+      duration: 800,
+      delay: 200,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [initialized]);
 
   // Inicializar o cargar borrador al montar
   useFocusEffect(
@@ -130,16 +192,21 @@ export default function CharacterNameStep() {
 
           {/* Barra de progreso */}
           <View className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: colors.bgInput }}>
-            <View
+            <Animated.View
               className="h-full bg-primary-500 rounded-full"
-              style={{ width: `${progressPercent}%` }}
+              style={{
+                width: progressBarAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ["0%", "100%"],
+                }),
+              }}
             />
           </View>
         </View>
 
         {/* Contenido del paso */}
         <View className="flex-1 px-5 justify-center" style={{ marginTop: -60 }}>
-          <View className="items-center mb-10">
+          <Animated.View className="items-center mb-10" style={{ opacity: iconAnim, transform: [{ scale: iconScale }] }}>
             <View className="h-20 w-20 rounded-full bg-primary-500/15 items-center justify-center mb-5">
               <Ionicons
                 name="text-outline"
@@ -148,19 +215,21 @@ export default function CharacterNameStep() {
               />
             </View>
 
-            <Text className="text-2xl font-bold text-center mb-2" style={{ color: colors.textPrimary }}>
-              ¿Cómo se llama tu personaje?
-            </Text>
-            <Text className="text-base text-center leading-6 px-4" style={{ color: colors.textSecondary }}>
-              Elige un nombre que identifique a tu héroe en la partida. Podrás
-              cambiarlo más adelante.
-            </Text>
-          </View>
+            <Animated.View style={{ opacity: titleAnim, transform: [{ translateY: titleSlide }] }}>
+              <Text className="text-2xl font-bold text-center mb-2" style={{ color: colors.textPrimary }}>
+                ¿Cómo se llama tu personaje?
+              </Text>
+              <Text className="text-base text-center leading-6 px-4" style={{ color: colors.textSecondary }}>
+                Elige un nombre que identifique a tu héroe en la partida. Podrás
+                cambiarlo más adelante.
+              </Text>
+            </Animated.View>
+          </Animated.View>
 
           {/* Campo de nombre */}
-          <View className="mb-6">
+          <Animated.View className="mb-6" style={{ opacity: inputAnim, transform: [{ translateY: inputSlide }] }}>
             <TextInput
-              className="rounded-xl px-5 py-4 text-xl text-center border font-semibold"
+              className="rounded-xl px-5 py-4 text-xl border font-semibold"
               style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
               placeholder="Nombre del personaje"
               placeholderTextColor={colors.textMuted}
@@ -175,10 +244,10 @@ export default function CharacterNameStep() {
             <Text className="text-xs mt-2 text-center" style={{ color: colors.textMuted }}>
               Máximo 50 caracteres · Se admiten tildes y caracteres especiales
             </Text>
-          </View>
+          </Animated.View>
 
           {/* Selector de sexo */}
-          <View className="mb-6">
+          <Animated.View className="mb-6" style={{ opacity: sexAnim, transform: [{ translateY: sexSlide }] }}>
             <Text className="text-xs font-semibold uppercase tracking-wider mb-3 text-center" style={{ color: colors.textMuted }}>
               Sexo del personaje
             </Text>
@@ -200,11 +269,11 @@ export default function CharacterNameStep() {
                     <Ionicons
                       name={icon as any}
                       size={22}
-                      color={selected ? "white" : colors.textSecondary}
+                      color={selected ? colors.textInverted : colors.textSecondary}
                     />
                     <Text
                       className="text-sm font-semibold mt-1"
-                      style={{ color: selected ? "white" : colors.textSecondary }}
+                      style={{ color: selected ? colors.textInverted : colors.textSecondary }}
                     >
                       {label}
                     </Text>
@@ -212,10 +281,10 @@ export default function CharacterNameStep() {
                 );
               })}
             </View>
-          </View>
+          </Animated.View>
 
           {/* Sugerencias */}
-          <View className="mb-8">
+          <Animated.View className="mb-8" style={{ opacity: suggestionsAnim, transform: [{ translateY: suggestionsSlide }] }}>
             <Text className="text-xs font-semibold uppercase tracking-wider mb-3 text-center" style={{ color: colors.textMuted }}>
               Ideas de nombre
             </Text>
@@ -242,11 +311,11 @@ export default function CharacterNameStep() {
                 </TouchableOpacity>
               ))}
             </View>
-          </View>
+          </Animated.View>
         </View>
 
         {/* Footer con botones de navegación */}
-        <View className="px-5 pb-10 pt-4 border-t" style={{ borderTopColor: colors.borderDefault }}>
+        <Animated.View className="px-5 pb-10 pt-4 border-t" style={{ borderTopColor: colors.borderDefault, opacity: footerAnim, transform: [{ translateY: footerSlide }] }}>
           <TouchableOpacity
             className="rounded-xl py-4 items-center flex-row justify-center"
             style={{
@@ -256,12 +325,12 @@ export default function CharacterNameStep() {
             onPress={handleNext}
             disabled={!isValid}
           >
-            <Text className="text-white font-bold text-base mr-2">
+            <Text className="font-bold text-base mr-2" style={{ color: colors.textInverted }}>
               Siguiente: Raza
             </Text>
-            <Ionicons name="arrow-forward" size={20} color="white" />
+            <Ionicons name="arrow-forward" size={20} color={colors.textInverted} />
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </View>
       {/* Custom dialog (replaces Alert.alert) */}
       <ConfirmDialog {...dialogProps} />

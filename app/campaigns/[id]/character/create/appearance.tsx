@@ -4,15 +4,15 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
 } from "react-native";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useCreationStore, TOTAL_STEPS } from "@/stores/creationStore";
+import { useCreationStore } from "@/stores/creationStore";
 import type { Appearance } from "@/types/character";
 import { useTheme, useScrollToTop } from "@/hooks";
 import { getCreationThemeOverrides } from "@/utils/creationStepTheme";
+import { WizardStepLayout } from "@/components/creation";
 
 const CURRENT_STEP = 10;
 
@@ -78,8 +78,6 @@ export default function AppearanceStep() {
     router.back();
   };
 
-  const progressPercent = (CURRENT_STEP / TOTAL_STEPS) * 100;
-
   const QUICK_COLORS = [
     { label: "Negro", value: "Negro" },
     { label: "Castaño", value: "Castaño" },
@@ -104,51 +102,18 @@ export default function AppearanceStep() {
   ];
 
   return (
-    <View style={[styles.container, themed.container]}>
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: 40 }}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <TouchableOpacity
-              style={[styles.backButton, themed.backButton]}
-              onPress={handleBack}
-            >
-              <Ionicons
-                name="arrow-back"
-                size={22}
-                color={colors.textPrimary}
-              />
-            </TouchableOpacity>
-            <Text style={[styles.stepText, themed.stepText]}>
-              Paso {CURRENT_STEP} de {TOTAL_STEPS}
-            </Text>
-            <View style={{ height: 40, width: 40 }} />
-          </View>
-          <View style={[styles.progressBar, themed.progressBar]}>
-            <View
-              style={[styles.progressFill, { width: `${progressPercent}%` }]}
-            />
-          </View>
-        </View>
-
-        {/* Title */}
-        <View style={styles.titleSection}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="body-outline" size={40} color={colors.accentRed} />
-          </View>
-          <Text style={[styles.title, themed.title]}>Apariencia</Text>
-          <Text style={[styles.subtitle, themed.subtitle]}>
-            Describe el aspecto físico de tu personaje. Todos los campos son
-            opcionales — puedes completarlos más adelante desde la hoja de
-            personaje.
-          </Text>
-        </View>
-
+    <WizardStepLayout
+      currentStep={CURRENT_STEP}
+      title="Apariencia"
+      subtitle="Describe el aspecto físico de tu personaje. Todos los campos son opcionales — puedes completarlos más adelante desde la hoja de personaje."
+      iconName="body-outline"
+      nextLabel="Siguiente: Resumen Final"
+      canProceed={true}
+      onNext={handleNext}
+      onBack={handleBack}
+      scrollRef={scrollRef}
+      keyboardShouldPersistTaps="handled"
+    >
         {/* Quick fields in a grid */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, themed.sectionTitle]}>
@@ -339,90 +304,11 @@ export default function AppearanceStep() {
             </Text>
           </View>
         </View>
-      </ScrollView>
-
-      {/* Footer */}
-      <View style={[styles.footer, themed.footer]}>
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Text style={styles.nextButtonText}>Siguiente: Resumen Final</Text>
-          <Ionicons name="arrow-forward" size={20} color="white" />
-        </TouchableOpacity>
-      </View>
-    </View>
+    </WizardStepLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#272519",
-  },
-  scroll: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 64,
-    paddingBottom: 16,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  backButton: {
-    height: 40,
-    width: 40,
-    borderRadius: 20,
-    backgroundColor: "#2E2C1E",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepText: {
-    color: "#AAA37B",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: "#2E2C1E",
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#8f3d38",
-    borderRadius: 3,
-  },
-  titleSection: {
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  iconCircle: {
-    height: 80,
-    width: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(143,61,56,0.15)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  title: {
-    color: "#ffffff",
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: "#AAA37B",
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 22,
-    paddingHorizontal: 16,
-  },
   section: {
     paddingHorizontal: 20,
     marginBottom: 20,
@@ -442,7 +328,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   fieldHint: {
-    color: "#AAA37B",
+    color: "#AAB8C8",
     fontSize: 13,
     lineHeight: 18,
     marginBottom: 10,
@@ -456,10 +342,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   input: {
-    backgroundColor: "#2E2C1E",
+    backgroundColor: "#101B2E",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#1E2D42",
     paddingHorizontal: 16,
     paddingVertical: 12,
     color: "#ffffff",
@@ -483,19 +369,19 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   quickChip: {
-    backgroundColor: "#323021",
+    backgroundColor: "#101B2E",
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#1E2D42",
   },
   quickChipSelected: {
-    borderColor: "#8f3d38",
-    backgroundColor: "rgba(143,61,56,0.2)",
+    borderColor: "#00BCD4",
+    backgroundColor: "rgba(0,188,212,0.2)",
   },
   quickChipText: {
-    color: "#AAA37B",
+    color: "#AAB8C8",
     fontSize: 13,
     fontWeight: "600",
   },
@@ -505,11 +391,11 @@ const styles = StyleSheet.create({
   hintBox: {
     flexDirection: "row",
     alignItems: "flex-start",
-    backgroundColor: "rgba(178,172,136,0.1)",
+    backgroundColor: "rgba(0,229,255,0.1)",
     borderRadius: 10,
     padding: 14,
     borderWidth: 1,
-    borderColor: "rgba(178,172,136,0.2)",
+    borderColor: "rgba(0,229,255,0.2)",
   },
   hintText: {
     color: "#d9d9e6",
@@ -517,26 +403,5 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginLeft: 10,
     flex: 1,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#514D35",
-  },
-  nextButton: {
-    backgroundColor: "#8f3d38",
-    borderRadius: 12,
-    paddingVertical: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  nextButtonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginRight: 8,
   },
 });

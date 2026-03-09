@@ -13,8 +13,8 @@ import {
   StyleSheet,
   Animated,
   Easing,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme, useEntranceAnimation } from "@/hooks";
@@ -68,7 +68,7 @@ export function CharacterCard({
     }).start();
   };
 
-  const accentColor = classTheme?.color ?? colors.accentRed;
+  const accentColor = colors.accentGold;
   const avatarSource = getCharacterAvatar(item.clase, item.raza, item.sexo);
   const classIcon = (classTheme?.iconName as keyof typeof Ionicons.glyphMap) ?? "shield-half-sharp";
 
@@ -103,11 +103,13 @@ export function CharacterCard({
             <Image
               source={avatarSource}
               style={styles.heroImage}
-              resizeMode="cover"
+              contentFit="cover"
+              contentPosition="top"
+              transition={200}
             />
           ) : (
-            <View style={[styles.heroPlaceholder, { backgroundColor: `${accentColor}18` }]}>
-              <Ionicons name={classIcon} size={56} color={`${accentColor}55`} />
+            <View style={[styles.heroPlaceholder, { backgroundColor: `${classTheme?.color ?? accentColor}18` }]}>
+              <Ionicons name={classIcon} size={56} color={`${classTheme?.color ?? accentColor}55`} />
             </View>
           )}
 
@@ -129,24 +131,24 @@ export function CharacterCard({
             style={[
               styles.levelBadge,
               {
-                backgroundColor: accentColor,
-                shadowColor: accentColor,
+                backgroundColor: classTheme?.color ?? accentColor,
+                shadowColor: classTheme?.color ?? accentColor,
               },
             ]}
           >
-            <Text style={styles.levelText}>NV {item.nivel}</Text>
+            <Text style={[styles.levelText, { color: colors.textInverted }]}>NV {item.nivel}</Text>
           </View>
 
           {/* Accent top bar */}
-          <View style={[styles.accentBar, { backgroundColor: accentColor }]} />
+          <View style={[styles.accentBar, { backgroundColor: classTheme?.color ?? accentColor }]} />
         </View>
 
         {/* ── Info Footer ── */}
         <View style={styles.infoSection}>
           <View style={styles.infoRow}>
             {/* Class icon */}
-            <View style={[styles.classIconCircle, { backgroundColor: `${accentColor}1A` }]}>
-              <Ionicons name={classIcon} size={18} color={accentColor} />
+            <View style={[styles.classIconCircle, { backgroundColor: `${classTheme?.color ?? accentColor}1A` }]}>
+              <Ionicons name={classIcon} size={18} color={classTheme?.color ?? accentColor} />
             </View>
 
             {/* Race · Class */}

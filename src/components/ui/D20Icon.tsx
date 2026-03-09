@@ -10,7 +10,7 @@
  * - Optional pulse animation
  *
  * Usage:
- *   <D20Icon size={64} color="#8f3d38" />
+ *   <D20Icon size={64} color="#00BCD4" />
  *   <D20Icon size={48} variant="gold" animated />
  */
 
@@ -63,18 +63,18 @@ interface D20IconProps {
 
 const VARIANT_COLORS: Record<D20Variant, { primary: string; highlight: string; shadow: string; glow: string; numberColor: string }> = {
   red: {
-    primary: "#8f3d38",
-    highlight: "#ef5350",
-    shadow: "#7f0000",
-    glow: "rgba(143, 61, 56, 0.4)",
-    numberColor: "#ffffff",
+    primary: "#00BCD4",
+    highlight: "#33EBFF",
+    shadow: "#00838F",
+    glow: "rgba(0, 229, 255, 0.4)",
+    numberColor: "#0B1221",
   },
   gold: {
-    primary: "#978F62",
-    highlight: "#fcd34d",
-    shadow: "#92400e",
-    glow: "rgba(178, 172, 136, 0.4)",
-    numberColor: "#3b1a08",
+    primary: "#0E7490",
+    highlight: "#22D3EE",
+    shadow: "#164E63",
+    glow: "rgba(14, 116, 144, 0.4)",
+    numberColor: "#ffffff",
   },
   silver: {
     primary: "#78909c",
@@ -105,11 +105,11 @@ const VARIANT_COLORS: Record<D20Variant, { primary: string; highlight: string; s
     numberColor: "#ffffff",
   },
   dark: {
-    primary: "#423E2B",
-    highlight: "#6C6746",
-    shadow: "#1F1D14",
-    glow: "rgba(66, 62, 43, 0.5)",
-    numberColor: "#CDC9B2",
+    primary: "#182338",
+    highlight: "#2D4054",
+    shadow: "#080E1A",
+    glow: "rgba(24, 35, 56, 0.5)",
+    numberColor: "#00E5FF",
   },
 };
 

@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Modal,
 } from "react-native";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,7 +13,6 @@ import { ConfirmDialog } from "@/components/ui";
 import { useTheme, useDialog, useScrollToTop } from "@/hooks";
 import {
   useCreationStore,
-  TOTAL_STEPS,
   calcTotalScoresPreview,
 } from "@/stores/creationStore";
 import {
@@ -24,6 +24,7 @@ import {
   type AbilityScoreMethod,
 } from "@/types/character";
 import { getCreationThemeOverrides } from "@/utils/creationStepTheme";
+import WizardStepLayout from "@/components/creation/WizardStepLayout";
 
 const CURRENT_STEP = 4;
 
@@ -74,7 +75,7 @@ function rollAbilityScore(): number {
 
 export default function AbilitiesStep() {
   const scrollRef = useScrollToTop();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const themed = getCreationThemeOverrides(colors);
   const router = useRouter();
   const { id: campaignId } = useLocalSearchParams<{ id: string }>();
@@ -89,6 +90,7 @@ export default function AbilitiesStep() {
   } = useCreationStore();
 
   const [method, setMethod] = useState<AbilityScoreMethod | null>(null);
+  const [detailMethodId, setDetailMethodId] = useState<AbilityScoreMethod | null>(null);
   const [scores, setScores] = useState<AbilityScores>({
     fue: 10,
     des: 10,
@@ -198,7 +200,7 @@ export default function AbilitiesStep() {
     return scores;
   };
 
-  const handleSelectMethod = (m: AbilityScoreMethod) => {
+  const applyMethod = (m: AbilityScoreMethod) => {
     setMethod(m);
     const defaultScores = {
       fue: 10,
@@ -222,6 +224,24 @@ export default function AbilitiesStep() {
       car: null,
     });
     setHasRolled(false);
+  };
+
+  const handleSelectMethod = (m: AbilityScoreMethod) => {
+    if (method === m) return; // Already selected
+    if (method) {
+      showWarning(
+        "Cambiar método",
+        "¿Quieres cambiar el método? Se perderán las puntuaciones actuales.",
+        () => applyMethod(m),
+        { confirmText: "Cambiar", cancelText: "Cancelar" },
+      );
+    } else {
+      applyMethod(m);
+    }
+  };
+
+  const handleShowMethodInfo = (m: AbilityScoreMethod) => {
+    setDetailMethodId(m);
   };
 
   const handleStandardAssign = (ability: AbilityKey, value: number) => {
@@ -282,8 +302,6 @@ export default function AbilitiesStep() {
     router.back();
   };
 
-  const progressPercent = (CURRENT_STEP / TOTAL_STEPS) * 100;
-
   // Preview with racial bonuses
   const currentScores = getCurrentScores();
   const totalScores = draft?.raza
@@ -297,124 +315,82 @@ export default function AbilitiesStep() {
     : currentScores;
 
   return (
-    <View style={[styles.container, themed.container]}>
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: 40 }}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <TouchableOpacity
-              style={[styles.backButton, themed.backButton]}
-              onPress={handleBack}
-            >
-              <Ionicons
-                name="arrow-back"
-                size={22}
-                color={colors.textPrimary}
-              />
-            </TouchableOpacity>
-            <Text style={[styles.stepText, themed.stepText]}>
-              Paso {CURRENT_STEP} de {TOTAL_STEPS}
-            </Text>
-            <View style={{ height: 40, width: 40 }} />
-          </View>
-          <View style={[styles.progressBar, themed.progressBar]}>
-            <View
-              style={[styles.progressFill, { width: `${progressPercent}%` }]}
-            />
-          </View>
-        </View>
-
-        {/* Title */}
-        <View style={styles.titleSection}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="stats-chart-outline" size={40} color={colors.accentRed} />
-          </View>
-          <Text style={[styles.title, themed.title]}>
-            Puntuaciones de Característica
-          </Text>
-          <Text style={[styles.subtitle, themed.subtitle]}>
-            Elige un método y asigna tus puntuaciones base. Los bonificadores
-            raciales se aplicarán automáticamente.
-          </Text>
-        </View>
-
+    <>
+    <WizardStepLayout
+      currentStep={CURRENT_STEP}
+      title="Puntuaciones de Característica"
+      subtitle="Elige un método y asigna tus puntuaciones base. Los bonificadores raciales se aplicarán automáticamente."
+      iconName="stats-chart-outline"
+      nextLabel="Siguiente: Trasfondo"
+      canProceed={!!method}
+      onNext={handleNext}
+      onBack={handleBack}
+      scrollRef={scrollRef}
+    >
         {/* Method Selection */}
-        {!method ? (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, themed.sectionTitle]}>
-              Elige un Método
-            </Text>
-            {(
-              [
-                "standard_array",
-                "point_buy",
-                "dice_roll",
-                "manual",
-              ] as AbilityScoreMethod[]
-            ).map((m) => (
-              <TouchableOpacity
-                key={m}
-                style={[styles.methodCard, themed.card]}
-                onPress={() => handleSelectMethod(m)}
-              >
-                <View style={styles.methodIcon}>
-                  <Ionicons
-                    name={
-                      m === "standard_array"
-                        ? "list-outline"
-                        : m === "point_buy"
-                          ? "cart-outline"
-                          : m === "dice_roll"
-                            ? "dice-outline"
-                            : "create-outline"
-                    }
-                    size={28}
-                    color={colors.accentGold}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.methodLabel, themed.textPrimary]}>
-                    {METHOD_LABELS[m]}
-                  </Text>
-                  <Text style={[styles.methodDesc, themed.textSecondary]}>
-                    {METHOD_DESCRIPTIONS[m]}
-                  </Text>
-                </View>
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, themed.sectionTitle]}>
+            {method ? "Método Seleccionado" : "Elige un Método"}
+          </Text>
+          {(
+            [
+              "standard_array",
+              "point_buy",
+              "dice_roll",
+              "manual",
+            ] as AbilityScoreMethod[]
+          ).map((m) => (
+            <TouchableOpacity
+              key={m}
+              style={[
+                styles.methodCard,
+                themed.card,
+                method === m && { borderColor: colors.accentGold },
+              ]}
+              onPress={() => handleSelectMethod(m)}
+            >
+              <View style={[
+                styles.methodIcon,
+                method === m && { backgroundColor: `${colors.accentGold}25` },
+              ]}>
                 <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={colors.textMuted}
+                  name={
+                    m === "standard_array"
+                      ? "list-outline"
+                      : m === "point_buy"
+                        ? "cart-outline"
+                        : m === "dice_roll"
+                          ? "dice-outline"
+                          : "create-outline"
+                  }
+                  size={28}
+                  color={method === m ? colors.accentGold : colors.textMuted}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.methodLabel, themed.textPrimary]}>
+                  {METHOD_LABELS[m]}
+                </Text>
+                <Text style={[styles.methodDesc, themed.textSecondary]}>
+                  {METHOD_DESCRIPTIONS[m]}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => handleShowMethodInfo(m)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons
+                  name={method === m ? "checkmark-circle" : "information-circle-outline"}
+                  size={22}
+                  color={method === m ? colors.accentGold : colors.textMuted}
                 />
               </TouchableOpacity>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.section}>
-            {/* Change method */}
-            <TouchableOpacity
-              style={[styles.changeMethodBtn, themed.card]}
-              onPress={() => {
-                showWarning(
-                  "Cambiar método",
-                  "¿Quieres cambiar el método? Se perderán las puntuaciones actuales.",
-                  () => setMethod(null),
-                  { confirmText: "Cambiar", cancelText: "Cancelar" },
-                );
-              }}
-            >
-              <Ionicons
-                name="swap-horizontal"
-                size={18}
-                color={colors.accentGold}
-              />
-              <Text style={[styles.changeMethodText, themed.textAccent]}>
-                {METHOD_LABELS[method]} — Cambiar método
-              </Text>
             </TouchableOpacity>
+          ))}
+        </View>
+
+        {method && (
+          <View style={styles.section}>
 
             {/* Standard Array */}
             {method === "standard_array" && (
@@ -445,17 +421,17 @@ export default function AbilitiesStep() {
                   )}
                 </View>
 
-                {ABILITY_KEYS.map((key) => (
-                  <View key={key} style={[styles.abilityRow, themed.card]}>
-                    <View style={styles.abilityLabel}>
-                      <Text style={[styles.abilityAbbr, themed.textAccent]}>
-                        {ABILITY_ABBR[key]}
-                      </Text>
-                      <Text style={[styles.abilityName, themed.textPrimary]}>
-                        {ABILITY_NAMES[key]}
-                      </Text>
-                    </View>
-                    {assignedValues[key] !== null ? (
+                {ABILITY_KEYS.map((key) =>
+                  assignedValues[key] !== null ? (
+                    <View key={key} style={[styles.abilityRow, themed.card]}>
+                      <View style={styles.abilityLabel}>
+                        <Text style={[styles.abilityAbbr, themed.textAccent]}>
+                          {ABILITY_ABBR[key]}
+                        </Text>
+                        <Text style={[styles.abilityName, themed.textPrimary]}>
+                          {ABILITY_NAMES[key]}
+                        </Text>
+                      </View>
                       <TouchableOpacity
                         style={[styles.assignedValue, themed.badge]}
                         onPress={() => handleStandardClear(key)}
@@ -471,8 +447,18 @@ export default function AbilitiesStep() {
                           color={colors.accentDanger}
                         />
                       </TouchableOpacity>
-                    ) : (
-                      <View style={styles.valueOptions}>
+                    </View>
+                  ) : (
+                    <View key={key} style={[styles.abilityRowVertical, themed.card]}>
+                      <View style={styles.abilityLabel}>
+                        <Text style={[styles.abilityAbbr, themed.textAccent]}>
+                          {ABILITY_ABBR[key]}
+                        </Text>
+                        <Text style={[styles.abilityName, themed.textPrimary]}>
+                          {ABILITY_NAMES[key]}
+                        </Text>
+                      </View>
+                      <View style={styles.valueOptionsWrap}>
                         {availableStandardValues
                           .filter((v, i, arr) => arr.indexOf(v) === i)
                           .sort((a, b) => b - a)
@@ -493,9 +479,9 @@ export default function AbilitiesStep() {
                             </TouchableOpacity>
                           ))}
                       </View>
-                    )}
-                  </View>
-                ))}
+                    </View>
+                  )
+                )}
               </View>
             )}
 
@@ -589,8 +575,8 @@ export default function AbilitiesStep() {
                   style={styles.rollButton}
                   onPress={handleRollAll}
                 >
-                  <Ionicons name="dice-outline" size={22} color="white" />
-                  <Text style={styles.rollButtonText}>
+                  <Ionicons name="dice-outline" size={22} color={colors.textInverted} />
+                  <Text style={[styles.rollButtonText, themed.textOnPrimary]}>
                     {hasRolled ? "Volver a Tirar" : "Tirar Dados"}
                   </Text>
                 </TouchableOpacity>
@@ -719,102 +705,171 @@ export default function AbilitiesStep() {
             )}
           </View>
         )}
-      </ScrollView>
 
-      {/* Footer */}
-      <View style={[styles.footer, themed.footer]}>
-        <TouchableOpacity
-          style={[
-            styles.nextButton,
-            !isValid() && [
-              styles.nextButtonDisabled,
-              themed.nextButtonDisabled,
-            ],
-          ]}
-          onPress={handleNext}
-          disabled={!isValid()}
-        >
-          <Text style={styles.nextButtonText}>Siguiente: Trasfondo</Text>
-          <Ionicons name="arrow-forward" size={20} color="white" />
-        </TouchableOpacity>
-      </View>
-      {/* Custom dialog (replaces Alert.alert) */}
-      <ConfirmDialog {...dialogProps} />
-    </View>
+      {/* Method Detail Modal */}
+      <Modal
+        visible={!!detailMethodId}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setDetailMethodId(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContainer, { backgroundColor: colors.bgPrimary }]}>
+            {/* Handle bar */}
+            <View style={styles.modalHandle}>
+              <View style={[styles.modalHandleBar, { backgroundColor: colors.borderDefault }]} />
+            </View>
+
+            {/* Header with close button */}
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                {detailMethodId ? METHOD_LABELS[detailMethodId] : ""}
+              </Text>
+              <TouchableOpacity
+                style={[styles.modalCloseBtn, { backgroundColor: colors.bgSecondary }]}
+                onPress={() => setDetailMethodId(null)}
+              >
+                <Ionicons name="close" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {detailMethodId && (
+              <ScrollView style={{ paddingHorizontal: 20 }} showsVerticalScrollIndicator={false}>
+                {/* Method icon + description card */}
+                <View style={[styles.modalDetailCard, { backgroundColor: `${colors.accentGold}10`, borderColor: `${colors.accentGold}40` }]}>
+                  <View style={styles.modalDetailIconRow}>
+                    <View style={[styles.modalDetailIcon, { backgroundColor: `${colors.accentGold}25` }]}>
+                      <Ionicons
+                        name={
+                          detailMethodId === "standard_array"
+                            ? "list-outline"
+                            : detailMethodId === "point_buy"
+                              ? "cart-outline"
+                              : detailMethodId === "dice_roll"
+                                ? "dice-outline"
+                                : "create-outline"
+                        }
+                        size={32}
+                        color={colors.accentGold}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.modalDetailName, { color: colors.textPrimary }]}>
+                        {METHOD_LABELS[detailMethodId]}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.modalDetailDesc, { color: colors.textSecondary }]}>
+                    {METHOD_DESCRIPTIONS[detailMethodId]}
+                  </Text>
+                </View>
+
+                {/* Method-specific info */}
+                <View style={[styles.modalInfoCard, { backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }]}>
+                  <Text style={[styles.modalInfoTitle, { color: colors.textSecondary }]}>
+                    Detalles del Método
+                  </Text>
+
+                  {detailMethodId === "standard_array" && (
+                    <View>
+                      <Text style={[styles.modalInfoText, { color: colors.textSecondary }]}>
+                        Asigna cada uno de estos valores a una característica diferente:
+                      </Text>
+                      <View style={styles.modalBadgeRow}>
+                        {STANDARD_ARRAY.map((v, i) => (
+                          <View key={i} style={[styles.modalBadge, { backgroundColor: colors.bgSecondary }]}>
+                            <Text style={[styles.modalBadgeText, { color: colors.accentGold }]}>{v}</Text>
+                          </View>
+                        ))}
+                      </View>
+                      <Text style={[styles.modalInfoHint, { color: colors.textMuted }]}>
+                        Ideal para principiantes. Puntuaciones equilibradas y predecibles.
+                      </Text>
+                    </View>
+                  )}
+
+                  {detailMethodId === "point_buy" && (
+                    <View>
+                      <Text style={[styles.modalInfoText, { color: colors.textSecondary }]}>
+                        Empiezas con todas las características en 8. Gasta puntos para subir cada valor.
+                      </Text>
+                      <View style={styles.modalBadgeRow}>
+                        <View style={[styles.modalBadge, { backgroundColor: colors.bgSecondary }]}>
+                          <Text style={[styles.modalBadgeText, { color: colors.accentGold }]}>27 puntos</Text>
+                        </View>
+                        <View style={[styles.modalBadge, { backgroundColor: colors.bgSecondary }]}>
+                          <Text style={[styles.modalBadgeText, { color: colors.accentGold }]}>Rango 8–15</Text>
+                        </View>
+                      </View>
+                      <Text style={[styles.modalInfoHint, { color: colors.textMuted }]}>
+                        Mayor personalización. Todos los personajes son igual de equilibrados.
+                      </Text>
+                    </View>
+                  )}
+
+                  {detailMethodId === "dice_roll" && (
+                    <View>
+                      <Text style={[styles.modalInfoText, { color: colors.textSecondary }]}>
+                        Tira 4d6 por cada característica y descarta el dado más bajo.
+                      </Text>
+                      <View style={styles.modalBadgeRow}>
+                        <View style={[styles.modalBadge, { backgroundColor: colors.bgSecondary }]}>
+                          <Text style={[styles.modalBadgeText, { color: colors.accentGold }]}>4d6 drop 1</Text>
+                        </View>
+                        <View style={[styles.modalBadge, { backgroundColor: colors.bgSecondary }]}>
+                          <Text style={[styles.modalBadgeText, { color: colors.accentGold }]}>Rango 3–18</Text>
+                        </View>
+                      </View>
+                      <Text style={[styles.modalInfoHint, { color: colors.textMuted }]}>
+                        Clásico y emocionante. Los resultados pueden ser muy altos o muy bajos.
+                      </Text>
+                    </View>
+                  )}
+
+                  {detailMethodId === "manual" && (
+                    <View>
+                      <Text style={[styles.modalInfoText, { color: colors.textSecondary }]}>
+                        Introduce cualquier valor entre 1 y 30 para cada característica.
+                      </Text>
+                      <View style={styles.modalBadgeRow}>
+                        <View style={[styles.modalBadge, { backgroundColor: colors.bgSecondary }]}>
+                          <Text style={[styles.modalBadgeText, { color: colors.accentGold }]}>Rango 1–30</Text>
+                        </View>
+                        <View style={[styles.modalBadge, { backgroundColor: colors.bgSecondary }]}>
+                          <Text style={[styles.modalBadgeText, { color: colors.accentGold }]}>Sin límites</Text>
+                        </View>
+                      </View>
+                      <Text style={[styles.modalInfoHint, { color: colors.textMuted }]}>
+                        Libertad total. Útil para campañas con reglas personalizadas.
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={{ height: 16 }} />
+              </ScrollView>
+            )}
+
+            {/* Modal Footer */}
+            <View style={[styles.modalFooter, { borderTopColor: colors.borderDefault }]}>
+              <TouchableOpacity
+                style={[styles.modalSelectBtn, { backgroundColor: colors.bgSecondary, borderWidth: 1, borderColor: colors.borderDefault }]}
+                onPress={() => setDetailMethodId(null)}
+              >
+                <Text style={[styles.modalSelectBtnText, { color: colors.textPrimary }]}>Cerrar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </WizardStepLayout>
+    {/* Custom dialog (replaces Alert.alert) */}
+    <ConfirmDialog {...dialogProps} />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#272519",
-  },
-  scroll: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 64,
-    paddingBottom: 16,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  backButton: {
-    height: 40,
-    width: 40,
-    borderRadius: 20,
-    backgroundColor: "#2E2C1E",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepText: {
-    color: "#AAA37B",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: "#2E2C1E",
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#8f3d38",
-    borderRadius: 3,
-  },
-  titleSection: {
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  iconCircle: {
-    height: 80,
-    width: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(143,61,56,0.15)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  title: {
-    color: "#ffffff",
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: "#AAA37B",
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 22,
-    paddingHorizontal: 16,
-  },
   section: {
     paddingHorizontal: 20,
   },
@@ -829,10 +884,10 @@ const styles = StyleSheet.create({
   methodCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#323021",
+    backgroundColor: "#101B2E",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#1E2D42",
     padding: 16,
     marginBottom: 10,
   },
@@ -840,7 +895,7 @@ const styles = StyleSheet.create({
     height: 48,
     width: 48,
     borderRadius: 12,
-    backgroundColor: "rgba(178,172,136,0.15)",
+    backgroundColor: "rgba(0,229,255,0.15)",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 14,
@@ -852,28 +907,12 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   methodDesc: {
-    color: "#AAA37B",
+    color: "#8899AA",
     fontSize: 13,
     lineHeight: 18,
   },
-  changeMethodBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#323021",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#514D35",
-  },
-  changeMethodText: {
-    color: "#CDC9B2",
-    fontSize: 14,
-    fontWeight: "600",
-    marginLeft: 8,
-  },
   infoText: {
-    color: "#AAA37B",
+    color: "#8899AA",
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 16,
@@ -891,7 +930,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   availableBadge: {
-    backgroundColor: "#423E2B",
+    backgroundColor: "#182338",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -899,7 +938,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   availableBadgeText: {
-    color: "#CDC9B2",
+    color: "#00E5FF",
     fontSize: 15,
     fontWeight: "bold",
   },
@@ -912,19 +951,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#323021",
+    backgroundColor: "#101B2E",
     borderRadius: 10,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#1E2D42",
   },
   abilityLabel: {
     flexDirection: "row",
     alignItems: "center",
   },
   abilityAbbr: {
-    color: "#CDC9B2",
+    color: "#00E5FF",
     fontSize: 14,
     fontWeight: "bold",
     width: 36,
@@ -936,7 +975,7 @@ const styles = StyleSheet.create({
   assignedValue: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#423E2B",
+    backgroundColor: "#182338",
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 6,
@@ -951,13 +990,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 6,
   },
+  valueOptionsWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 10,
+  },
+  abilityRowVertical: {
+    backgroundColor: "#101B2E",
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#1E2D42",
+  },
   valueOption: {
-    backgroundColor: "#2E2C1E",
+    backgroundColor: "#101B2E",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#1E2D42",
   },
   valueOptionText: {
     color: "#ffffff",
@@ -972,7 +1025,7 @@ const styles = StyleSheet.create({
     height: 36,
     width: 36,
     borderRadius: 18,
-    backgroundColor: "#423E2B",
+    backgroundColor: "#182338",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -995,12 +1048,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#323021",
+    backgroundColor: "#101B2E",
     borderRadius: 10,
     padding: 14,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#1E2D42",
   },
   pointsLabel: {
     color: "#d9d9e6",
@@ -1008,7 +1061,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   pointsValue: {
-    color: "#CDC9B2",
+    color: "#00E5FF",
     fontSize: 20,
     fontWeight: "bold",
   },
@@ -1016,13 +1069,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#8f3d38",
+    backgroundColor: "#00BCD4",
     borderRadius: 12,
     paddingVertical: 14,
     marginBottom: 16,
   },
   rollButtonText: {
-    color: "#ffffff",
+    color: "#0B1221",
     fontSize: 16,
     fontWeight: "bold",
     marginLeft: 8,
@@ -1034,14 +1087,14 @@ const styles = StyleSheet.create({
   },
   previewSection: {
     marginTop: 20,
-    backgroundColor: "#323021",
+    backgroundColor: "#101B2E",
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#1E2D42",
   },
   previewTitle: {
-    color: "#CDC9B2",
+    color: "#00E5FF",
     fontSize: 13,
     fontWeight: "700",
     textTransform: "uppercase",
@@ -1056,14 +1109,14 @@ const styles = StyleSheet.create({
   },
   previewCard: {
     width: "30%",
-    backgroundColor: "#2E2C1E",
+    backgroundColor: "#101B2E",
     borderRadius: 10,
     padding: 12,
     alignItems: "center",
     marginBottom: 10,
   },
   previewAbbr: {
-    color: "#CDC9B2",
+    color: "#00E5FF",
     fontSize: 12,
     fontWeight: "bold",
     marginBottom: 4,
@@ -1074,7 +1127,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   previewMod: {
-    color: "#AAA37B",
+    color: "#8899AA",
     fontSize: 14,
     fontWeight: "600",
     marginTop: 2,
@@ -1084,29 +1137,124 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
-  footer: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#514D35",
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
-  nextButton: {
-    backgroundColor: "#8f3d38",
-    borderRadius: 12,
-    paddingVertical: 16,
+  modalContainer: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "92%",
+  },
+  modalHandle: {
+    alignItems: "center",
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  modalHandleBar: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+  },
+  modalHeader: {
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  modalCloseBtn: {
+    height: 32,
+    width: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },
-  nextButtonDisabled: {
-    backgroundColor: "#423E2B",
-    opacity: 0.5,
+  modalDetailCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 20,
+    marginBottom: 20,
   },
-  nextButtonText: {
-    color: "#ffffff",
+  modalDetailIconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  modalDetailIcon: {
+    height: 64,
+    width: 64,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 16,
+  },
+  modalDetailName: {
+    fontSize: 22,
+    fontWeight: "bold",
+  },
+  modalDetailDesc: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  modalInfoCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+  },
+  modalInfoTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 12,
+  },
+  modalInfoText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  modalBadgeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 12,
+  },
+  modalBadge: {
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  modalBadgeText: {
+    fontSize: 15,
+    fontWeight: "bold",
+  },
+  modalInfoHint: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontStyle: "italic",
+  },
+  modalFooter: {
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+    paddingTop: 16,
+    borderTopWidth: 1,
+  },
+  modalSelectBtn: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  modalSelectBtnText: {
+    color: "#0B1221",
     fontSize: 16,
     fontWeight: "bold",
-    marginRight: 8,
   },
 });

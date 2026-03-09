@@ -94,8 +94,8 @@ export default function GlowCard({
   const resolvedGlowColor = glowColor ?? colors.accentRed;
   const resolvedAccentColors: [string, string, ...string[]] = accentColors ?? [
     colors.accentRed,
-    "#d32f2f",
-    "#ef5350",
+    "#00BCD4",
+    "#33EBFF",
   ];
   const resolvedBg = backgroundColor ?? colors.bgCard;
   const resolvedBorder = borderColor ?? colors.borderDefault;
@@ -113,7 +113,7 @@ export default function GlowCard({
   useEffect(() => {
     if (fadeIn) {
       const delay = fadeInDelay || 0;
-      Animated.parallel([
+      const anim = Animated.parallel([
         Animated.timing(entranceAnim, {
           toValue: 1,
           duration: 400,
@@ -128,7 +128,9 @@ export default function GlowCard({
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-      ]).start();
+      ]);
+      anim.start();
+      return () => anim.stop();
     }
   }, [fadeIn, fadeInDelay, entranceAnim, translateY]);
 

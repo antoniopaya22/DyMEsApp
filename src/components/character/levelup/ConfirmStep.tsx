@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks";
+import { withAlpha } from "@/utils/theme";
 import { getSpellById } from "@/data/srd/spells";
 import {
   getSubclassFeaturesForLevel,
@@ -87,7 +88,7 @@ export default function ConfirmStep({
   // Level
   changes.push({
     icon: "star",
-    color: colors.accentGold,
+    color: colors.accentRed,
     label: "Nivel",
     detail: `${character.nivel} → ${newLevel}`,
   });
@@ -103,7 +104,7 @@ export default function ConfirmStep({
   // Hit Dice
   changes.push({
     icon: "cube-outline",
-    color: colors.accentGreen,
+    color: colors.accentRed,
     label: "Dados de Golpe",
     detail: `${character.hitDice.total}${classData?.hitDie ?? "d8"} → ${newLevel}${classData?.hitDie ?? "d8"}`,
   });
@@ -112,7 +113,7 @@ export default function ConfirmStep({
   if (profChanged) {
     changes.push({
       icon: "ribbon",
-      color: colors.accentBlue,
+      color: colors.accentRed,
       label: "Bonificador de Competencia",
       detail: `+${oldProfBonus} → +${newProfBonus}`,
     });
@@ -125,7 +126,7 @@ export default function ConfirmStep({
       .join(", ");
     changes.push({
       icon: "trending-up",
-      color: colors.accentPurple,
+      color: colors.accentRed,
       label: "Mejora de Característica",
       detail: asiDetails,
     });
@@ -135,7 +136,7 @@ export default function ConfirmStep({
   if (subclassName.trim()) {
     changes.push({
       icon: "git-branch",
-      color: "#ec4899",
+      color: colors.accentRed,
       label: classData?.subclassLabel ?? "Subclase",
       detail: subclassName.trim(),
     });
@@ -149,7 +150,7 @@ export default function ConfirmStep({
         if (featureNames.length > 0) {
           changes.push({
             icon: "flash",
-            color: "#ec4899",
+            color: colors.accentRed,
             label: "Rasgos de Subclase",
             detail: featureNames.join(", "),
           });
@@ -172,7 +173,7 @@ export default function ConfirmStep({
         if (choiceLabels.length > 0) {
           changes.push({
             icon: "options",
-            color: colors.accentGold,
+            color: colors.accentRed,
             label: "Elecciones",
             detail: choiceLabels.join(" | "),
           });
@@ -185,7 +186,7 @@ export default function ConfirmStep({
   if (summary && summary.features.length > 0) {
     changes.push({
       icon: "flash",
-      color: colors.accentOrange,
+      color: colors.accentRed,
       label: "Nuevos Rasgos",
       detail: summary.features.map((f) => f.nombre).join(", "),
     });
@@ -198,7 +199,7 @@ export default function ConfirmStep({
   if (newCantrips.length > 0) {
     changes.push({
       icon: "sparkles",
-      color: colors.accentBlue,
+      color: colors.accentRed,
       label: "Trucos Nuevos",
       detail: newCantrips.map(resolveSpellName).join(", "),
     });
@@ -207,7 +208,7 @@ export default function ConfirmStep({
   if (newSpells.length > 0) {
     changes.push({
       icon: "book",
-      color: colors.accentBlue,
+      color: colors.accentRed,
       label: "Hechizos Nuevos",
       detail: newSpells.map(resolveSpellName).join(", "),
     });
@@ -216,7 +217,7 @@ export default function ConfirmStep({
   if (newSpellbook.length > 0) {
     changes.push({
       icon: "document-text",
-      color: colors.accentPurple,
+      color: colors.accentRed,
       label: "Libro de Conjuros",
       detail: `+${newSpellbook.length}: ${newSpellbook.map(resolveSpellName).join(", ")}`,
     });
@@ -225,7 +226,7 @@ export default function ConfirmStep({
   if (wantsToSwap && swapOldSpell && swapNewSpell) {
     changes.push({
       icon: "swap-horizontal",
-      color: colors.accentOrange,
+      color: colors.accentRed,
       label: "Intercambio",
       detail: `${resolveSpellName(swapOldSpell)} → ${resolveSpellName(swapNewSpell)}`,
     });
@@ -235,7 +236,7 @@ export default function ConfirmStep({
   if (selectedMetamagic.length > 0) {
     changes.push({
       icon: "flash",
-      color: colors.accentPurple,
+      color: colors.accentRed,
       label: "Metamagia",
       detail: selectedMetamagic
         .map((id) => METAMAGIC_NAMES[id as MetamagicOption] ?? id)
@@ -254,9 +255,9 @@ export default function ConfirmStep({
             width: 64,
             height: 64,
             borderRadius: 32,
-            backgroundColor: "rgba(34, 197, 94, 0.15)",
+            backgroundColor: withAlpha(colors.accentRed, 0.15),
             borderWidth: 2,
-            borderColor: "rgba(34, 197, 94, 0.3)",
+            borderColor: withAlpha(colors.accentRed, 0.3),
             alignItems: "center",
             justifyContent: "center",
             marginBottom: 8,
@@ -265,7 +266,7 @@ export default function ConfirmStep({
           <Ionicons
             name="checkmark-circle"
             size={32}
-            color={colors.accentGreen}
+            color={colors.accentRed}
           />
         </View>
         <Text
@@ -298,12 +299,12 @@ export default function ConfirmStep({
             style={{
               flexDirection: "row",
               alignItems: "center",
-              backgroundColor: colors.borderSubtle,
+              backgroundColor: colors.bgCard,
               borderRadius: 12,
               padding: 12,
               gap: 10,
               borderWidth: 1,
-              borderColor: colors.borderSeparator,
+              borderColor: colors.borderDefault,
             }}
           >
             <Ionicons

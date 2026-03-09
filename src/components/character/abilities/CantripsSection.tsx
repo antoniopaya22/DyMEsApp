@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks";
 import { withAlpha } from "@/utils/theme";
-import { SPELL_LEVEL_COLORS } from "@/constants/abilities";
+import { getSpellLevelColors } from "@/constants/abilities";
 import { getSpellById } from "@/data/srd/spells";
 import { getSpellDescription } from "@/data/srd/spellDescriptions";
 
@@ -18,7 +18,8 @@ function CantripCard({
 }) {
   const { colors } = useTheme();
   const [expanded, setExpanded] = useState(false);
-  const color = SPELL_LEVEL_COLORS[0] ?? "#9ca3af";
+  const spellLevelColors = useMemo(() => getSpellLevelColors(colors), [colors]);
+  const color = spellLevelColors[0] ?? colors.textMuted;
 
   const castingTimeInfo = (() => {
     const desc = getSpellDescription(spellId);
@@ -32,7 +33,7 @@ function CantripCard({
   return (
     <TouchableOpacity
       className="rounded-lg p-3 mb-2 border"
-      style={{ backgroundColor: colors.bgSecondary, borderColor: colors.borderDefault }}
+      style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
       onPress={() => setExpanded(!expanded)}
       activeOpacity={0.7}
     >
@@ -107,19 +108,30 @@ function CantripCard({
                       }}
                     >
                       {desc.tiempo ? (
-                        <Text className="text-[10px]" style={{ color: colors.textMuted }}>
-                          ⏱ {desc.tiempo}
-                        </Text>
+                        <View className="flex-row items-center">
+                          <Ionicons name="time-outline" size={10} color={colors.textMuted} />
+                          <Text className="text-[10px] ml-0.5" style={{ color: colors.textMuted }}>
+                            {desc.tiempo}
+                          </Text>
+                        </View>
                       ) : null}
                       {desc.alcance ? (
-                        <Text className="text-[10px]" style={{ color: colors.textMuted }}>
-                          · 📏 {desc.alcance}
-                        </Text>
+                        <View className="flex-row items-center">
+                          <Text className="text-[10px]" style={{ color: colors.textMuted }}>· </Text>
+                          <Ionicons name="locate-outline" size={10} color={colors.textMuted} />
+                          <Text className="text-[10px] ml-0.5" style={{ color: colors.textMuted }}>
+                            {desc.alcance}
+                          </Text>
+                        </View>
                       ) : null}
                       {desc.duracion ? (
-                        <Text className="text-[10px]" style={{ color: colors.textMuted }}>
-                          · ⏳ {desc.duracion}
-                        </Text>
+                        <View className="flex-row items-center">
+                          <Text className="text-[10px]" style={{ color: colors.textMuted }}>· </Text>
+                          <Ionicons name="hourglass-outline" size={10} color={colors.textMuted} />
+                          <Text className="text-[10px] ml-0.5" style={{ color: colors.textMuted }}>
+                            {desc.duracion}
+                          </Text>
+                        </View>
                       ) : null}
                     </View>
                     {desc.componentes ? (
@@ -171,13 +183,13 @@ export default function CantripsSection({
   if (cantrips.length === 0) return null;
 
   return (
-    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
+    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
       <View className="flex-row items-center mb-3">
         <View
           className="h-8 w-8 rounded-full items-center justify-center mr-3"
-          style={{ backgroundColor: `${colors.accentAmber}20` }}
+          style={{ backgroundColor: `${colors.accentRed}20` }}
         >
-          <Ionicons name="sparkles" size={18} color={colors.accentAmber} />
+          <Ionicons name="sparkles" size={18} color={colors.accentRed} />
         </View>
         <View className="flex-1">
           <Text className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
@@ -189,11 +201,11 @@ export default function CantripsSection({
         </View>
         <View
           className="rounded-full px-2.5 py-0.5"
-          style={{ backgroundColor: `${colors.accentAmber}20` }}
+          style={{ backgroundColor: `${colors.accentRed}20` }}
         >
           <Text
             className="text-xs font-bold"
-            style={{ color: colors.accentAmber }}
+            style={{ color: colors.accentRed }}
           >
             {cantrips.length}
           </Text>

@@ -97,7 +97,7 @@ export function NoteFilterBar({
 
           <TouchableOpacity
             className="flex-row items-center rounded-lg px-2.5 py-1.5 border"
-            style={{ backgroundColor: colors.bgSecondary, borderColor: colors.borderDefault }}
+            style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
             onPress={onToggleSortOptions}
           >
             <Ionicons name="swap-vertical" size={14} color={colors.textMuted} />
@@ -193,13 +193,13 @@ export function NoteFilterBar({
                         borderColor: `${tag.color}50`,
                       }
                     : {
-                        backgroundColor: colors.bgSecondary,
-                        borderColor: colors.borderDefault,
+                        backgroundColor: colors.chipBg,
+                        borderColor: colors.chipBorder,
                       }
                 }
                 onPress={() => onTagFilterChange(isActive ? null : tag.id)}
               >
-                <Text className="text-xs mr-1">{tag.icon}</Text>
+                <Ionicons name={tag.icon as any} size={12} color={isActive ? tag.color : colors.textSecondary} style={{ marginRight: 4 }} />
                 <Text
                   className="text-[10px] font-semibold"
                   style={{ color: isActive ? tag.color : colors.textSecondary }}
@@ -234,10 +234,10 @@ function FilterChip({
       style={{
         backgroundColor: isActive
           ? withAlpha(colors.accentRed, 0.2)
-          : colors.bgSecondary,
+          : colors.chipBg,
         borderColor: isActive
           ? withAlpha(colors.accentRed, 0.5)
-          : colors.borderDefault,
+          : colors.chipBorder,
       }}
       onPress={onPress}
     >

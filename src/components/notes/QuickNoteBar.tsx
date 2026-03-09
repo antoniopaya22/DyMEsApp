@@ -40,7 +40,7 @@ export function QuickNoteBar({ onSubmit, onShowToast }: QuickNoteBarProps) {
   return (
     <View
       className="rounded-card border p-3 mb-4"
-      style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
+      style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}
     >
       {!showInput ? (
         <TouchableOpacity
@@ -63,7 +63,7 @@ export function QuickNoteBar({ onSubmit, onShowToast }: QuickNoteBarProps) {
           <TextInput
             className="rounded-xl px-4 py-3 text-sm border mb-2 min-h-[70px]"
             style={{
-              backgroundColor: colors.bgSecondary,
+              backgroundColor: colors.bgCard,
               color: colors.textPrimary,
               borderColor: colors.borderDefault,
             }}
@@ -100,7 +100,7 @@ export function QuickNoteBar({ onSubmit, onShowToast }: QuickNoteBarProps) {
               onPress={handleSubmit}
               disabled={!content.trim()}
             >
-              <Text className="text-white text-xs font-semibold">
+              <Text className="text-xs font-semibold" style={{ color: colors.textInverted }}>
                 Guardar
               </Text>
             </TouchableOpacity>

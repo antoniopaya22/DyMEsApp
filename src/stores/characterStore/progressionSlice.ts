@@ -32,6 +32,7 @@ import {
   buildLevelRecord,
   applyMagicProgression,
 } from "./levelUpHelpers";
+import { useCharacterListStore, toCharacterSummary } from "@/stores/characterListStore";
 
 type SetState = (partial: Partial<CharacterStore>) => void;
 type GetState = () => CharacterStore;
@@ -189,6 +190,10 @@ export function createProgressionSlice(
         }
       }
 
+      // ── Sincronizar resumen en la lista de personajes ──
+      const charSummary = toCharacterSummary(updatedChar);
+      await useCharacterListStore.getState().updateCharacterSummary(updatedChar.id, charSummary);
+
       return summary;
     },
 
@@ -301,6 +306,10 @@ export function createProgressionSlice(
         STORAGE_KEYS.CLASS_RESOURCES(character.id),
         newClassResources,
       );
+
+      // ── Sincronizar resumen en la lista de personajes ──
+      const resetSummary = toCharacterSummary(updatedChar);
+      await useCharacterListStore.getState().updateCharacterSummary(updatedChar.id, resetSummary);
     },
   };
 }

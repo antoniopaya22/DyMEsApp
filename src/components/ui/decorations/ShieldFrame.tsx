@@ -31,8 +31,8 @@ interface ShieldFrameProps {
 export function ShieldFrame({
   children,
   size = 80,
-  color = "#CDC9B2",
-  backgroundColor = "#2E2C1E",
+  color = "#00E5FF",
+  backgroundColor = "#101B2E",
   showBorder = true,
   showGradient = true,
   style,
@@ -77,7 +77,7 @@ export function ShieldFrame({
           </SvgLinearGradient>
           <SvgLinearGradient id="shieldInner" x1="0.5" y1="0" x2="0.5" y2="1">
             <Stop offset="0" stopColor={backgroundColor} stopOpacity="1" />
-            <Stop offset="1" stopColor="#17160F" stopOpacity="1" />
+            <Stop offset="1" stopColor="#060A14" stopOpacity="1" />
           </SvgLinearGradient>
           <RadialGradient id="shieldShine" cx="0.35" cy="0.25" rx="0.4" ry="0.4">
             <Stop offset="0" stopColor="#ffffff" stopOpacity="0.12" />

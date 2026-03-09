@@ -99,9 +99,9 @@ function getTypeConfig(
     warning: {
       icon: "alert-circle",
       color: colors.accentGold,
-      bgColor: "rgba(178,172,136,0.10)",
-      borderColor: "rgba(178,172,136,0.20)",
-      ringColor: "rgba(178,172,136,0.12)",
+      bgColor: "rgba(0,229,255,0.10)",
+      borderColor: "rgba(0,229,255,0.20)",
+      ringColor: "rgba(0,229,255,0.12)",
     },
     success: {
       icon: "checkmark-circle",
@@ -508,7 +508,7 @@ export default function ConfirmDialog({
                     {/* Default (primary) button gets gradient */}
                     {isDefault && (
                       <LinearGradient
-                        colors={["#A0443F", "#8f3d38", "#7C3530"]}
+                        colors={["#00D4E8", "#00BCD4", "#0097A7"]}
                         style={[StyleSheet.absoluteFill, { borderRadius: 11 }]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 0, y: 1 }}

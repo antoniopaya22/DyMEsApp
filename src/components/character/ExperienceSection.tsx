@@ -20,13 +20,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCharacterStore } from "@/stores/characterStore";
 import {
-  XP_THRESHOLDS,
   MAX_LEVEL,
   getXPProgress,
   getXPForNextLevel,
   canLevelUp as canLevelUpCheck,
   formatXP,
-  getLevelForXP,
 } from "@/data/srd/leveling";
 import { useTheme, usePulseAnimation } from "@/hooks";
 
@@ -70,7 +68,6 @@ export default function ExperienceSection({
   const currentLevel = character.nivel;
   const isMaxLevel = currentLevel >= MAX_LEVEL;
   const nextLevelXP = getXPForNextLevel(currentLevel);
-  const currentLevelXP = XP_THRESHOLDS[currentLevel];
   const progress = getXPProgress(currentXP, currentLevel);
   const canLevel = canLevelUpCheck(currentXP, currentLevel);
 
@@ -122,92 +119,137 @@ export default function ExperienceSection({
     setShowXPInput(false);
   };
 
-  // Calculate display values
-  const xpIntoLevel = currentXP - currentLevelXP;
-  const xpNeededForLevel = nextLevelXP ? nextLevelXP - currentLevelXP : 0;
-  const xpRemaining = nextLevelXP ? nextLevelXP - currentXP : 0;
-
   return (
     <View
       style={{
-        backgroundColor: colors.bgPrimary,
+        backgroundColor: colors.bgElevated,
         borderRadius: 16,
         borderWidth: 1,
         borderColor: canLevel
-          ? "rgba(251, 191, 36, 0.4)"
-          : colors.borderSeparator,
-        padding: 16,
+          ? `${colors.accentGold}66`
+          : colors.borderDefault,
+        padding: 12,
         marginBottom: 16,
       }}
     >
-      {/* Header row */}
+      {/* ── Compact header: icon + XP info + progress + action buttons ── */}
       <View
         style={{
           flexDirection: "row",
-          justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 12,
+          gap: 10,
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <View
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              backgroundColor: "rgba(251, 191, 36, 0.15)",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Ionicons name="star" size={18} color={colors.accentGold} />
-          </View>
-          <View>
+        {/* Star icon */}
+        <View
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 8,
+            backgroundColor: colors.accentGoldGlow,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Ionicons name="star" size={15} color={colors.accentGold} />
+        </View>
+
+        {/* XP info + progress bar */}
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
             <Text
               style={{
-                color: colors.textPrimary,
+                color: colors.accentGold,
                 fontSize: 16,
-                fontWeight: "700",
+                fontWeight: "800",
               }}
             >
-              Experiencia
+              {formatXP(currentXP)} XP
             </Text>
-            <Text
-              style={{
-                color: colors.textSecondary,
-                fontSize: 12,
-                fontWeight: "500",
-              }}
-            >
-              Nivel {currentLevel}
-              {!isMaxLevel ? ` → ${currentLevel + 1}` : " (Máximo)"}
-            </Text>
+            {!isMaxLevel && nextLevelXP ? (
+              <Text
+                style={{
+                  color: colors.textMuted,
+                  fontSize: 11,
+                  fontWeight: "500",
+                }}
+              >
+                / {formatXP(nextLevelXP)}
+              </Text>
+            ) : null}
+            {isMaxLevel && (
+              <Text
+                style={{
+                  color: colors.accentGold,
+                  fontSize: 11,
+                  fontWeight: "600",
+                }}
+              >
+                (Máximo)
+              </Text>
+            )}
           </View>
+
+          {/* Thin progress bar */}
+          {!isMaxLevel && (
+            <View
+              style={{
+                height: 4,
+                backgroundColor: colors.borderSeparator,
+                borderRadius: 2,
+                overflow: "hidden",
+                marginTop: 4,
+              }}
+            >
+              <Animated.View
+                style={{
+                  height: "100%",
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  width: progressAnim.interpolate({
+                    inputRange: [0, 100],
+                    outputRange: ["0%", "100%"],
+                  }),
+                }}
+              >
+                <LinearGradient
+                  colors={
+                    canLevel
+                      ? [colors.accentAmber, colors.accentGold]
+                      : [colors.accentGold, colors.accentGold]
+                  }
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={{ flex: 1 }}
+                />
+              </Animated.View>
+            </View>
+          )}
         </View>
 
         {/* Quick action buttons */}
-        <View style={{ flexDirection: "row", gap: 8 }}>
+        <View style={{ flexDirection: "row", gap: 6 }}>
           <TouchableOpacity
             onPress={togglePresets}
             activeOpacity={0.7}
             style={{
-              width: 34,
-              height: 34,
-              borderRadius: 10,
+              width: 30,
+              height: 30,
+              borderRadius: 8,
               backgroundColor: showPresets
-                ? "rgba(251, 191, 36, 0.25)"
+                ? `${colors.accentGold}40`
                 : colors.borderSeparator,
               alignItems: "center",
               justifyContent: "center",
               borderWidth: 1,
               borderColor: showPresets
-                ? "rgba(251, 191, 36, 0.4)"
+                ? `${colors.accentGold}66`
                 : colors.borderSubtle,
             }}
           >
             <Ionicons
               name="flash-outline"
-              size={16}
+              size={14}
               color={showPresets ? colors.accentGold : colors.textSecondary}
             />
           </TouchableOpacity>
@@ -215,163 +257,47 @@ export default function ExperienceSection({
             onPress={toggleXPInput}
             activeOpacity={0.7}
             style={{
-              width: 34,
-              height: 34,
-              borderRadius: 10,
+              width: 30,
+              height: 30,
+              borderRadius: 8,
               backgroundColor: showXPInput
-                ? "rgba(34, 197, 94, 0.25)"
+                ? `${colors.accentGreen}40`
                 : colors.borderSeparator,
               alignItems: "center",
               justifyContent: "center",
               borderWidth: 1,
               borderColor: showXPInput
-                ? "rgba(34, 197, 94, 0.4)"
+                ? `${colors.accentGreen}66`
                 : colors.borderSubtle,
             }}
           >
             <Ionicons
               name={showXPInput ? "close" : "create-outline"}
-              size={16}
+              size={14}
               color={showXPInput ? colors.accentGreen : colors.textSecondary}
             />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* XP Display */}
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          marginBottom: 8,
-        }}
-      >
-        <Text
-          style={{
-            color: colors.accentGold,
-            fontSize: 28,
-            fontWeight: "800",
-            letterSpacing: -0.5,
-          }}
-        >
-          {formatXP(currentXP)}
-        </Text>
-        {!isMaxLevel && nextLevelXP && (
-          <Text
-            style={{
-              color: colors.textMuted,
-              fontSize: 13,
-              fontWeight: "600",
-            }}
-          >
-            / {formatXP(nextLevelXP)} XP
-          </Text>
-        )}
-        {isMaxLevel && (
-          <Text
-            style={{
-              color: colors.accentGold,
-              fontSize: 13,
-              fontWeight: "600",
-            }}
-          >
-            Nivel Máximo ✨
-          </Text>
-        )}
-      </View>
-
-      {/* Progress bar */}
-      {!isMaxLevel && (
-        <View style={{ marginBottom: 8 }}>
-          <View
-            style={{
-              height: 8,
-              backgroundColor: colors.borderSeparator,
-              borderRadius: 4,
-              overflow: "hidden",
-            }}
-          >
-            <Animated.View
-              style={{
-                height: "100%",
-                borderRadius: 4,
-                overflow: "hidden",
-                width: progressAnim.interpolate({
-                  inputRange: [0, 100],
-                  outputRange: ["0%", "100%"],
-                }),
-              }}
-            >
-              <LinearGradient
-                colors={
-                  canLevel
-                    ? [colors.accentAmber, colors.accentGold, "#fcd34d"]
-                    : ["#6366f1", "#818cf8", "#a5b4fc"]
-                }
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-                style={{ flex: 1 }}
-              />
-            </Animated.View>
-          </View>
-
-          {/* Progress text */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              marginTop: 4,
-            }}
-          >
-            <Text
-              style={{
-                color: colors.textMuted,
-                fontSize: 11,
-                fontWeight: "500",
-              }}
-            >
-              {formatXP(xpIntoLevel)} / {formatXP(xpNeededForLevel)}
-            </Text>
-            <Text
-              style={{
-                color: canLevel ? colors.accentGold : colors.textMuted,
-                fontSize: 11,
-                fontWeight: canLevel ? "700" : "500",
-              }}
-            >
-              {canLevel
-                ? "¡Listo para subir!"
-                : `Faltan ${formatXP(xpRemaining)} XP`}
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* Preset XP buttons */}
+      {/* ── Expandable: Preset XP buttons ── */}
       {showPresets && (
-        <View style={{ marginTop: 8 }}>
+        <View style={{ marginTop: 10 }}>
           {/* Mode toggle */}
-          <View
-            style={{
-              flexDirection: "row",
-              marginBottom: 8,
-              gap: 8,
-            }}
-          >
+          <View style={{ flexDirection: "row", marginBottom: 8, gap: 6 }}>
             <TouchableOpacity
               onPress={() => setIsRemoving(false)}
               activeOpacity={0.7}
               style={{
                 flex: 1,
-                paddingVertical: 8,
-                borderRadius: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
                 backgroundColor: !isRemoving
-                  ? "rgba(34, 197, 94, 0.2)"
+                  ? `${colors.accentGreen}30`
                   : colors.borderSeparator,
                 borderWidth: 1,
                 borderColor: !isRemoving
-                  ? "rgba(34, 197, 94, 0.4)"
+                  ? `${colors.accentGreen}66`
                   : colors.borderSubtle,
                 alignItems: "center",
                 flexDirection: "row",
@@ -381,13 +307,13 @@ export default function ExperienceSection({
             >
               <Ionicons
                 name="add-circle-outline"
-                size={14}
+                size={13}
                 color={!isRemoving ? colors.accentGreen : colors.textMuted}
               />
               <Text
                 style={{
                   color: !isRemoving ? colors.accentGreen : colors.textMuted,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: "600",
                 }}
               >
@@ -399,14 +325,14 @@ export default function ExperienceSection({
               activeOpacity={0.7}
               style={{
                 flex: 1,
-                paddingVertical: 8,
-                borderRadius: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
                 backgroundColor: isRemoving
-                  ? "rgba(239, 68, 68, 0.2)"
+                  ? `${colors.accentDanger}30`
                   : colors.borderSeparator,
                 borderWidth: 1,
                 borderColor: isRemoving
-                  ? "rgba(239, 68, 68, 0.4)"
+                  ? `${colors.accentDanger}66`
                   : colors.borderSubtle,
                 alignItems: "center",
                 flexDirection: "row",
@@ -416,13 +342,13 @@ export default function ExperienceSection({
             >
               <Ionicons
                 name="remove-circle-outline"
-                size={14}
+                size={13}
                 color={isRemoving ? colors.accentDanger : colors.textMuted}
               />
               <Text
                 style={{
                   color: isRemoving ? colors.accentDanger : colors.textMuted,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: "600",
                 }}
               >
@@ -432,13 +358,7 @@ export default function ExperienceSection({
           </View>
 
           {/* Preset grid */}
-          <View
-            style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-              gap: 8,
-            }}
-          >
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
             {XP_PRESETS.map((amount) => (
               <TouchableOpacity
                 key={amount}
@@ -447,16 +367,16 @@ export default function ExperienceSection({
                 }
                 activeOpacity={0.7}
                 style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderRadius: 10,
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 8,
                   backgroundColor: isRemoving
-                    ? "rgba(239, 68, 68, 0.12)"
-                    : "rgba(34, 197, 94, 0.12)",
+                    ? `${colors.accentDanger}18`
+                    : `${colors.accentGreen}18`,
                   borderWidth: 1,
                   borderColor: isRemoving
-                    ? "rgba(239, 68, 68, 0.25)"
-                    : "rgba(34, 197, 94, 0.25)",
+                    ? `${colors.accentDanger}40`
+                    : `${colors.accentGreen}40`,
                 }}
               >
                 <Text
@@ -464,7 +384,7 @@ export default function ExperienceSection({
                     color: isRemoving
                       ? colors.accentDanger
                       : colors.accentGreen,
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: "700",
                   }}
                 >
@@ -477,30 +397,24 @@ export default function ExperienceSection({
         </View>
       )}
 
-      {/* Custom XP input */}
+      {/* ── Expandable: Custom XP input ── */}
       {showXPInput && (
-        <View style={{ marginTop: 8 }}>
+        <View style={{ marginTop: 10 }}>
           {/* Mode toggle */}
-          <View
-            style={{
-              flexDirection: "row",
-              marginBottom: 8,
-              gap: 8,
-            }}
-          >
+          <View style={{ flexDirection: "row", marginBottom: 8, gap: 6 }}>
             <TouchableOpacity
               onPress={() => setIsRemoving(false)}
               activeOpacity={0.7}
               style={{
                 flex: 1,
-                paddingVertical: 8,
-                borderRadius: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
                 backgroundColor: !isRemoving
-                  ? "rgba(34, 197, 94, 0.2)"
+                  ? `${colors.accentGreen}30`
                   : colors.borderSeparator,
                 borderWidth: 1,
                 borderColor: !isRemoving
-                  ? "rgba(34, 197, 94, 0.4)"
+                  ? `${colors.accentGreen}66`
                   : colors.borderSubtle,
                 alignItems: "center",
               }}
@@ -508,7 +422,7 @@ export default function ExperienceSection({
               <Text
                 style={{
                   color: !isRemoving ? colors.accentGreen : colors.textMuted,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: "600",
                 }}
               >
@@ -520,14 +434,14 @@ export default function ExperienceSection({
               activeOpacity={0.7}
               style={{
                 flex: 1,
-                paddingVertical: 8,
-                borderRadius: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
                 backgroundColor: isRemoving
-                  ? "rgba(239, 68, 68, 0.2)"
+                  ? `${colors.accentDanger}30`
                   : colors.borderSeparator,
                 borderWidth: 1,
                 borderColor: isRemoving
-                  ? "rgba(239, 68, 68, 0.4)"
+                  ? `${colors.accentDanger}66`
                   : colors.borderSubtle,
                 alignItems: "center",
               }}
@@ -535,7 +449,7 @@ export default function ExperienceSection({
               <Text
                 style={{
                   color: isRemoving ? colors.accentDanger : colors.textMuted,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: "600",
                 }}
               >
@@ -545,31 +459,25 @@ export default function ExperienceSection({
           </View>
 
           {/* Input row */}
-          <View
-            style={{
-              flexDirection: "row",
-              gap: 8,
-              alignItems: "center",
-            }}
-          >
+          <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
             <View
               style={{
                 flex: 1,
                 flexDirection: "row",
                 alignItems: "center",
                 backgroundColor: colors.borderSeparator,
-                borderRadius: 12,
+                borderRadius: 10,
                 borderWidth: 1,
                 borderColor: isRemoving
-                  ? "rgba(239, 68, 68, 0.3)"
-                  : "rgba(34, 197, 94, 0.3)",
-                paddingHorizontal: 12,
+                  ? `${colors.accentDanger}50`
+                  : `${colors.accentGreen}50`,
+                paddingHorizontal: 10,
               }}
             >
               <Text
                 style={{
                   color: isRemoving ? colors.accentDanger : colors.accentGreen,
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: "700",
                   marginRight: 4,
                 }}
@@ -589,9 +497,9 @@ export default function ExperienceSection({
                 style={{
                   flex: 1,
                   color: colors.textPrimary,
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: "600",
-                  paddingVertical: 10,
+                  paddingVertical: 8,
                 }}
               />
             </View>
@@ -599,17 +507,17 @@ export default function ExperienceSection({
               onPress={handleCustomXP}
               activeOpacity={0.7}
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
+                width: 38,
+                height: 38,
+                borderRadius: 10,
                 overflow: "hidden",
               }}
             >
               <LinearGradient
                 colors={
                   isRemoving
-                    ? [colors.accentDanger, "#dc2626"]
-                    : [colors.accentGreen, "#16a34a"]
+                    ? [colors.accentDanger, colors.accentDanger]
+                    : [colors.accentGreen, colors.accentGreen]
                 }
                 style={{
                   flex: 1,
@@ -619,7 +527,7 @@ export default function ExperienceSection({
               >
                 <Ionicons
                   name="checkmark"
-                  size={20}
+                  size={18}
                   color={colors.textInverted}
                 />
               </LinearGradient>
@@ -628,11 +536,11 @@ export default function ExperienceSection({
         </View>
       )}
 
-      {/* Level Up Button */}
+      {/* ── Level Up Button (primary outlined) ── */}
       {canLevel && !isMaxLevel && (
         <Animated.View
           style={{
-            marginTop: 12,
+            marginTop: 10,
             transform: [{ scale: pulseAnim }],
           }}
         >
@@ -640,95 +548,65 @@ export default function ExperienceSection({
             onPress={onLevelUp}
             activeOpacity={0.8}
             style={{
-              borderRadius: 14,
-              overflow: "hidden",
-              shadowColor: colors.accentGold,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.4,
-              shadowRadius: 12,
-              elevation: 8,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              paddingVertical: 10,
+              paddingHorizontal: 16,
+              borderRadius: 12,
+              borderWidth: 1.5,
+              borderColor: colors.accentGold,
+              backgroundColor: "transparent",
+              gap: 8,
             }}
           >
-            <LinearGradient
-              colors={[colors.accentAmber, "#d97706", "#b45309"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+            <Ionicons
+              name="arrow-up-circle"
+              size={20}
+              color={colors.accentGold}
+            />
+            <Text
               style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                paddingVertical: 14,
-                paddingHorizontal: 24,
-                gap: 10,
+                color: colors.accentGold,
+                fontSize: 15,
+                fontWeight: "700",
               }}
             >
-              <Ionicons
-                name="arrow-up-circle"
-                size={24}
-                color={colors.textInverted}
-              />
-              <View>
-                <Text
-                  style={
-                    {
-                      color: colors.textInverted,
-                      fontSize: 17,
-                      fontWeight: "800",
-                      letterSpacing: 0.5,
-                    } as const
-                  }
-                >
-                  ¡Subir a Nivel {currentLevel + 1}!
-                </Text>
-                <Text
-                  style={{
-                    color: "rgba(255, 255, 255, 0.8)",
-                    fontSize: 12,
-                    fontWeight: "500",
-                  }}
-                >
-                  Toca para configurar tu subida de nivel
-                </Text>
-              </View>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color="rgba(255,255,255,0.7)"
-              />
-            </LinearGradient>
+              ¡Subir a Nivel {currentLevel + 1}!
+            </Text>
           </TouchableOpacity>
         </Animated.View>
       )}
 
-      {/* Milestone level up button (always visible when not max, but less prominent if not enough XP) */}
+      {/* Milestone level up (subtle, always visible when not max and no XP requirement met) */}
       {!canLevel && !isMaxLevel && (
         <TouchableOpacity
           onPress={onLevelUp}
           activeOpacity={0.7}
           style={{
-            marginTop: 12,
+            marginTop: 10,
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
             paddingVertical: 10,
             paddingHorizontal: 16,
             borderRadius: 12,
-            backgroundColor: colors.borderSeparator,
-            borderWidth: 1,
-            borderColor: colors.borderDefault,
+            borderWidth: 1.5,
+            borderColor: colors.accentGold,
+            backgroundColor: "transparent",
             gap: 8,
           }}
         >
           <Ionicons
             name="arrow-up-circle-outline"
-            size={18}
-            color={colors.textSecondary}
+            size={20}
+            color={colors.accentGold}
           />
           <Text
             style={{
-              color: colors.textSecondary,
-              fontSize: 13,
-              fontWeight: "600",
+              color: colors.accentGold,
+              fontSize: 15,
+              fontWeight: "700",
             }}
           >
             Subir de nivel (hito)

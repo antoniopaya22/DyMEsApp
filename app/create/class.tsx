@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Modal } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useCreationStore, TOTAL_STEPS } from "@/stores/creationStore";
@@ -15,6 +15,7 @@ import type { ClassId, AbilityKey } from "@/types/character";
 import { ABILITY_NAMES } from "@/types/character";
 import { useTheme, useScrollToTop } from "@/hooks";
 import { withAlpha, type ThemeColors } from "@/utils/theme";
+import SelectionCard, { PillBadge } from "@/components/creation/SelectionCard";
 
 const CURRENT_STEP = 3;
 
@@ -28,7 +29,7 @@ export default function ClassSelectionStep() {
   const [selectedClass, setSelectedClass] = useState<ClassId | null>(
     draft?.clase ?? null,
   );
-  const [showDetails, setShowDetails] = useState(!!draft?.clase);
+  const [detailClassId, setDetailClassId] = useState<ClassId | null>(null);
 
   const classes = getClassList();
 
@@ -41,18 +42,22 @@ export default function ClassSelectionStep() {
         const currentDraft = useCreationStore.getState().draft;
         if (currentDraft?.clase) {
           setSelectedClass(currentDraft.clase);
-          setShowDetails(true);
         }
       };
       init();
     }, []),
   );
 
-  const currentClassData = selectedClass ? getClassData(selectedClass) : null;
+  const detailClassData = detailClassId ? getClassData(detailClassId) : null;
 
-  const handleSelectClass = (classId: ClassId) => {
-    setSelectedClass(classId);
-    setShowDetails(true);
+  const handleOpenDetails = (classId: ClassId) => {
+    setDetailClassId(classId);
+  };
+
+  const handleConfirmClass = () => {
+    if (!detailClassId) return;
+    setSelectedClass(detailClassId);
+    setDetailClassId(null);
   };
 
   const handleNext = async () => {
@@ -89,11 +94,9 @@ export default function ClassSelectionStep() {
   const getCasterColor = (cls: ClassData): string => {
     switch (cls.casterType) {
       case "full":
-        return colors.accentPurple;
       case "half":
-        return colors.accentBlue;
       case "pact":
-        return colors.accentDeepPurple;
+        return colors.accentRed;
       default:
         return colors.textMuted;
     }
@@ -147,463 +150,444 @@ export default function ClassSelectionStep() {
         </View>
 
         {/* Class list */}
-        {!showDetails && (
-          <View className="px-5">
-            {classes.map((cls) => (
-              <TouchableOpacity
-                key={cls.id}
-                className="mb-3 rounded-card border p-4 active:opacity-80"
-                style={{
-                  backgroundColor: selectedClass === cls.id ? `${cls.color}18` : colors.bgCard,
-                  borderColor: selectedClass === cls.id ? `${cls.color}50` : colors.borderDefault,
-                }}
-                onPress={() => handleSelectClass(cls.id)}
-              >
-                <View className="flex-row items-center">
-                  <View
-                    className={`h-14 w-14 rounded-xl items-center justify-center mr-4`}
-                    style={{
-                      backgroundColor:
-                        selectedClass === cls.id
-                          ? `${cls.color}30`
-                          : colors.bgCard,
-                    }}
-                  >
-                    <Ionicons
-                      name={cls.iconName as any}
-                      size={28}
-                      color={
-                        selectedClass === cls.id ? cls.color : colors.textMuted
-                      }
-                    />
-                  </View>
-
-                  <View className="flex-1">
-                    <Text className="text-lg font-bold" style={{ color: colors.textPrimary }}>
-                      {cls.nombre}
-                    </Text>
-                    <Text
-                      className="text-sm mt-0.5"
-                      style={{ color: colors.textSecondary }}
-                      numberOfLines={2}
-                    >
-                      {cls.descripcion}
-                    </Text>
-                    {/* Quick info pills */}
-                    <View className="flex-row flex-wrap mt-2">
-                      <View className="rounded-full px-2.5 py-0.5 mr-1.5 mb-1" style={{ backgroundColor: colors.bgSecondary }}>
-                        <Text className="text-xs" style={{ color: colors.textSecondary }}>
-                          ❤️ {cls.hitDie}
-                        </Text>
-                      </View>
-                      <View
-                        className="rounded-full px-2.5 py-0.5 mr-1.5 mb-1"
-                        style={{
-                          backgroundColor: `${getCasterColor(cls)}15`,
-                        }}
-                      >
-                        <Text
-                          className="text-xs font-medium"
-                          style={{ color: getCasterColor(cls) }}
-                        >
-                          {getCasterLabel(cls)}
-                        </Text>
-                      </View>
-                      <View className="rounded-full px-2.5 py-0.5 mr-1.5 mb-1" style={{ backgroundColor: colors.bgSecondary }}>
-                        <Text className="text-xs" style={{ color: colors.textSecondary }}>
-                          Salv: {ABILITY_NAMES[cls.savingThrows[0]]},{" "}
-                          {ABILITY_NAMES[cls.savingThrows[1]]}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20}
-                    color={
-                      selectedClass === cls.id ? cls.color : colors.textMuted
-                    }
+        <View className="px-5">
+          {classes.map((cls) => (
+            <SelectionCard
+              key={cls.id}
+              iconName={cls.iconName}
+              title={cls.nombre}
+              subtitle={cls.descripcion}
+              isSelected={selectedClass === cls.id}
+              onPress={() => handleOpenDetails(cls.id)}
+              accentColor={cls.color}
+              trailingIcon="chevron"
+              subtitleLines={2}
+              pills={
+                <>
+                  <PillBadge text={cls.hitDie} icon="heart" iconColor={colors.accentGreen} />
+                  <PillBadge
+                    text={getCasterLabel(cls)}
+                    color={getCasterColor(cls)}
+                    bgColor={`${getCasterColor(cls)}15`}
                   />
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+                  <PillBadge
+                    text={`Salv: ${ABILITY_NAMES[cls.savingThrows[0]]}, ${ABILITY_NAMES[cls.savingThrows[1]]}`}
+                  />
+                </>
+              }
+            />
+          ))}
+        </View>
 
-        {/* Class Details */}
-        {showDetails && currentClassData && (
-          <View className="px-5">
-            {/* Back to list */}
-            <TouchableOpacity
-              className="flex-row items-center mb-4 active:opacity-70"
-              onPress={() => setShowDetails(false)}
-            >
-              <Ionicons name="arrow-back" size={16} color={colors.textMuted} />
-              <Text className="text-sm ml-1" style={{ color: colors.textMuted }}>
-                Ver todas las clases
+      </ScrollView>
+
+      {/* Class Detail Modal */}
+      <Modal
+        visible={!!detailClassId && !!detailClassData}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setDetailClassId(null)}
+      >
+        <View className="flex-1 justify-end" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <View className="rounded-t-3xl" style={{ backgroundColor: colors.bgPrimary, maxHeight: "92%" }}>
+            {/* Handle bar */}
+            <View className="items-center pt-3 pb-1">
+              <View className="w-10 h-1 rounded-full" style={{ backgroundColor: colors.borderDefault }} />
+            </View>
+
+            {/* Header with close button */}
+            <View className="flex-row items-center justify-between px-5 pb-3">
+              <Text className="text-xl font-bold" style={{ color: colors.textPrimary }}>
+                {detailClassData?.nombre}
               </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                className="h-8 w-8 rounded-full items-center justify-center"
+                style={{ backgroundColor: colors.bgSecondary }}
+                onPress={() => setDetailClassId(null)}
+              >
+                <Ionicons name="close" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
 
-            {/* Class Header */}
-            <View
-              className="rounded-card border p-5 mb-5"
-              style={{
-                backgroundColor: `${currentClassData.color}10`,
-                borderColor: `${currentClassData.color}40`,
-              }}
-            >
-              <View className="flex-row items-center mb-4">
+            {detailClassData && (
+              <ScrollView className="px-5" showsVerticalScrollIndicator={false}>
+                {/* Class Header */}
                 <View
-                  className="h-16 w-16 rounded-xl items-center justify-center mr-4"
+                  className="rounded-card border p-5 mb-5"
                   style={{
-                    backgroundColor: `${currentClassData.color}25`,
+                    backgroundColor: `${detailClassData.color}10`,
+                    borderColor: `${detailClassData.color}40`,
                   }}
                 >
-                  <Ionicons
-                    name={currentClassData.iconName as any}
-                    size={32}
-                    color={currentClassData.color}
-                  />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
-                    {currentClassData.nombre}
-                  </Text>
-                  <Text className="text-sm mt-1" style={{ color: colors.textSecondary }}>
-                    Dado de golpe: {currentClassData.hitDie} · PG nivel 1:{" "}
-                    {currentClassData.hitDieMax} + mod. CON
-                  </Text>
-                </View>
-              </View>
-
-              <Text className="text-sm leading-5" style={{ color: colors.textSecondary }}>
-                {currentClassData.descripcion}
-              </Text>
-            </View>
-
-            {/* Hit Points Summary */}
-            <View className="border rounded-card p-4 mb-5" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
-              <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
-                Puntos de Golpe
-              </Text>
-              <View className="flex-row items-center mb-2">
-                <View className="h-8 w-8 rounded-full bg-hp-full/20 items-center justify-center mr-3">
-                  <Ionicons name="heart" size={16} color={colors.accentGreen} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
-                    Nivel 1: {currentClassData.hitDieMax} + mod. Constitución
-                  </Text>
-                  <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
-                    Niveles superiores: {currentClassData.hitDie} (o{" "}
-                    {currentClassData.hitDieFixed}) + mod. CON por nivel
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Saving Throws */}
-            <View className="mb-5">
-              <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
-                Tiradas de Salvación
-              </Text>
-              <View className="flex-row">
-                {currentClassData.savingThrows.map((save, idx) => (
-                  <View
-                    key={save}
-                    className="border rounded-xl px-4 py-3 mr-2 items-center min-w-[100px]"
-                    style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
-                  >
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={18}
-                      color={colors.accentGreen}
-                    />
-                    <Text className="text-sm font-semibold mt-1" style={{ color: colors.textPrimary }}>
-                      {ABILITY_NAMES[save]}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {/* Armor & Weapon Proficiencies */}
-            <View className="mb-5">
-              <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
-                Competencias con Armadura
-              </Text>
-              <View className="flex-row flex-wrap">
-                {currentClassData.armorProficiencies.length > 0 ? (
-                  currentClassData.armorProficiencies.map((armor, idx) => (
+                  <View className="flex-row items-center mb-4">
                     <View
-                      key={idx}
-                      className="border rounded-full px-3 py-1.5 mr-2 mb-2"
-                      style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
+                      className="h-16 w-16 rounded-xl items-center justify-center mr-4"
+                      style={{
+                        backgroundColor: `${detailClassData.color}25`,
+                      }}
                     >
-                      <Text className="text-sm" style={{ color: colors.textSecondary }}>
-                        {armor}
+                      <Ionicons
+                        name={detailClassData.iconName as any}
+                        size={32}
+                        color={detailClassData.color}
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+                        {detailClassData.nombre}
+                      </Text>
+                      <Text className="text-sm mt-1" style={{ color: colors.textSecondary }}>
+                        Dado de golpe: {detailClassData.hitDie} · PG nivel 1:{" "}
+                        {detailClassData.hitDieMax} + mod. CON
                       </Text>
                     </View>
-                  ))
-                ) : (
-                  <View className="rounded-full px-3 py-1.5" style={{ backgroundColor: colors.bgSecondary }}>
-                    <Text className="text-sm" style={{ color: colors.textMuted }}>Ninguna</Text>
+                  </View>
+
+                  <Text className="text-sm leading-5" style={{ color: colors.textSecondary }}>
+                    {detailClassData.descripcion}
+                  </Text>
+                </View>
+
+                {/* Hit Points Summary */}
+                <View className="border rounded-card p-4 mb-5" style={{ backgroundColor: colors.bgElevated, borderColor: withAlpha(colors.textMuted, 0.2) }}>
+                  <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+                    Puntos de Golpe
+                  </Text>
+                  <View className="flex-row items-center mb-2">
+                    <View className="h-8 w-8 rounded-full bg-hp-full/20 items-center justify-center mr-3">
+                      <Ionicons name="heart" size={16} color={colors.accentGreen} />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
+                        Nivel 1: {detailClassData.hitDieMax} + mod. Constitución
+                      </Text>
+                      <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
+                        Niveles superiores: {detailClassData.hitDie} (o{" "}
+                        {detailClassData.hitDieFixed}) + mod. CON por nivel
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Saving Throws */}
+                <View className="mb-5">
+                  <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+                    Tiradas de Salvación
+                  </Text>
+                  <View className="flex-row">
+                    {detailClassData.savingThrows.map((save, idx) => (
+                      <View
+                        key={save}
+                        className="border rounded-xl px-4 py-3 mr-2 items-center min-w-[100px]"
+                        style={{ backgroundColor: colors.bgElevated, borderColor: withAlpha(colors.textMuted, 0.2) }}
+                      >
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={18}
+                          color={colors.accentGreen}
+                        />
+                        <Text className="text-sm font-semibold mt-1" style={{ color: colors.textPrimary }}>
+                          {ABILITY_NAMES[save]}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Armor & Weapon Proficiencies */}
+                <View className="mb-5">
+                  <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+                    Competencias con Armadura
+                  </Text>
+                  <View className="flex-row flex-wrap">
+                    {detailClassData.armorProficiencies.length > 0 ? (
+                      detailClassData.armorProficiencies.map((armor, idx) => (
+                        <View
+                          key={idx}
+                          className="border rounded-full px-3 py-1.5 mr-2 mb-2"
+                          style={{ backgroundColor: colors.bgElevated, borderColor: withAlpha(colors.textMuted, 0.2) }}
+                        >
+                          <Text className="text-sm" style={{ color: colors.textSecondary }}>
+                            {armor}
+                          </Text>
+                        </View>
+                      ))
+                    ) : (
+                      <View className="rounded-full px-3 py-1.5" style={{ backgroundColor: colors.bgSecondary }}>
+                        <Text className="text-sm" style={{ color: colors.textMuted }}>Ninguna</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                <View className="mb-5">
+                  <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+                    Competencias con Armas
+                  </Text>
+                  <View className="flex-row flex-wrap">
+                    {detailClassData.weaponProficiencies.map((weapon, idx) => (
+                      <View
+                        key={idx}
+                        className="border rounded-full px-3 py-1.5 mr-2 mb-2"
+                        style={{ backgroundColor: colors.bgElevated, borderColor: withAlpha(colors.textMuted, 0.2) }}
+                      >
+                        <Text className="text-sm" style={{ color: colors.textSecondary }}>
+                          {weapon}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Tool Proficiencies */}
+                {(detailClassData.toolProficiencies.length > 0 ||
+                  (detailClassData.toolChoices &&
+                    detailClassData.toolChoices.length > 0)) && (
+                  <View className="mb-5">
+                    <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+                      Competencias con Herramientas
+                    </Text>
+                    <View className="flex-row flex-wrap">
+                      {detailClassData.toolProficiencies.map((tool, idx) => (
+                        <View
+                          key={idx}
+                          className="border rounded-full px-3 py-1.5 mr-2 mb-2"
+                          style={{ backgroundColor: colors.bgElevated, borderColor: withAlpha(colors.textMuted, 0.2) }}
+                        >
+                          <Text className="text-sm" style={{ color: colors.textSecondary }}>
+                            {tool}
+                          </Text>
+                        </View>
+                      ))}
+                      {detailClassData.toolChoices && (
+                        <View className="border rounded-full px-3 py-1.5 mr-2 mb-2" style={{ backgroundColor: withAlpha(colors.accentGold, 0.1), borderColor: withAlpha(colors.accentGold, 0.3) }}>
+                          <Text className="text-sm" style={{ color: colors.accentGold }}>
+                            +{detailClassData.toolChoiceCount ?? 1} a elegir
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
                 )}
-              </View>
-            </View>
 
-            <View className="mb-5">
-              <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
-                Competencias con Armas
-              </Text>
-              <View className="flex-row flex-wrap">
-                {currentClassData.weaponProficiencies.map((weapon, idx) => (
-                  <View
-                    key={idx}
-                    className="border rounded-full px-3 py-1.5 mr-2 mb-2"
-                    style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
-                  >
-                    <Text className="text-sm" style={{ color: colors.textSecondary }}>
-                      {weapon}
-                    </Text>
+                {/* Skill Choices */}
+                <View className="mb-5">
+                  <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+                    Habilidades (elige {detailClassData.skillChoiceCount})
+                  </Text>
+                  <View className="flex-row flex-wrap">
+                    {detailClassData.skillChoicePool.map((skillKey, idx) => {
+                      const { SKILLS } = require("@/types/character");
+                      const skillDef = SKILLS[skillKey];
+                      return (
+                        <View
+                          key={idx}
+                          className="border rounded-full px-3 py-1.5 mr-2 mb-2"
+                          style={{ backgroundColor: colors.bgElevated, borderColor: withAlpha(colors.textMuted, 0.2) }}
+                        >
+                          <Text className="text-sm" style={{ color: colors.textSecondary }}>
+                            {skillDef?.nombre ?? skillKey}
+                          </Text>
+                        </View>
+                      );
+                    })}
                   </View>
-                ))}
-              </View>
-            </View>
+                  <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
+                    Se elegirán en el paso de Habilidades.
+                  </Text>
+                </View>
 
-            {/* Tool Proficiencies */}
-            {(currentClassData.toolProficiencies.length > 0 ||
-              (currentClassData.toolChoices &&
-                currentClassData.toolChoices.length > 0)) && (
-              <View className="mb-5">
-                <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
-                  Competencias con Herramientas
-                </Text>
-                <View className="flex-row flex-wrap">
-                  {currentClassData.toolProficiencies.map((tool, idx) => (
+                {/* Spellcasting */}
+                {isSpellcaster(detailClassData.id) && (
+                  <View className="mb-5">
+                    <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+                      Lanzamiento de Conjuros
+                    </Text>
+
+                    <View
+                      className="rounded-card border p-4 mb-3"
+                      style={{
+                        backgroundColor: `${getCasterColor(detailClassData)}10`,
+                        borderColor: `${getCasterColor(detailClassData)}30`,
+                      }}
+                    >
+                      <View className="flex-row items-center mb-2">
+                        <Ionicons
+                          name="sparkles"
+                          size={18}
+                          color={getCasterColor(detailClassData)}
+                        />
+                        <Text
+                          className="text-sm font-bold ml-2"
+                          style={{ color: getCasterColor(detailClassData) }}
+                        >
+                          {getCasterLabel(detailClassData)}
+                        </Text>
+                      </View>
+
+                      {SPELLCASTING_DESCRIPTIONS[detailClassData.id] && (
+                        <Text className="text-sm leading-5" style={{ color: colors.textSecondary }}>
+                          {SPELLCASTING_DESCRIPTIONS[detailClassData.id]}
+                        </Text>
+                      )}
+
+                      {/* Spellcasting details */}
+                      <View className="mt-3 flex-row flex-wrap">
+                        {detailClassData.spellcastingAbility && (
+                          <View className="rounded-full px-2.5 py-1 mr-2 mb-1" style={{ backgroundColor: colors.bgSecondary }}>
+                            <Text className="text-xs" style={{ color: colors.textSecondary }}>
+                              Aptitud:{" "}
+                              {ABILITY_NAMES[detailClassData.spellcastingAbility]}
+                            </Text>
+                          </View>
+                        )}
+                        {detailClassData.cantripsAtLevel1 > 0 && (
+                          <View className="rounded-full px-2.5 py-1 mr-2 mb-1" style={{ backgroundColor: colors.bgSecondary }}>
+                            <Text className="text-xs" style={{ color: colors.textSecondary }}>
+                              Trucos: {detailClassData.cantripsAtLevel1}
+                            </Text>
+                          </View>
+                        )}
+                        {detailClassData.spellsAtLevel1 > 0 && (
+                          <View className="rounded-full px-2.5 py-1 mr-2 mb-1" style={{ backgroundColor: colors.bgSecondary }}>
+                            <Text className="text-xs" style={{ color: colors.textSecondary }}>
+                              Conjuros nv.1: {detailClassData.spellsAtLevel1}
+                            </Text>
+                          </View>
+                        )}
+                        {detailClassData.preparesSpells && (
+                          <View className="rounded-full px-2.5 py-1 mr-2 mb-1" style={{ backgroundColor: colors.bgSecondary }}>
+                            <Text className="text-xs" style={{ color: colors.textSecondary }}>
+                              Prepara conjuros
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {/* Level 1 Features */}
+                <View className="mb-5">
+                  <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+                    Rasgos de Nivel 1
+                  </Text>
+
+                  {detailClassData.level1Features.map((feature, idx) => (
                     <View
                       key={idx}
-                      className="border rounded-full px-3 py-1.5 mr-2 mb-2"
-                      style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
+                      className="border rounded-card p-4 mb-2"
+                      style={{ backgroundColor: colors.bgElevated, borderColor: withAlpha(colors.textMuted, 0.2) }}
                     >
-                      <Text className="text-sm" style={{ color: colors.textSecondary }}>
-                        {tool}
+                      <View className="flex-row items-center mb-2">
+                        <Ionicons
+                          name="star"
+                          size={14}
+                          color={detailClassData.color}
+                        />
+                        <Text className="text-sm font-bold ml-2" style={{ color: colors.textPrimary }}>
+                          {feature.nombre}
+                        </Text>
+                      </View>
+                      <Text className="text-sm leading-5" style={{ color: colors.textSecondary }}>
+                        {feature.descripcion}
                       </Text>
                     </View>
                   ))}
-                  {currentClassData.toolChoices && (
-                    <View className="border rounded-full px-3 py-1.5 mr-2 mb-2" style={{ backgroundColor: withAlpha(colors.accentGold, 0.1), borderColor: withAlpha(colors.accentGold, 0.3) }}>
-                      <Text className="text-sm" style={{ color: colors.accentGold }}>
-                        +{currentClassData.toolChoiceCount ?? 1} a elegir
-                      </Text>
-                    </View>
-                  )}
                 </View>
-              </View>
-            )}
 
-            {/* Skill Choices */}
-            <View className="mb-5">
-              <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
-                Habilidades (elige {currentClassData.skillChoiceCount})
-              </Text>
-              <View className="flex-row flex-wrap">
-                {currentClassData.skillChoicePool.map((skillKey, idx) => {
-                  const { SKILLS } = require("@/types/character");
-                  const skillDef = SKILLS[skillKey];
-                  return (
-                    <View
-                      key={idx}
-                      className="border rounded-full px-3 py-1.5 mr-2 mb-2"
-                      style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
-                    >
-                      <Text className="text-sm" style={{ color: colors.textSecondary }}>
-                        {skillDef?.nombre ?? skillKey}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-              <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
-                Se elegirán en el paso de Habilidades.
-              </Text>
-            </View>
-
-            {/* Spellcasting */}
-            {isSpellcaster(currentClassData.id) && (
-              <View className="mb-5">
-                <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
-                  Lanzamiento de Conjuros
-                </Text>
-
-                <View
-                  className="rounded-card border p-4 mb-3"
-                  style={{
-                    backgroundColor: `${getCasterColor(currentClassData)}10`,
-                    borderColor: `${getCasterColor(currentClassData)}30`,
-                  }}
-                >
+                {/* Subclass info */}
+                <View className="border rounded-card p-4 mb-5" style={{ backgroundColor: colors.bgElevated, borderColor: withAlpha(colors.accentGold, 0.2) }}>
                   <View className="flex-row items-center mb-2">
                     <Ionicons
-                      name="sparkles"
-                      size={18}
-                      color={getCasterColor(currentClassData)}
+                      name="git-branch-outline"
+                      size={16}
+                      color={colors.accentGold}
                     />
-                    <Text
-                      className="text-sm font-bold ml-2"
-                      style={{ color: getCasterColor(currentClassData) }}
-                    >
-                      {getCasterLabel(currentClassData)}
-                    </Text>
-                  </View>
-
-                  {SPELLCASTING_DESCRIPTIONS[currentClassData.id] && (
-                    <Text className="text-sm leading-5" style={{ color: colors.textSecondary }}>
-                      {SPELLCASTING_DESCRIPTIONS[currentClassData.id]}
-                    </Text>
-                  )}
-
-                  {/* Spellcasting details */}
-                  <View className="mt-3 flex-row flex-wrap">
-                    {currentClassData.spellcastingAbility && (
-                      <View className="rounded-full px-2.5 py-1 mr-2 mb-1" style={{ backgroundColor: colors.bgSecondary }}>
-                        <Text className="text-xs" style={{ color: colors.textSecondary }}>
-                          Aptitud:{" "}
-                          {ABILITY_NAMES[currentClassData.spellcastingAbility]}
-                        </Text>
-                      </View>
-                    )}
-                    {currentClassData.cantripsAtLevel1 > 0 && (
-                      <View className="rounded-full px-2.5 py-1 mr-2 mb-1" style={{ backgroundColor: colors.bgSecondary }}>
-                        <Text className="text-xs" style={{ color: colors.textSecondary }}>
-                          Trucos: {currentClassData.cantripsAtLevel1}
-                        </Text>
-                      </View>
-                    )}
-                    {currentClassData.spellsAtLevel1 > 0 && (
-                      <View className="rounded-full px-2.5 py-1 mr-2 mb-1" style={{ backgroundColor: colors.bgSecondary }}>
-                        <Text className="text-xs" style={{ color: colors.textSecondary }}>
-                          Conjuros nv.1: {currentClassData.spellsAtLevel1}
-                        </Text>
-                      </View>
-                    )}
-                    {currentClassData.preparesSpells && (
-                      <View className="rounded-full px-2.5 py-1 mr-2 mb-1" style={{ backgroundColor: colors.bgSecondary }}>
-                        <Text className="text-xs" style={{ color: colors.textSecondary }}>
-                          Prepara conjuros
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </View>
-            )}
-
-            {/* Level 1 Features */}
-            <View className="mb-5">
-              <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
-                Rasgos de Nivel 1
-              </Text>
-
-              {currentClassData.level1Features.map((feature, idx) => (
-                <View
-                  key={idx}
-                  className="border rounded-card p-4 mb-2"
-                  style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
-                >
-                  <View className="flex-row items-center mb-2">
-                    <Ionicons
-                      name="star"
-                      size={14}
-                      color={currentClassData.color}
-                    />
-                    <Text className="text-sm font-bold ml-2" style={{ color: colors.textPrimary }}>
-                      {feature.nombre}
+                    <Text className="text-sm font-bold ml-2" style={{ color: colors.accentGold }}>
+                      {detailClassData.subclassLabel}
                     </Text>
                   </View>
                   <Text className="text-sm leading-5" style={{ color: colors.textSecondary }}>
-                    {feature.descripcion}
+                    Al nivel {detailClassData.subclassLevel}, elegirás tu{" "}
+                    {detailClassData.subclassLabel.toLowerCase()}, que define la
+                    especialización de tu personaje dentro de esta clase.
                   </Text>
                 </View>
-              ))}
-            </View>
 
-            {/* Subclass info */}
-            <View className="border rounded-card p-4 mb-5" style={{ backgroundColor: colors.bgCard, borderColor: withAlpha(colors.accentGold, 0.2) }}>
-              <View className="flex-row items-center mb-2">
-                <Ionicons
-                  name="git-branch-outline"
-                  size={16}
-                  color={colors.accentGold}
-                />
-                <Text className="text-sm font-bold ml-2" style={{ color: colors.accentGold }}>
-                  {currentClassData.subclassLabel}
-                </Text>
-              </View>
-              <Text className="text-sm leading-5" style={{ color: colors.textSecondary }}>
-                Al nivel {currentClassData.subclassLevel}, elegirás tu{" "}
-                {currentClassData.subclassLabel.toLowerCase()}, que define la
-                especialización de tu personaje dentro de esta clase.
-              </Text>
-            </View>
-
-            {/* Equipment Preview */}
-            <View className="mb-5">
-              <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
-                Equipo Inicial
-              </Text>
-
-              {currentClassData.equipmentChoices.map((choice, idx) => (
-                <View
-                  key={idx}
-                  className="border rounded-card p-3 mb-2"
-                  style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
-                >
-                  <Text className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: colors.textSecondary }}>
-                    {choice.label}
+                {/* Equipment Preview */}
+                <View className="mb-5">
+                  <Text className="text-sm font-semibold mb-3 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+                    Equipo Inicial
                   </Text>
-                  {choice.options.map((option, optIdx) => (
+
+                  {detailClassData.equipmentChoices.map((choice, idx) => (
                     <View
-                      key={optIdx}
-                      className="flex-row items-center mb-1 last:mb-0"
+                      key={idx}
+                      className="border rounded-card p-3 mb-2"
+                      style={{ backgroundColor: colors.bgElevated, borderColor: withAlpha(colors.textMuted, 0.2) }}
                     >
-                      <Text className="text-xs mr-1.5" style={{ color: colors.textMuted }}>
-                        {String.fromCharCode(97 + optIdx)})
+                      <Text className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: colors.textSecondary }}>
+                        {choice.label}
                       </Text>
-                      <Text className="text-sm" style={{ color: colors.textSecondary }}>
-                        {option.label}
-                      </Text>
+                      {choice.options.map((option, optIdx) => (
+                        <View
+                          key={optIdx}
+                          className="flex-row items-center mb-1 last:mb-0"
+                        >
+                          <Text className="text-xs mr-1.5" style={{ color: colors.textMuted }}>
+                            {String.fromCharCode(97 + optIdx)})
+                          </Text>
+                          <Text className="text-sm" style={{ color: colors.textSecondary }}>
+                            {option.label}
+                          </Text>
+                        </View>
+                      ))}
                     </View>
                   ))}
-                </View>
-              ))}
 
-              {currentClassData.defaultEquipment.length > 0 && (
-                <View className="border rounded-card p-3 mb-2" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
-                  <Text className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: colors.textSecondary }}>
-                    Siempre incluido
+                  {detailClassData.defaultEquipment.length > 0 && (
+                    <View className="border rounded-card p-3 mb-2" style={{ backgroundColor: colors.bgElevated, borderColor: withAlpha(colors.textMuted, 0.2) }}>
+                      <Text className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: colors.textSecondary }}>
+                        Siempre incluido
+                      </Text>
+                      {detailClassData.defaultEquipment.map((item, idx) => (
+                        <View key={idx} className="flex-row items-center mb-1">
+                          <Text className="text-xs mr-1.5" style={{ color: colors.textMuted }}>•</Text>
+                          <Text className="text-sm" style={{ color: colors.textSecondary }}>
+                            {item}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
+                    Las opciones de equipo se seleccionarán en el paso de
+                    Equipamiento.
                   </Text>
-                  {currentClassData.defaultEquipment.map((item, idx) => (
-                    <View key={idx} className="flex-row items-center mb-1">
-                      <Text className="text-xs mr-1.5" style={{ color: colors.textMuted }}>•</Text>
-                      <Text className="text-sm" style={{ color: colors.textSecondary }}>
-                        {item}
-                      </Text>
-                    </View>
-                  ))}
                 </View>
-              )}
 
-              <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
-                Las opciones de equipo se seleccionarán en el paso de
-                Equipamiento.
-              </Text>
+                {/* Bottom spacing for scroll */}
+                <View className="h-4" />
+              </ScrollView>
+            )}
+
+            {/* Modal Footer */}
+            <View className="px-5 pb-8 pt-4 border-t" style={{ borderTopColor: colors.borderDefault }}>
+              <TouchableOpacity
+                className="rounded-xl py-4 items-center"
+                style={{ backgroundColor: detailClassData?.color ?? colors.accentRed }}
+                onPress={handleConfirmClass}
+              >
+                <Text className="text-white font-bold text-base">
+                  Seleccionar {detailClassData?.nombre}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
-        )}
-      </ScrollView>
+        </View>
+      </Modal>
 
       {/* Footer with navigation buttons */}
       <View className="px-5 pb-10 pt-4 border-t" style={{ backgroundColor: colors.bgPrimary, borderTopColor: colors.borderDefault }}>
@@ -616,10 +600,10 @@ export default function ClassSelectionStep() {
           onPress={handleNext}
           disabled={!selectedClass}
         >
-          <Text className="text-white font-bold text-base mr-2">
+          <Text className="font-bold text-base mr-2" style={{ color: colors.textInverted }}>
             Siguiente: Estadísticas
           </Text>
-          <Ionicons name="arrow-forward" size={20} color="white" />
+          <Ionicons name="arrow-forward" size={20} color={colors.textInverted} />
         </TouchableOpacity>
 
         <TouchableOpacity

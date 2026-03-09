@@ -27,7 +27,7 @@ export default function ClassResourceSlots({
   if (resourceEntries.length === 0) return null;
 
   return (
-    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
+    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
       <View className="flex-row items-center justify-between mb-3">
         <View className="flex-row items-center">
           <Ionicons
@@ -42,10 +42,10 @@ export default function ClassResourceSlots({
         {resourceEntries.some((r) => r.current < r.max && r.max < UNLIMITED_RESOURCE) && (
           <TouchableOpacity
             className="rounded-lg px-3 py-1.5 active:opacity-70"
-            style={{ backgroundColor: withAlpha('#3b82f6', 0.2) }}
+            style={{ backgroundColor: withAlpha(colors.accentBlue, 0.2) }}
             onPress={onRestoreAll}
           >
-            <Text className="text-xs font-semibold" style={{ color: '#3b82f6' }}>
+            <Text className="text-xs font-semibold" style={{ color: colors.accentBlue }}>
               Restaurar todos
             </Text>
           </TouchableOpacity>
@@ -114,7 +114,7 @@ export default function ClassResourceSlots({
                   className="ml-2 rounded-lg px-2.5 py-2 active:opacity-70"
                   onPress={() => onUse(res.id, res.nombre)}
                   disabled={available <= 0}
-                  style={{ backgroundColor: colors.bgSecondary, opacity: available > 0 ? 1 : 0.4 }}
+                  style={{ backgroundColor: colors.bgCard, opacity: available > 0 ? 1 : 0.4 }}
                 >
                   <Ionicons name="remove" size={16} color={resColor} />
                 </TouchableOpacity>
@@ -124,7 +124,7 @@ export default function ClassResourceSlots({
                     onRestore(res.id, res.nombre)
                   }
                   disabled={available >= total}
-                  style={{ backgroundColor: colors.bgSecondary, opacity: available < total ? 1 : 0.4 }}
+                  style={{ backgroundColor: colors.bgCard, opacity: available < total ? 1 : 0.4 }}
                 >
                   <Ionicons name="add" size={16} color={resColor} />
                 </TouchableOpacity>
@@ -148,7 +148,7 @@ export default function ClassResourceSlots({
                     className="flex-row items-center rounded-lg px-3 py-2 mr-2 active:opacity-70"
                     onPress={() => onUse(res.id, res.nombre)}
                     disabled={available <= 0}
-                    style={{ backgroundColor: colors.bgSecondary, opacity: available > 0 ? 1 : 0.4 }}
+                    style={{ backgroundColor: colors.bgCard, opacity: available > 0 ? 1 : 0.4 }}
                   >
                     <Ionicons
                       name="remove-circle-outline"
@@ -165,7 +165,7 @@ export default function ClassResourceSlots({
                       onRestore(res.id, res.nombre)
                     }
                     disabled={available >= total}
-                    style={{ backgroundColor: colors.bgSecondary, opacity: available < total ? 1 : 0.4 }}
+                    style={{ backgroundColor: colors.bgCard, opacity: available < total ? 1 : 0.4 }}
                   >
                     <Ionicons
                       name="add-circle-outline"

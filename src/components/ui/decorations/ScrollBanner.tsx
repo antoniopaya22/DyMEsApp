@@ -25,7 +25,7 @@ interface ScrollBannerProps {
 
 export function ScrollBanner({
   text,
-  color = "#8f3d38",
+  color = "#00E5FF",
   textColor = "#ffffff",
   fontSize = 14,
   height = 40,

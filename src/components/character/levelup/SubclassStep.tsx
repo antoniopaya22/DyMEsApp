@@ -9,6 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/hooks";
+import { withAlpha } from "@/utils/theme";
 import { getSubclassOptions, type SubclassOption } from "@/data/srd/subclasses";
 import {
   getSubclassFeaturesForLevel,
@@ -104,15 +105,15 @@ export default function SubclassStep({
             width: 64,
             height: 64,
             borderRadius: 32,
-            backgroundColor: "rgba(139, 92, 246, 0.1)",
+            backgroundColor: withAlpha(colors.accentRed, 0.1),
             borderWidth: 1,
-            borderColor: "rgba(139, 92, 246, 0.2)",
+            borderColor: withAlpha(colors.accentRed, 0.2),
             alignItems: "center",
             justifyContent: "center",
             marginBottom: 12,
           }}
         >
-          <Ionicons name="git-branch" size={28} color={"#ec4899"} />
+          <Ionicons name="git-branch" size={28} color={colors.accentRed} />
         </View>
         <Text
           style={{
@@ -151,13 +152,13 @@ export default function SubclassStep({
               activeOpacity={0.7}
               style={{
                 backgroundColor: isSelected
-                  ? "rgba(236, 72, 153, 0.1)"
-                  : colors.borderSubtle,
+                  ? withAlpha(colors.accentRed, 0.1)
+                  : colors.bgCard,
                 borderRadius: 14,
                 borderWidth: isSelected ? 2 : 1,
                 borderColor: isSelected
-                  ? "rgba(236, 72, 153, 0.5)"
-                  : colors.borderSeparator,
+                  ? withAlpha(colors.accentRed, 0.5)
+                  : colors.borderDefault,
                 padding: 14,
                 flexDirection: "row",
                 alignItems: "center",
@@ -171,8 +172,8 @@ export default function SubclassStep({
                   height: 22,
                   borderRadius: 11,
                   borderWidth: 2,
-                  borderColor: isSelected ? "#ec4899" : colors.textMuted + "55",
-                  backgroundColor: isSelected ? "#ec4899" : "transparent",
+                  borderColor: isSelected ? colors.accentRed : colors.textMuted + "55",
+                  backgroundColor: isSelected ? colors.accentRed : "transparent",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
@@ -183,7 +184,7 @@ export default function SubclassStep({
                       width: 8,
                       height: 8,
                       borderRadius: 4,
-                      backgroundColor: "#fff",
+                      backgroundColor: colors.textInverted,
                     }}
                   />
                 )}
@@ -191,7 +192,7 @@ export default function SubclassStep({
               <View style={{ flex: 1 }}>
                 <Text
                   style={{
-                    color: isSelected ? "#ec4899" : colors.textPrimary,
+                    color: isSelected ? colors.accentRed : colors.textPrimary,
                     fontSize: 15,
                     fontWeight: "700",
                   }}
@@ -234,13 +235,13 @@ export default function SubclassStep({
           activeOpacity={0.7}
           style={{
             backgroundColor: isCustomSubclass
-              ? "rgba(251, 191, 36, 0.1)"
-              : colors.borderSubtle,
+              ? withAlpha(colors.accentRed, 0.1)
+              : colors.bgCard,
             borderRadius: 14,
             borderWidth: isCustomSubclass ? 2 : 1,
             borderColor: isCustomSubclass
-              ? "rgba(251, 191, 36, 0.5)"
-              : colors.borderSeparator,
+              ? withAlpha(colors.accentRed, 0.5)
+              : colors.borderDefault,
             padding: 14,
             flexDirection: "row",
             alignItems: "center",
@@ -254,10 +255,10 @@ export default function SubclassStep({
               borderRadius: 11,
               borderWidth: 2,
               borderColor: isCustomSubclass
-                ? colors.accentGold
+                ? colors.accentRed
                 : colors.textMuted + "55",
               backgroundColor: isCustomSubclass
-                ? colors.accentGold
+                ? colors.accentRed
                 : "transparent",
               alignItems: "center",
               justifyContent: "center",
@@ -269,7 +270,7 @@ export default function SubclassStep({
                   width: 8,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: "#fff",
+                  backgroundColor: colors.textInverted,
                 }}
               />
             )}
@@ -278,7 +279,7 @@ export default function SubclassStep({
             <Text
               style={{
                 color: isCustomSubclass
-                  ? colors.accentGold
+                  ? colors.accentRed
                   : colors.textPrimary,
                 fontSize: 15,
                 fontWeight: "700",
@@ -303,12 +304,12 @@ export default function SubclassStep({
         {isCustomSubclass && (
           <View
             style={{
-              backgroundColor: colors.borderSubtle,
+              backgroundColor: colors.bgCard,
               borderRadius: 14,
               borderWidth: 1,
               borderColor: subclassName.trim()
-                ? "rgba(251, 191, 36, 0.4)"
-                : colors.borderSeparator,
+                ? withAlpha(colors.accentRed, 0.4)
+                : colors.borderDefault,
               paddingHorizontal: 16,
               paddingVertical: 4,
               marginTop: 4,
@@ -353,10 +354,10 @@ export default function SubclassStep({
           {subLevelBlock.competenciasGanadas && (
             <View
               style={{
-                backgroundColor: "rgba(34, 197, 94, 0.08)",
+                backgroundColor: withAlpha(colors.accentRed, 0.08),
                 borderRadius: 12,
                 borderWidth: 1,
-                borderColor: "rgba(34, 197, 94, 0.25)",
+                borderColor: withAlpha(colors.accentRed, 0.25),
                 padding: 12,
                 marginBottom: 10,
                 flexDirection: "row",
@@ -364,7 +365,7 @@ export default function SubclassStep({
                 gap: 10,
               }}
             >
-              <Ionicons name="shield-checkmark" size={18} color="#22c55e" style={{ marginTop: 2 }} />
+              <Ionicons name="shield-checkmark" size={18} color={colors.accentRed} style={{ marginTop: 2 }} />
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: "700" }}>
                   Competencias Ganadas
@@ -392,10 +393,10 @@ export default function SubclassStep({
           {subLevelBlock.habilidadesExtra && (
             <View
               style={{
-                backgroundColor: "rgba(59, 130, 246, 0.08)",
+                backgroundColor: withAlpha(colors.accentRed, 0.08),
                 borderRadius: 12,
                 borderWidth: 1,
-                borderColor: "rgba(59, 130, 246, 0.25)",
+                borderColor: withAlpha(colors.accentRed, 0.25),
                 padding: 12,
                 marginBottom: 10,
                 flexDirection: "row",
@@ -403,7 +404,7 @@ export default function SubclassStep({
                 gap: 10,
               }}
             >
-              <Ionicons name="school" size={18} color={colors.accentBlue} style={{ marginTop: 2 }} />
+              <Ionicons name="school" size={18} color={colors.accentRed} style={{ marginTop: 2 }} />
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: "700" }}>
                   Habilidades Adicionales
@@ -427,12 +428,12 @@ export default function SubclassStep({
             <View
               key={`rasgo-${idx}`}
               style={{
-                backgroundColor: colors.borderSubtle,
+                backgroundColor: colors.bgCard,
                 borderRadius: 12,
                 borderWidth: 1,
                 borderColor: rasgo.elecciones && rasgo.elecciones.length > 0
-                  ? "rgba(251, 191, 36, 0.3)"
-                  : colors.borderSeparator,
+                  ? withAlpha(colors.accentRed, 0.3)
+                  : colors.borderDefault,
                 padding: 14,
                 marginBottom: 10,
               }}
@@ -441,7 +442,7 @@ export default function SubclassStep({
                 <Ionicons
                   name={rasgo.elecciones && rasgo.elecciones.length > 0 ? "options" : "flash"}
                   size={16}
-                  color={rasgo.elecciones && rasgo.elecciones.length > 0 ? colors.accentGold : colors.accentOrange}
+                  color={rasgo.elecciones && rasgo.elecciones.length > 0 ? colors.accentRed : colors.accentRed}
                 />
                 <Text style={{
                   color: colors.textPrimary,
@@ -470,15 +471,15 @@ export default function SubclassStep({
                   <View key={eleccion.id} style={{ marginTop: 12 }}>
                     <View
                       style={{
-                        backgroundColor: "rgba(251, 191, 36, 0.08)",
+                        backgroundColor: withAlpha(colors.accentRed, 0.08),
                         borderRadius: 10,
                         padding: 10,
                         borderWidth: 1,
-                        borderColor: "rgba(251, 191, 36, 0.2)",
+                        borderColor: withAlpha(colors.accentRed, 0.2),
                       }}
                     >
                       <Text style={{
-                        color: colors.accentGold,
+                        color: colors.accentRed,
                         fontSize: 13,
                         fontWeight: "700",
                         marginBottom: 4,
@@ -503,13 +504,13 @@ export default function SubclassStep({
                               activeOpacity={0.7}
                               style={{
                                 backgroundColor: isOptSelected
-                                  ? "rgba(251, 191, 36, 0.12)"
-                                  : "rgba(0, 0, 0, 0.05)",
+                                  ? withAlpha(colors.accentRed, 0.12)
+                                  : colors.bgCard,
                                 borderRadius: 10,
                                 borderWidth: isOptSelected ? 2 : 1,
                                 borderColor: isOptSelected
-                                  ? "rgba(251, 191, 36, 0.5)"
-                                  : colors.borderSeparator,
+                                  ? withAlpha(colors.accentRed, 0.5)
+                                  : colors.borderDefault,
                                 padding: 10,
                                 flexDirection: "row",
                                 alignItems: "flex-start",
@@ -524,10 +525,10 @@ export default function SubclassStep({
                                   borderRadius: isRadio ? 10 : 4,
                                   borderWidth: 2,
                                   borderColor: isOptSelected
-                                    ? colors.accentGold
+                                    ? colors.accentRed
                                     : colors.textMuted + "55",
                                   backgroundColor: isOptSelected
-                                    ? colors.accentGold
+                                    ? colors.accentRed
                                     : "transparent",
                                   alignItems: "center",
                                   justifyContent: "center",
@@ -541,21 +542,21 @@ export default function SubclassStep({
                                         width: 6,
                                         height: 6,
                                         borderRadius: 3,
-                                        backgroundColor: "#fff",
+                                        backgroundColor: colors.textInverted,
                                       }}
                                     />
                                   ) : (
                                     <Ionicons
                                       name="checkmark"
                                       size={14}
-                                      color="#fff"
+                                      color={colors.textInverted}
                                     />
                                   )
                                 )}
                               </View>
                               <View style={{ flex: 1 }}>
                                 <Text style={{
-                                  color: isOptSelected ? colors.accentGold : colors.textPrimary,
+                                  color: isOptSelected ? colors.accentRed : colors.textPrimary,
                                   fontSize: 14,
                                   fontWeight: "700",
                                 }}>

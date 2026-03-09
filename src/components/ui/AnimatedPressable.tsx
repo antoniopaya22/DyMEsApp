@@ -148,8 +148,8 @@ function getVariantStyles(
       glow: colors.accentDanger,
     },
     gold: {
-      bg: "rgba(151,143,98,0.15)",
-      border: "rgba(151,143,98,0.3)",
+      bg: "rgba(0,229,255,0.15)",
+      border: "rgba(0,229,255,0.3)",
       text: colors.accentGold,
       glow: colors.accentGold,
     },

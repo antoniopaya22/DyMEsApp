@@ -30,7 +30,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 // Re-export so existing consumers keep working
-export { ABILITY_COLORS, ABILITY_KEYS } from "@/constants/abilities";
+export { getAbilityColors, ABILITY_KEYS } from "@/constants/abilities";
 
 // ─── Public types ────────────────────────────────────────────────────
 

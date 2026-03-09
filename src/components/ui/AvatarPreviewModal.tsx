@@ -9,7 +9,6 @@
 import { useEffect, useRef } from "react";
 import {
   View,
-  Image,
   TouchableWithoutFeedback,
   Modal,
   Animated,
@@ -17,7 +16,8 @@ import {
   StyleSheet,
   Dimensions,
 } from "react-native";
-import type { ImageSourcePropType } from "react-native";
+import { Image } from "expo-image";
+import type { ImageSource } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks";
 
@@ -28,7 +28,7 @@ export interface AvatarPreviewModalProps {
   /** Whether the modal is visible */
   visible: boolean;
   /** The image source to display */
-  source: ImageSourcePropType | null;
+  source: ImageSource | null;
   /** Character name shown below the image */
   characterName?: string;
   /** Called when the modal should close */
@@ -137,7 +137,8 @@ export default function AvatarPreviewModal({
             <Image
               source={source}
               style={styles.image}
-              resizeMode="cover"
+              contentFit="cover"
+              transition={200}
             />
 
             {/* Character name overlay at bottom */}

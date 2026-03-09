@@ -83,13 +83,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 8,
+    borderRadius: 20,
     borderWidth: 1,
   },
   icon: {
     marginRight: 5,
   },
   label: {
-    fontWeight: "600",
+    fontWeight: "700",
+    letterSpacing: 0.1,
   },
 });

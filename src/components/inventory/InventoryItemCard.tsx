@@ -106,7 +106,7 @@ export function InventoryItemCard({
 }: InventoryItemCardProps) {
   const { colors } = useTheme();
 
-  const categoryIcon = ITEM_CATEGORY_ICONS[item.categoria] ?? "📦";
+  const categoryIcon = ITEM_CATEGORY_ICONS[item.categoria] ?? "cube";
   const categoryName = ITEM_CATEGORY_NAMES[item.categoria] ?? "Otro";
 
   // Weapon editing state
@@ -201,14 +201,14 @@ export function InventoryItemCard({
     <TouchableOpacity
       key={item.id}
       className="rounded-card border mb-2 overflow-hidden"
-      style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
+      style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}
       onPress={onToggleExpand}
       activeOpacity={0.7}
     >
       <View className="flex-row items-center p-3">
         {/* Category icon */}
         <View className="h-10 w-10 rounded-lg items-center justify-center mr-3" style={{ backgroundColor: colors.bgSecondary }}>
-          <Text className="text-base">{categoryIcon}</Text>
+          <Ionicons name={categoryIcon as any} size={20} color={colors.textSecondary} />
         </View>
 
         {/* Item info */}
@@ -217,14 +217,14 @@ export function InventoryItemCard({
             <Text
               className="text-sm font-semibold flex-1"
               style={{
-                color: item.equipado ? colors.accentGold : colors.textPrimary,
+                color: item.equipado ? colors.accentRed : colors.textPrimary,
               }}
               numberOfLines={1}
             >
               {item.nombre}
             </Text>
             {item.cantidad > 1 && (
-              <View className="rounded-full px-2 py-0.5 ml-1" style={{ backgroundColor: colors.bgSecondary }}>
+              <View className="rounded-full px-2 py-0.5 ml-1" style={{ backgroundColor: colors.chipBg }}>
                 <Text className="text-[10px] font-bold" style={{ color: colors.textSecondary }}>
                   x{item.cantidad}
                 </Text>
@@ -243,9 +243,9 @@ export function InventoryItemCard({
                 <Ionicons
                   name="checkmark-circle"
                   size={10}
-                  color={colors.accentGold}
+                  color={colors.accentRed}
                 />
-                <Text className="text-[10px] ml-0.5" style={{ color: colors.accentGold }}>
+                <Text className="text-[10px] ml-0.5" style={{ color: colors.accentRed }}>
                   Equipado
                 </Text>
               </View>
@@ -255,9 +255,9 @@ export function InventoryItemCard({
                 <Ionicons
                   name="sparkles"
                   size={10}
-                  color={colors.accentPurple}
+                  color={colors.accentRed}
                 />
-                <Text className="text-[10px] ml-0.5" style={{ color: colors.accentPurple }}>
+                <Text className="text-[10px] ml-0.5" style={{ color: colors.accentRed }}>
                   Mágico
                 </Text>
               </View>
@@ -272,15 +272,15 @@ export function InventoryItemCard({
           <TouchableOpacity
             className="h-8 w-8 rounded-full items-center justify-center ml-2 border"
             style={{
-              backgroundColor: item.equipado ? withAlpha(colors.accentGold, 0.2) : colors.bgSecondary,
-              borderColor: item.equipado ? withAlpha(colors.accentGold, 0.5) : colors.borderDefault,
+              backgroundColor: item.equipado ? withAlpha(colors.accentRed, 0.2) : colors.bgCard,
+              borderColor: item.equipado ? withAlpha(colors.accentRed, 0.5) : colors.borderDefault,
             }}
             onPress={onToggleEquip}
           >
             <Ionicons
               name={item.equipado ? "body" : "body-outline"}
               size={16}
-              color={item.equipado ? colors.accentAmber : colors.textMuted}
+              color={item.equipado ? colors.accentRed : colors.textMuted}
             />
           </TouchableOpacity>
         )}
@@ -315,8 +315,8 @@ export function InventoryItemCard({
                     style={{ backgroundColor: colors.bgSecondary }}
                     onPress={handleStartEditWeapon}
                   >
-                    <Ionicons name="pencil" size={10} color={colors.accentBlue} />
-                    <Text className="text-[10px] ml-1" style={{ color: colors.accentBlue }}>
+                    <Ionicons name="pencil" size={10} color={colors.accentRed} />
+                    <Text className="text-[10px] ml-1" style={{ color: colors.accentRed }}>
                       Editar
                     </Text>
                   </TouchableOpacity>
@@ -359,11 +359,11 @@ export function InventoryItemCard({
           {item.categoria === "arma" && !editingWeapon && !item.weaponDetails && onUpdateItem && (
             <TouchableOpacity
               className="flex-row items-center justify-center border rounded-lg py-2 mb-2"
-              style={{ backgroundColor: withAlpha(colors.accentDanger, 0.1), borderColor: withAlpha(colors.accentDanger, 0.3) }}
+              style={{ backgroundColor: withAlpha(colors.accentRed, 0.1), borderColor: withAlpha(colors.accentRed, 0.3) }}
               onPress={handleAddWeaponDetails}
             >
-              <Ionicons name="add-circle-outline" size={14} color={colors.accentDanger} />
-              <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.accentDanger }}>
+              <Ionicons name="add-circle-outline" size={14} color={colors.accentRed} />
+              <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.accentRed }}>
                 Configurar datos de arma
               </Text>
             </TouchableOpacity>
@@ -375,13 +375,13 @@ export function InventoryItemCard({
               className="rounded-lg p-3 mb-2"
               style={{
                 borderWidth: 1,
-                borderColor: colors.accentDanger + "40",
-                backgroundColor: colors.accentDanger + "08",
+                borderColor: colors.accentRed + "40",
+                backgroundColor: colors.accentRed + "08",
               }}
             >
               <Text
                 className="text-[10px] font-semibold uppercase tracking-wider mb-2"
-                style={{ color: colors.accentDanger }}
+                style={{ color: colors.accentRed }}
               >
                 Editar Arma
               </Text>
@@ -509,11 +509,11 @@ export function InventoryItemCard({
                 <Ionicons
                   name={editHasBonusDamage ? "checkbox" : "square-outline"}
                   size={14}
-                  color={editHasBonusDamage ? colors.accentAmber : colors.textMuted}
+                  color={editHasBonusDamage ? colors.accentRed : colors.textMuted}
                 />
                 <Text
                   className="text-[10px] font-semibold ml-1.5"
-                  style={{ color: editHasBonusDamage ? colors.accentAmber : colors.textSecondary }}
+                  style={{ color: editHasBonusDamage ? colors.accentRed : colors.textSecondary }}
                 >
                   Bonificador de daño adicional
                 </Text>
@@ -525,8 +525,8 @@ export function InventoryItemCard({
                   className="rounded-lg p-2.5 mb-2"
                   style={{
                     borderWidth: 1,
-                    borderColor: colors.accentAmber + "30",
-                    backgroundColor: colors.accentAmber + "08",
+                    borderColor: colors.accentRed + "30",
+                    backgroundColor: colors.accentRed + "08",
                   }}
                 >
                   <Text className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.textSecondary }}>
@@ -603,7 +603,7 @@ export function InventoryItemCard({
                   style={{ backgroundColor: colors.accentRed }}
                   onPress={handleSaveWeapon}
                 >
-                  <Text className="text-white text-xs font-bold">Guardar</Text>
+                  <Text className="text-xs font-bold" style={{ color: colors.textInverted }}>Guardar</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -612,7 +612,7 @@ export function InventoryItemCard({
           {/* Armor details */}
           {item.armorDetails && (
             <View className="rounded-lg p-2.5 mb-2" style={{ backgroundColor: colors.bgSecondary }}>
-              <Text className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.accentBlue }}>
+              <Text className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.accentRed }}>
                 Datos de Armadura
               </Text>
               <Text className="text-xs" style={{ color: colors.textSecondary }}>
@@ -642,7 +642,7 @@ export function InventoryItemCard({
           {/* Magic item details */}
           {item.magicDetails && (
             <View className="rounded-lg p-2.5 mb-2" style={{ backgroundColor: colors.bgSecondary }}>
-              <Text className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.accentPurple }}>
+              <Text className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.accentRed }}>
                 Propiedades Mágicas
               </Text>
               <Text className="text-xs" style={{ color: colors.textSecondary }}>
@@ -673,7 +673,7 @@ export function InventoryItemCard({
           {/* Notes */}
           {item.notas && (
             <View className="rounded-lg p-2.5 mb-2" style={{ backgroundColor: colors.bgSecondary }}>
-              <Text className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.accentGold }}>
+              <Text className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: colors.accentRed }}>
                 Notas
               </Text>
               <Text className="text-xs" style={{ color: colors.textSecondary }}>
@@ -685,18 +685,18 @@ export function InventoryItemCard({
           {/* Item stats */}
           <View className="flex-row flex-wrap mb-2">
             {item.valor !== undefined && item.valor > 0 && (
-              <View className="flex-row items-center rounded-lg px-2.5 py-1.5 mr-2 mb-1" style={{ backgroundColor: colors.bgSecondary }}>
+              <View className="flex-row items-center rounded-lg px-2.5 py-1.5 mr-2 mb-1" style={{ backgroundColor: colors.chipBg }}>
                 <Ionicons
                   name="cash-outline"
                   size={12}
-                  color={colors.accentAmber}
+                  color={colors.accentRed}
                 />
                 <Text className="text-xs ml-1" style={{ color: colors.textSecondary }}>
                   {item.valor} MO
                 </Text>
               </View>
             )}
-            <View className="flex-row items-center rounded-lg px-2.5 py-1.5 mr-2 mb-1" style={{ backgroundColor: colors.bgSecondary }}>
+            <View className="flex-row items-center rounded-lg px-2.5 py-1.5 mr-2 mb-1" style={{ backgroundColor: colors.chipBg }}>
               <Ionicons
                 name="scale-outline"
                 size={12}
@@ -714,7 +714,7 @@ export function InventoryItemCard({
             <View className="flex-row items-center">
               <TouchableOpacity
                 className="h-8 w-8 rounded-lg items-center justify-center"
-                style={{ backgroundColor: colors.bgSecondary }}
+                style={{ backgroundColor: colors.bgCard }}
                 onPress={() => onUpdateQuantity(-1)}
               >
                 <Ionicons name="remove" size={16} color={colors.textMuted} />
@@ -724,7 +724,7 @@ export function InventoryItemCard({
               </Text>
               <TouchableOpacity
                 className="h-8 w-8 rounded-lg items-center justify-center"
-                style={{ backgroundColor: colors.bgSecondary }}
+                style={{ backgroundColor: colors.bgCard }}
                 onPress={() => onUpdateQuantity(1)}
               >
                 <Ionicons name="add" size={16} color={colors.textMuted} />

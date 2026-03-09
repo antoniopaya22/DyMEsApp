@@ -3,6 +3,9 @@
  *
  * All business logic lives in `useLevelUpWizard`.
  * Each wizard step is a standalone component under `./levelup/`.
+ *
+ * Visual chrome matches the creation-wizard design language:
+ * continuous progress bar, icon-circle title, solid-color footer buttons.
  */
 
 import React from "react";
@@ -12,12 +15,14 @@ import {
   TouchableOpacity,
   Modal,
   Animated,
+  ActivityIndicator,
+  StyleSheet,
   Platform,
   KeyboardAvoidingView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/hooks";
+import { withAlpha } from "@/utils/theme";
 
 // Hook & step components
 import { useLevelUpWizard } from "./levelup/useLevelUpWizard";
@@ -187,6 +192,10 @@ export default function LevelUpModal({
 
   // ─── Main render ───────────────────────────────────────────────────
 
+  const progressPercent =
+    ((w.currentStepIndex + 1) / w.steps.length) * 100;
+  const disabled = !w.canProceed() || w.isProcessing;
+
   return (
     <Modal
       visible={visible}
@@ -196,173 +205,92 @@ export default function LevelUpModal({
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1, backgroundColor: colors.bgSecondary }}
+        style={[s.root, { backgroundColor: colors.bgPrimary }]}
       >
-        <LinearGradient
-          colors={[
-            colors.gradientMain[0],
-            colors.gradientMain[1],
-            colors.gradientMain[2],
-          ]}
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-          }}
-        />
+        {/* ── Header ── */}
+        <View style={s.header}>
+          <View style={s.headerRow}>
+            <TouchableOpacity
+              onPress={w.goBack}
+              activeOpacity={0.7}
+              style={[
+                s.headerBtn,
+                {
+                  backgroundColor: colors.bgCard,
+                  borderColor: colors.borderDefault,
+                },
+              ]}
+            >
+              <Ionicons
+                name={w.isFirstStep ? "close" : "arrow-back"}
+                size={20}
+                color={colors.textPrimary}
+              />
+            </TouchableOpacity>
 
-        {/* Header */}
-        <View
-          style={{
-            paddingTop: Platform.OS === "ios" ? 56 : 16,
-            paddingHorizontal: 20,
-            paddingBottom: 16,
-          }}
-        >
-          {/* Close & title */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 16,
-            }}
-          >
+            <Text style={[s.stepText, { color: colors.textSecondary }]}>
+              Paso {w.currentStepIndex + 1} de {w.steps.length}
+            </Text>
+
             <TouchableOpacity
               onPress={onClose}
               activeOpacity={0.7}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                backgroundColor: colors.headerButtonBg,
-                borderWidth: 1,
-                borderColor: colors.headerButtonBorder,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              style={[
+                s.headerBtn,
+                {
+                  backgroundColor: colors.bgCard,
+                  borderColor: colors.borderDefault,
+                },
+              ]}
             >
               <Ionicons name="close" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
-
-            <View style={{ alignItems: "center" }}>
-              <Text
-                style={{
-                  color: colors.accentGold,
-                  fontSize: 17,
-                  fontWeight: "800",
-                  letterSpacing: 0.5,
-                }}
-              >
-                Subir de Nivel
-              </Text>
-              <Text
-                style={{
-                  color: colors.textMuted,
-                  fontSize: 12,
-                  fontWeight: "500",
-                }}
-              >
-                {w.character.nombre} · {w.classData?.nombre}
-              </Text>
-            </View>
-
-            {/* Spacer */}
-            <View style={{ width: 36 }} />
           </View>
 
-          {/* Step indicator */}
-          <View
-            style={{
-              flexDirection: "row",
-              gap: 4,
-              alignItems: "center",
-            }}
-          >
-            {w.steps.map((step, index) => {
-              const isActive = index === w.currentStepIndex;
-              const isDone = index < w.currentStepIndex;
-
-              return (
-                <View key={step.id} style={{ flex: 1, alignItems: "center" }}>
-                  <View
-                    style={{
-                      height: 4,
-                      width: "100%",
-                      borderRadius: 2,
-                      backgroundColor: isDone
-                        ? colors.accentGold
-                        : isActive
-                          ? "rgba(251, 191, 36, 0.5)"
-                          : colors.borderSeparator,
-                    }}
-                  />
-                  {isActive && (
-                    <Text
-                      style={{
-                        color: colors.accentGold,
-                        fontSize: 10,
-                        fontWeight: "700",
-                        marginTop: 4,
-                        textTransform: "uppercase",
-                        letterSpacing: 0.5,
-                      }}
-                      numberOfLines={1}
-                    >
-                      {step.title}
-                    </Text>
-                  )}
-                </View>
-              );
-            })}
+          {/* Continuous progress bar */}
+          <View style={[s.progressBar, { backgroundColor: colors.bgInput }]}>
+            <View
+              style={[
+                s.progressFill,
+                {
+                  width: `${progressPercent}%`,
+                  backgroundColor: colors.accentRed,
+                },
+              ]}
+            />
           </View>
         </View>
 
-        {/* Step content */}
+        {/* ── Step content (animated) ── */}
         <Animated.View
-          style={{
-            flex: 1,
-            paddingHorizontal: 20,
-            opacity: w.fadeAnim,
-            transform: [{ translateY: w.slideAnim }],
-          }}
+          style={[
+            s.content,
+            {
+              opacity: w.fadeAnim,
+              transform: [{ translateY: w.slideAnim }],
+            },
+          ]}
         >
-          {/* Step title */}
+          {/* Step title section (centered, like creation wizard) */}
           {w.currentStep && (
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                marginBottom: 16,
-              }}
-            >
+            <View style={s.titleSection}>
               <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 10,
-                  backgroundColor: "rgba(251, 191, 36, 0.12)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                style={[
+                  s.iconCircle,
+                  { backgroundColor: withAlpha(colors.accentRed, 0.15) },
+                ]}
               >
                 <Ionicons
                   name={w.currentStep.icon}
-                  size={18}
-                  color={colors.accentGold}
+                  size={32}
+                  color={colors.accentRed}
                 />
               </View>
-              <Text
-                style={{
-                  color: colors.textPrimary,
-                  fontSize: 20,
-                  fontWeight: "800",
-                }}
-              >
+              <Text style={[s.title, { color: colors.textPrimary }]}>
                 {w.currentStep.title}
+              </Text>
+              <Text style={[s.subtitle, { color: colors.textSecondary }]}>
+                {w.character.nombre} · {w.classData?.nombre}
               </Text>
             </View>
           )}
@@ -370,109 +298,174 @@ export default function LevelUpModal({
           {renderStepContent()}
         </Animated.View>
 
-        {/* Footer buttons */}
-        <View
-          style={{
-            flexDirection: "row",
-            paddingHorizontal: 20,
-            paddingBottom: Platform.OS === "ios" ? 34 : 20,
-            paddingTop: 12,
-            gap: 12,
-            borderTopWidth: 1,
-            borderTopColor: colors.borderSeparator,
-          }}
-        >
-          <TouchableOpacity
-            onPress={w.goBack}
-            activeOpacity={0.7}
-            style={{
-              flex: 1,
-              paddingVertical: 14,
-              borderRadius: 14,
-              backgroundColor: colors.borderSeparator,
-              borderWidth: 1,
-              borderColor: colors.borderDefault,
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "row",
-              gap: 6,
-            }}
-          >
-            <Ionicons
-              name={w.isFirstStep ? "close-outline" : "arrow-back-outline"}
-              size={18}
-              color={colors.textSecondary}
-            />
-            <Text
-              style={{
-                color: colors.textSecondary,
-                fontSize: 15,
-                fontWeight: "600",
-              }}
+        {/* ── Footer ── */}
+        <View style={[s.footer, { borderTopColor: colors.borderDefault }]}>
+          <View style={s.footerRow}>
+            {/* Back / Cancel */}
+            <TouchableOpacity
+              onPress={w.goBack}
+              activeOpacity={0.7}
+              style={[
+                s.secondaryBtn,
+                {
+                  backgroundColor: colors.bgCard,
+                  borderColor: colors.borderDefault,
+                },
+              ]}
             >
-              {w.isFirstStep ? "Cancelar" : "Atrás"}
-            </Text>
-          </TouchableOpacity>
+              <Ionicons
+                name={w.isFirstStep ? "close-outline" : "arrow-back-outline"}
+                size={18}
+                color={colors.textSecondary}
+              />
+              <Text style={[s.secondaryBtnText, { color: colors.textSecondary }]}>
+                {w.isFirstStep ? "Cancelar" : "Atrás"}
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={w.goNext}
-            disabled={!w.canProceed() || w.isProcessing}
-            activeOpacity={0.8}
-            style={{
-              flex: 2,
-              borderRadius: 14,
-              overflow: "hidden",
-              opacity: w.canProceed() && !w.isProcessing ? 1 : 0.5,
-            }}
-          >
-            <LinearGradient
-              colors={
-                w.isLastStep
-                  ? [colors.accentGreen, "#16a34a"]
-                  : [colors.accentAmber, "#d97706"]
-              }
-              style={{
-                paddingVertical: 14,
-                alignItems: "center",
-                justifyContent: "center",
-                flexDirection: "row",
-                gap: 8,
-              }}
+            {/* Next / Confirm */}
+            <TouchableOpacity
+              onPress={w.goNext}
+              disabled={disabled}
+              activeOpacity={0.8}
+              style={[
+                s.primaryBtn,
+                {
+                  backgroundColor: colors.accentRed,
+                },
+                disabled && {
+                  backgroundColor: colors.bgSecondary,
+                  opacity: 0.5,
+                },
+              ]}
             >
               {w.isProcessing ? (
-                <Text
-                  style={{
-                    color: colors.textInverted,
-                    fontSize: 15,
-                    fontWeight: "700",
-                  }}
-                >
-                  Aplicando...
-                </Text>
+                <>
+                  <ActivityIndicator size="small" color={colors.textInverted} />
+                  <Text style={[s.primaryBtnText, { color: colors.textInverted }]}>
+                    Aplicando…
+                  </Text>
+                </>
               ) : (
                 <>
-                  <Text
-                    style={{
-                      color: colors.textInverted,
-                      fontSize: 15,
-                      fontWeight: "700",
-                    }}
-                  >
-                    {w.isLastStep ? "¡Confirmar Nivel!" : "Siguiente"}
+                  <Text style={[s.primaryBtnText, { color: colors.textInverted }]}>
+                    {w.isLastStep ? "¡Confirmar!" : "Siguiente"}
                   </Text>
                   <Ionicons
-                    name={
-                      w.isLastStep ? "checkmark-circle" : "arrow-forward"
-                    }
+                    name={w.isLastStep ? "checkmark-circle" : "arrow-forward"}
                     size={18}
                     color={colors.textInverted}
                   />
                 </>
               )}
-            </LinearGradient>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
+
+// ─── Styles (structural — colors via theme) ──────────────────────────
+
+const s = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === "ios" ? 56 : 16,
+    paddingBottom: 16,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  headerBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  progressBar: {
+    height: 6,
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 3,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  titleSection: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "800",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  footer: {
+    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === "ios" ? 34 : 20,
+    paddingTop: 12,
+    borderTopWidth: 1,
+  },
+  footerRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  secondaryBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 6,
+  },
+  secondaryBtnText: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  primaryBtn: {
+    flex: 2,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
+  primaryBtnText: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+});

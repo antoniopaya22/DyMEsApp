@@ -31,7 +31,7 @@ interface SwordDividerProps {
 
 export function SwordDivider({
   variant = "crossed",
-  color = "#CDC9B2",
+  color = "#00E5FF",
   bladeColor = "#b0b0cc",
   height = 36,
   spacing = 14,

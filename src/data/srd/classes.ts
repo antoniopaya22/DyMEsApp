@@ -187,7 +187,7 @@ export const CLASSES: Record<ClassId, ClassData> = {
     subclassLevel: 3,
     subclassLabel: "Senda Primordial",
     iconName: "flash-outline",
-    color: "#dc2626",
+    color: "#ea580c",
   },
 
   // ─── BARDO ─────────────────────────────────────────────────────────
@@ -411,7 +411,7 @@ export const CLASSES: Record<ClassId, ClassData> = {
     subclassLevel: 3,
     subclassLabel: "Subclase de Brujo",
     iconName: "eye-outline",
-    color: "#7c3aed",
+    color: "#8b5cf6",
   },
 
   // ─── CLÉRIGO ───────────────────────────────────────────────────────
@@ -896,7 +896,7 @@ export const CLASSES: Record<ClassId, ClassData> = {
     subclassLevel: 3,
     subclassLabel: "Arquetipo Marcial",
     iconName: "shield-outline",
-    color: "#b91c1c",
+    color: "#64748b",
   },
 
   // ─── HECHICERO ─────────────────────────────────────────────────────
@@ -994,7 +994,7 @@ export const CLASSES: Record<ClassId, ClassData> = {
     subclassLevel: 3,
     subclassLabel: "Origen Mágico",
     iconName: "sparkles-outline",
-    color: "#dc2626",
+    color: "#c026d3",
   },
 
   // ─── MAGO ──────────────────────────────────────────────────────────

@@ -22,11 +22,13 @@ import type {
   Character,
   SavingThrowProficiencies,
   Sexo,
+  DamageModifier,
+  DamageType,
 } from "@/types/character";
 import type { CustomRaceConfig, CustomBackgroundConfig } from "@/types/creation";
 import { calcProficiencyBonus } from "@/types/character";
 import { STORAGE_KEYS, setItem, getItem, removeItem } from "@/utils/storage";
-import { getRaceData, getSubraceData, getTotalRacialBonuses, getRacialSpellsForLevel, buildRaceDataFromCustom } from "@/data/srd/races";
+import { getRaceData, getSubraceData, getTotalRacialBonuses, getRacialSpellsForLevel, buildRaceDataFromCustom, DRAGON_LINEAGES } from "@/data/srd/races";
 import { getClassData, calcLevel1HP } from "@/data/srd/classes";
 import { getBackgroundData, buildBackgroundDataFromCustom } from "@/data/srd/backgrounds";
 import { createDefaultInventory } from "@/types/item";
@@ -140,6 +142,12 @@ interface CreationActions {
   setAppearance: (appearance: Appearance) => void;
   /** Bonificadores libres de raza (semielfo) */
   setFreeAbilityBonuses: (bonuses: AbilityKey[]) => void;
+  /** Linaje dracónico (solo dracónido) */
+  setDragonLineage: (lineageId: string) => void;
+  /** Herramienta elegida por la raza (ej: enano) */
+  setRaceToolChoice: (tool: string) => void;
+  /** Truco racial elegido (ej: alto elfo) */
+  setRacialCantripChoice: (spellId: string) => void;
 
   // ── Re-creación ──
   /** Crea un borrador pre-rellenado a partir de un personaje existente para re-creación */
@@ -309,6 +317,9 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
         subraza,
         // Limpiar elecciones que dependen de la raza
         skillChoices: undefined,
+        dragonLineage: undefined,
+        raceToolChoice: undefined,
+        racialCantripChoice: undefined,
         // Limpiar datos custom si se elige una raza estándar
         ...(raza !== "personalizada" ? { customRaceData: undefined } : {}),
       },
@@ -450,6 +461,33 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
     if (!draft) return;
     set({
       draft: { ...draft, freeAbilityBonuses: bonuses },
+      isDirty: true,
+    });
+  },
+
+  setDragonLineage: (lineageId: string) => {
+    const { draft } = get();
+    if (!draft) return;
+    set({
+      draft: { ...draft, dragonLineage: lineageId },
+      isDirty: true,
+    });
+  },
+
+  setRaceToolChoice: (tool: string) => {
+    const { draft } = get();
+    if (!draft) return;
+    set({
+      draft: { ...draft, raceToolChoice: tool },
+      isDirty: true,
+    });
+  },
+
+  setRacialCantripChoice: (spellId: string) => {
+    const { draft } = get();
+    if (!draft) return;
+    set({
+      draft: { ...draft, racialCantripChoice: spellId },
       isDirty: true,
     });
   },
@@ -659,8 +697,10 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
       raceTools: raceData.toolProficiencies,
       raceLanguages: raceData.languages,
       subraceWeapons: subraceData?.weaponProficiencies,
+      subraceArmors: subraceData?.armorProficiencies,
       subraceTools: subraceData?.toolProficiencies,
       backgroundTools: backgroundData.toolProficiencies,
+      raceToolChoice: draft.raceToolChoice,
     });
 
     // ── Rasgos ──
@@ -680,6 +720,50 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
       flaws: "",
     };
     const appearance: Appearance = draft.appearance ?? {};
+
+    // ── Resistencias al daño (raciales) ──
+    const damageModifiers: DamageModifier[] = [];
+    if (draft.raza === "personalizada" && draft.customRaceData?.damageResistances) {
+      for (const type of draft.customRaceData.damageResistances) {
+        damageModifiers.push({
+          type,
+          modifier: "resistance" as const,
+          source: draft.customRaceData.nombre || "Raza personalizada",
+        });
+      }
+    } else {
+      // Resistencias SRD
+      if (draft.raza === "enano") {
+        damageModifiers.push({ type: "veneno", modifier: "resistance", source: raceData.nombre });
+      }
+      if (draft.raza === "tiefling") {
+        damageModifiers.push({ type: "fuego", modifier: "resistance", source: raceData.nombre });
+      }
+      if (draft.subraza === "mediano_fornido") {
+        damageModifiers.push({ type: "veneno", modifier: "resistance", source: subraceData!.nombre });
+      }
+      if (draft.raza === "draconido" && draft.dragonLineage) {
+        const lineage = DRAGON_LINEAGES.find(l => l.id === draft.dragonLineage);
+        if (lineage) {
+          const damageTypeId = lineage.damageType
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") as DamageType;
+          damageModifiers.push({
+            type: damageTypeId,
+            modifier: "resistance",
+            source: `Linaje Dracónico (${lineage.dragon})`,
+          });
+        }
+      }
+    }
+
+    // ── Visión en la oscuridad ──
+    const darkvision = draft.raza === "personalizada"
+      ? (draft.customRaceData?.darkvision ? 60 : 0)
+      : raceData.darkvision
+        ? (subraceData?.darkvisionOverride ?? raceData.darkvisionRange ?? 60)
+        : 0;
 
     // ── Hechizos ──
     const racialSpellsLv1 = draft.raza === "personalizada" && draft.customRaceData?.racialSpells
@@ -736,18 +820,14 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
       hitDice: { die: classData.hitDie, total: 1, remaining: 1 },
       deathSaves: { successes: 0, failures: 0 },
       speed: {
-        walk: raceData.speed,
+        walk: subraceData?.speedOverride ?? raceData.speed,
         ...(raceData.flySpeed ? { fly: raceData.flySpeed } : {}),
         ...(raceData.swimSpeed ? { swim: raceData.swimSpeed } : {}),
         ...(raceData.climbSpeed ? { climb: raceData.climbSpeed } : {}),
       },
-      damageModifiers: draft.raza === "personalizada" && draft.customRaceData?.damageResistances
-        ? draft.customRaceData.damageResistances.map((type) => ({
-            type,
-            modifier: "resistance" as const,
-            source: draft.customRaceData!.nombre || "Raza personalizada",
-          }))
-        : [],
+      darkvision,
+      dragonLineage: draft.dragonLineage,
+      damageModifiers,
       conditions: [],
       concentration: null,
       proficiencies,
@@ -855,7 +935,18 @@ export function getAvailableClassSkills(
   const classData = getClassData(classId);
   const granted = getGrantedSkills(raceId, trasfondoId, customBackgroundData);
 
-  return classData.skillChoicePool.filter(
+  // Combinar pool de clase + pool de raza (ej: semielfo puede elegir de las 18)
+  const pool = new Set<SkillKey>(classData.skillChoicePool);
+  if (raceId && raceId !== "personalizada") {
+    const raceData = getRaceData(raceId);
+    if (raceData.skillChoicePool) {
+      for (const skill of raceData.skillChoicePool) {
+        pool.add(skill);
+      }
+    }
+  }
+
+  return [...pool].filter(
     (skill) => !granted.includes(skill)
   );
 }

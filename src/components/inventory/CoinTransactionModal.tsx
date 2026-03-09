@@ -20,22 +20,30 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useCharacterStore } from "@/stores/characterStore";
 import {
-  COIN_NAMES,
   COIN_ABBR,
-  COIN_ICONS,
   type CoinType,
 } from "@/types/item";
 import { useTheme } from "@/hooks";
+import { withAlpha } from "@/utils/theme";
 
 const COIN_ORDER: CoinType[] = ["mpl", "mo", "me", "mp", "mc"];
 
-// Real-world metal colors for coin badges (theme-independent)
-const COIN_COLORS: Record<CoinType, string> = {
-  mc: "#b45309",
-  mp: "#9ca3af",
-  me: "#3b82f6",
-  mo: "#f59e0b",
-  mpl: "#a78bfa",
+/** Metallic colors for coin icons (same as InventoryTab) */
+const COIN_ICON_COLORS: Record<CoinType, string> = {
+  mc: "#B87333",   // copper
+  mp: "#C0C0C0",   // silver
+  me: "#5B8DBE",   // electrum (blue-silver)
+  mo: "#FFD700",   // gold
+  mpl: "#E5E4E2",  // platinum
+};
+
+/** Short labels for coin input rows */
+const COIN_SHORT: Record<CoinType, string> = {
+  mc: "M. Cobre",
+  mp: "M. Plata",
+  me: "M. Electro",
+  mo: "M. Oro",
+  mpl: "M. Platino",
 };
 
 interface CoinTransactionModalProps {
@@ -132,24 +140,24 @@ export function CoinTransactionModal({
             <View className="flex-row mb-4 rounded-xl p-1" style={{ backgroundColor: colors.bgSecondary }}>
               <TouchableOpacity
                 className="flex-1 rounded-lg py-2.5 items-center"
-                style={{ backgroundColor: operation === "add" ? "rgba(22, 163, 74, 0.8)" : "transparent" }}
+                style={{ backgroundColor: operation === "add" ? withAlpha(colors.accentRed, 0.85) : "transparent" }}
                 onPress={() => setOperation("add")}
               >
                 <Text
                   className="text-sm font-semibold"
-                  style={{ color: operation === "add" ? colors.textPrimary : colors.textMuted }}
+                  style={{ color: operation === "add" ? colors.textInverted : colors.textMuted }}
                 >
                   Añadir
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className="flex-1 rounded-lg py-2.5 items-center"
-                style={{ backgroundColor: operation === "remove" ? "rgba(220, 38, 38, 0.8)" : "transparent" }}
+                style={{ backgroundColor: operation === "remove" ? withAlpha(colors.accentDanger, 0.85) : "transparent" }}
                 onPress={() => setOperation("remove")}
               >
                 <Text
                   className="text-sm font-semibold"
-                  style={{ color: operation === "remove" ? colors.textPrimary : colors.textMuted }}
+                  style={{ color: operation === "remove" ? colors.textInverted : colors.textMuted }}
                 >
                   Gastar
                 </Text>
@@ -163,15 +171,20 @@ export function CoinTransactionModal({
               </Text>
               <View className="flex-row justify-between">
                 {COIN_ORDER.map((type) => (
-                  <View key={type} className="items-center">
-                    <Text className="text-xs mb-0.5">{COIN_ICONS[type]}</Text>
+                  <View key={type} className="items-center flex-1">
+                    <View
+                      className="h-8 w-8 rounded-full items-center justify-center mb-0.5"
+                      style={{ backgroundColor: `${COIN_ICON_COLORS[type]}20` }}
+                    >
+                      <Ionicons name="ellipse" size={18} color={COIN_ICON_COLORS[type]} />
+                    </View>
                     <Text
                       className="text-sm font-bold"
-                      style={{ color: COIN_COLORS[type] }}
+                      style={{ color: colors.accentRed }}
                     >
                       {inventory.coins[type]}
                     </Text>
-                    <Text className="text-[9px]" style={{ color: colors.textMuted }}>
+                    <Text className="text-[9px] uppercase" style={{ color: colors.textMuted }}>
                       {COIN_ABBR[type]}
                     </Text>
                   </View>
@@ -186,12 +199,17 @@ export function CoinTransactionModal({
             {COIN_ORDER.map((type) => (
               <View key={type} className="flex-row items-center mb-2">
                 <View className="flex-row items-center w-28">
-                  <Text className="text-base mr-1.5">{COIN_ICONS[type]}</Text>
+                  <View
+                    className="h-6 w-6 rounded-full items-center justify-center mr-2"
+                    style={{ backgroundColor: `${COIN_ICON_COLORS[type]}20` }}
+                  >
+                    <Ionicons name="ellipse" size={12} color={COIN_ICON_COLORS[type]} />
+                  </View>
                   <Text
                     className="text-sm font-medium"
-                    style={{ color: COIN_COLORS[type] }}
+                    style={{ color: colors.textPrimary }}
                   >
-                    {COIN_NAMES[type]}
+                    {COIN_SHORT[type]}
                   </Text>
                 </View>
                 <TextInput
@@ -225,10 +243,10 @@ export function CoinTransactionModal({
             {/* Submit */}
             <TouchableOpacity
               className="rounded-xl py-4 items-center"
-              style={{ backgroundColor: operation === "add" ? "#16a34a" : "#dc2626" }}
+              style={{ backgroundColor: operation === "add" ? colors.accentRed : colors.accentDanger }}
               onPress={handleSubmit}
             >
-              <Text className="font-bold text-base" style={{ color: colors.textPrimary }}>
+              <Text className="font-bold text-base" style={{ color: colors.textInverted }}>
                 {operation === "add" ? "Añadir Monedas" : "Gastar Monedas"}
               </Text>
             </TouchableOpacity>

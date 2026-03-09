@@ -191,7 +191,7 @@ export function NoteEditorModal({
             onPress={handleSave}
             disabled={!title.trim()}
           >
-            <Text className="text-white text-sm font-semibold">Guardar</Text>
+            <Text className="text-sm font-semibold" style={{ color: colors.textInverted }}>Guardar</Text>
           </TouchableOpacity>
         </View>
 
@@ -212,13 +212,13 @@ export function NoteEditorModal({
                 size={16}
                 color={
                   noteType === "general"
-                    ? colors.textPrimary
+                    ? colors.accentRed
                     : colors.textMuted
                 }
               />
               <Text
                 className="text-sm font-medium ml-1.5"
-                style={{ color: noteType === "general" ? colors.textPrimary : colors.textMuted }}
+                style={{ color: noteType === "general" ? colors.accentRed : colors.textMuted }}
               >
                 General
               </Text>
@@ -232,12 +232,12 @@ export function NoteEditorModal({
                 name="journal-outline"
                 size={16}
                 color={
-                  noteType === "diario" ? colors.accentBlue : colors.textMuted
+                  noteType === "diario" ? colors.accentRed : colors.textMuted
                 }
               />
               <Text
                 className="text-sm font-medium ml-1.5"
-                style={{ color: noteType === "diario" ? colors.accentBlue : colors.textMuted }}
+                style={{ color: noteType === "diario" ? colors.accentRed : colors.textMuted }}
               >
                 Diario
               </Text>
@@ -326,11 +326,11 @@ export function NoteEditorModal({
                           backgroundColor: `${tag.color}20`,
                           borderColor: `${tag.color}50`,
                         }
-                      : { backgroundColor: colors.bgSecondary, borderColor: colors.borderDefault }
+                      : { backgroundColor: colors.chipBg, borderColor: colors.chipBorder }
                   }
                   onPress={() => handleToggleTag(tag.id)}
                 >
-                  <Text className="text-xs mr-1">{tag.icon}</Text>
+                  <Ionicons name={tag.icon as any} size={12} color={isSelected ? tag.color : colors.textSecondary} style={{ marginRight: 4 }} />
                   <Text
                     className="text-xs font-medium"
                     style={{

@@ -28,16 +28,16 @@ export const ITEM_CATEGORY_NAMES: Record<ItemCategory, string> = {
 };
 
 export const ITEM_CATEGORY_ICONS: Record<ItemCategory, string> = {
-  arma: "⚔️",
-  armadura: "🛡️",
-  escudo: "🛡️",
-  equipo_aventurero: "🎒",
-  herramienta: "🔧",
-  montura_vehiculo: "🐴",
-  consumible: "🧪",
-  objeto_magico: "✨",
-  municion: "🏹",
-  otro: "📦",
+  arma: "hammer",
+  armadura: "shield-half",
+  escudo: "shield",
+  equipo_aventurero: "bag",
+  herramienta: "construct",
+  montura_vehiculo: "speedometer",
+  consumible: "flask",
+  objeto_magico: "sparkles",
+  municion: "arrow-forward",
+  otro: "cube",
 };
 
 // ─── Armas ───────────────────────────────────────────────────────────

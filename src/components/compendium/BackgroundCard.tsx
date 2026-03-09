@@ -20,7 +20,7 @@ interface BackgroundCardProps {
 export function BackgroundCard({ data, isExpanded, onToggle }: BackgroundCardProps) {
   const { colors } = useTheme();
   const icon =
-    BACKGROUND_ICONS[data.id as keyof typeof BACKGROUND_ICONS] || "📜";
+    BACKGROUND_ICONS[data.id as keyof typeof BACKGROUND_ICONS] || "document-text-outline";
   const personalityTraits = data.personality?.traits ?? [];
 
   return (
@@ -41,7 +41,7 @@ export function BackgroundCard({ data, isExpanded, onToggle }: BackgroundCardPro
             { backgroundColor: `#22c55e${colors.iconBgAlpha}` },
           ]}
         >
-          <Text style={{ fontSize: 22 }}>{icon}</Text>
+          <Ionicons name={icon as any} size={24} color={"#22c55e"} />
         </View>
         <View style={styles.cardInfo}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>

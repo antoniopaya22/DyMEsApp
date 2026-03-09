@@ -7,10 +7,11 @@
  *   InventoryItemCard, AddItemModal, CoinTransactionModal
  */
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
+  FlatList,
   ScrollView,
   Animated,
   TouchableOpacity,
@@ -24,7 +25,6 @@ import { withAlpha } from "@/utils/theme";
 import {
   ITEM_CATEGORY_NAMES,
   COIN_ABBR,
-  COIN_ICONS,
   calcCoinWeight,
   calcInventoryWeight,
   calcCarryingCapacity,
@@ -35,6 +35,8 @@ import {
   type CoinType,
   type InventoryItem,
 } from "@/types/item";
+
+import type { ThemeColors } from "@/utils/theme";
 
 // Extracted sub-components
 import {
@@ -47,13 +49,24 @@ import {
 
 const COIN_ORDER: CoinType[] = ["mpl", "mo", "me", "mp", "mc"];
 
-const COIN_COLORS: Record<CoinType, string> = {
-  mc: "#b45309",
-  mp: "#9ca3af",
-  me: "#3b82f6",
-  mo: "#f59e0b",
-  mpl: "#a78bfa",
+/** Metallic colors for coin icons (theme-independent) */
+const COIN_ICON_COLORS: Record<CoinType, string> = {
+  mc: "#B87333",   // copper
+  mp: "#C0C0C0",   // silver
+  me: "#5B8DBE",   // electrum (blue-silver)
+  mo: "#FFD700",   // gold
+  mpl: "#E5E4E2",  // platinum
 };
+
+function getCoinColors(colors: ThemeColors): Record<CoinType, string> {
+  return {
+    mc: colors.accentRed,
+    mp: colors.accentRed,
+    me: colors.accentRed,
+    mo: colors.accentRed,
+    mpl: colors.accentRed,
+  };
+}
 
 const CATEGORY_OPTIONS: { value: ItemCategory; label: string }[] = [
   { value: "arma", label: "Arma" },
@@ -73,6 +86,7 @@ const CATEGORY_OPTIONS: { value: ItemCategory; label: string }[] = [
 export default function InventoryTab() {
   const { colors } = useTheme();
   const { onScroll } = useHeaderScroll();
+  const coinColors = useMemo(() => getCoinColors(colors), [colors]);
   const { toastProps, showInfo: showToast } = useToast();
   const {
     character,
@@ -156,10 +170,10 @@ export default function InventoryTab() {
       ? colors.accentDanger
       : encumbrancePct > 75
         ? colors.accentAmber
-        : colors.accentGreen;
+        : colors.accentRed;
 
     return (
-      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
+      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center">
             <Ionicons name="scale-outline" size={18} color={barColor} />
@@ -193,7 +207,7 @@ export default function InventoryTab() {
 
         {/* Attunement info */}
         <View className="flex-row items-center mt-2">
-          <Ionicons name="link-outline" size={14} color={colors.accentPurple} />
+          <Ionicons name="link-outline" size={14} color={colors.accentRed} />
           <Text className="text-xs ml-1" style={{ color: colors.textMuted }}>
             Sintonizaciones: {activeAttunements}/{inventory.maxAttunements}
           </Text>
@@ -203,20 +217,20 @@ export default function InventoryTab() {
   };
 
   const renderCoins = () => (
-    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
+    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
       <View className="flex-row items-center justify-between mb-3">
         <View className="flex-row items-center">
-          <Ionicons name="cash-outline" size={18} color={colors.accentAmber} />
+          <Ionicons name="cash-outline" size={18} color={colors.accentRed} />
           <Text className="text-xs font-semibold uppercase tracking-wider ml-2" style={{ color: colors.textSecondary }}>
             Monedas
           </Text>
         </View>
         <TouchableOpacity
           className="rounded-lg px-3 py-1.5"
-          style={{ backgroundColor: withAlpha(colors.accentAmber, 0.2) }}
+          style={{ backgroundColor: withAlpha(colors.accentRed, 0.2) }}
           onPress={() => setShowCoinModal(true)}
         >
-          <Text className="text-xs font-semibold" style={{ color: colors.accentAmber }}>
+          <Text className="text-xs font-semibold" style={{ color: colors.accentRed }}>
             Gestionar
           </Text>
         </TouchableOpacity>
@@ -225,10 +239,15 @@ export default function InventoryTab() {
       <View className="flex-row justify-between mb-3">
         {COIN_ORDER.map((type) => (
           <View key={type} className="items-center flex-1">
-            <Text className="text-lg mb-0.5">{COIN_ICONS[type]}</Text>
+            <View
+              className="h-8 w-8 rounded-full items-center justify-center mb-0.5"
+              style={{ backgroundColor: `${COIN_ICON_COLORS[type]}20` }}
+            >
+              <Ionicons name="ellipse" size={18} color={COIN_ICON_COLORS[type]} />
+            </View>
             <Text
               className="text-lg font-bold"
-              style={{ color: COIN_COLORS[type] }}
+              style={{ color: coinColors[type] }}
             >
               {inventory.coins[type]}
             </Text>
@@ -284,8 +303,8 @@ export default function InventoryTab() {
             key={tab.key}
             className="rounded-full px-4 py-2 mr-2 border"
             style={{
-              backgroundColor: isActive ? withAlpha(colors.accentRed, 0.2) : colors.bgSecondary,
-              borderColor: isActive ? withAlpha(colors.accentRed, 0.5) : colors.borderDefault,
+              backgroundColor: isActive ? withAlpha(colors.accentRed, 0.2) : colors.chipBg,
+              borderColor: isActive ? withAlpha(colors.accentRed, 0.5) : colors.chipBorder,
             }}
             onPress={() => setFilter(tab.key)}
           >
@@ -301,8 +320,8 @@ export default function InventoryTab() {
     </ScrollView>
   );
 
-  const renderItemList = () => (
-    <View className="mb-4">
+  const renderItemListHeader = () => (
+    <View className="mb-3">
       <View className="flex-row items-center justify-between mb-3">
         <Text className="text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textSecondary }}>
           Objetos ({filteredItems.length})
@@ -320,58 +339,68 @@ export default function InventoryTab() {
       </View>
 
       {renderFilterTabs()}
-
-      {filteredItems.length === 0 ? (
-        <View className="rounded-card border p-6 items-center" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
-          <Ionicons name="bag-outline" size={32} color={colors.textMuted} />
-          <Text className="text-sm mt-2" style={{ color: colors.textMuted }}>
-            {filter === "all"
-              ? "Tu inventario está vacío"
-              : "No hay objetos en esta categoría"}
-          </Text>
-          <TouchableOpacity
-            className="mt-3 rounded-lg px-4 py-2"
-            style={{ backgroundColor: colors.accentRed }}
-            onPress={() => setShowAddItem(true)}
-          >
-            <Text className="text-white text-xs font-semibold">
-              Añadir objeto
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        filteredItems.map((item) => (
-          <InventoryItemCard
-            key={item.id}
-            item={item}
-            isExpanded={expandedItemId === item.id}
-            onToggleExpand={() =>
-              setExpandedItemId(expandedItemId === item.id ? null : item.id)
-            }
-            onToggleEquip={() => handleToggleEquip(item)}
-            onUpdateQuantity={(delta) => handleUpdateQuantity(item, delta)}
-            onDelete={() => handleDeleteItem(item)}
-            onUpdateItem={(updates) => updateItem(item.id, updates)}
-          />
-        ))
-      )}
     </View>
+  );
+
+  const renderInventoryItem = useCallback(({ item }: { item: InventoryItem }) => (
+    <InventoryItemCard
+      item={item}
+      isExpanded={expandedItemId === item.id}
+      onToggleExpand={() =>
+        setExpandedItemId(expandedItemId === item.id ? null : item.id)
+      }
+      onToggleEquip={() => handleToggleEquip(item)}
+      onUpdateQuantity={(delta) => handleUpdateQuantity(item, delta)}
+      onDelete={() => handleDeleteItem(item)}
+      onUpdateItem={(updates) => updateItem(item.id, updates)}
+    />
+  ), [expandedItemId, handleToggleEquip, handleDeleteItem, updateItem]);
+
+  const itemKeyExtractor = useCallback((item: InventoryItem) => item.id, []);
+
+  const ListEmptyInventory = () => (
+    <View className="rounded-card border p-6 items-center" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+      <Ionicons name="bag-outline" size={32} color={colors.textMuted} />
+      <Text className="text-sm mt-2" style={{ color: colors.textMuted }}>
+        {filter === "all"
+          ? "Tu inventario está vacío"
+          : "No hay objetos en esta categoría"}
+      </Text>
+      <TouchableOpacity
+        className="mt-3 rounded-lg px-4 py-2"
+        style={{ backgroundColor: colors.accentRed }}
+        onPress={() => setShowAddItem(true)}
+      >
+        <Text className="text-xs font-semibold" style={{ color: colors.textInverted }}>
+          Añadir objeto
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const ListHeaderComponent = () => (
+    <>
+      {renderWeightBar()}
+      {renderCoins()}
+      {renderItemListHeader()}
+    </>
   );
 
   return (
     <View className="flex-1">
-      <Animated.ScrollView
-        className="flex-1"
+      <FlatList
+        data={filteredItems}
+        renderItem={renderInventoryItem}
+        keyExtractor={itemKeyExtractor}
+        ListHeaderComponent={ListHeaderComponent}
+        ListEmptyComponent={ListEmptyInventory}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         onScroll={onScroll}
         scrollEventThrottle={16}
-      >
-        {renderWeightBar()}
-        {renderCoins()}
-        {renderItemList()}
-      </Animated.ScrollView>
+        removeClippedSubviews
+      />
 
       <AddItemModal
         visible={showAddItem}

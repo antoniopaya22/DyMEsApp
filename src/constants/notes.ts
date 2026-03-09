@@ -21,14 +21,14 @@ export const PREDEFINED_TAG_NAMES: Record<PredefinedTag, string> = {
 };
 
 export const PREDEFINED_TAG_ICONS: Record<PredefinedTag, string> = {
-  npc: "🧑",
-  lugar: "📍",
-  mision: "⚔️",
-  objeto: "🔮",
-  lore: "📖",
-  pista: "💡",
-  comercio: "💰",
-  general: "📝",
+  npc: "person",
+  lugar: "location",
+  mision: "shield",
+  objeto: "diamond",
+  lore: "book",
+  pista: "bulb",
+  comercio: "cash",
+  general: "document-text",
 };
 
 export const PREDEFINED_TAG_COLORS: Record<PredefinedTag, string> = {

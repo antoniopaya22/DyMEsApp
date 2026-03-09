@@ -21,7 +21,7 @@ interface TorchGlowProps {
 }
 
 export function TorchGlow({
-  color = "#CDC9B2",
+  color = "#00E5FF",
   position = "top-right",
   size = 150,
   intensity = 0.08,

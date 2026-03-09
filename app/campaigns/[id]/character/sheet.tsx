@@ -54,14 +54,14 @@ function getTabs(colors: import("@/utils/theme").ThemeColors): TabDef[] {
       label: "Combate",
       icon: "heart-outline",
       iconActive: "heart",
-      color: colors.accentGreen,
+      color: colors.accentRed,
     },
     {
       id: "spells",
       label: "Habilidades",
       icon: "star-outline",
       iconActive: "star",
-      color: colors.accentDanger,
+      color: colors.accentRed,
     },
     {
       id: "overview",
@@ -75,14 +75,14 @@ function getTabs(colors: import("@/utils/theme").ThemeColors): TabDef[] {
       label: "Inventario",
       icon: "bag-outline",
       iconActive: "bag",
-      color: colors.accentGold,
+      color: colors.accentRed,
     },
     {
       id: "notes",
       label: "Notas",
       icon: "document-text-outline",
       iconActive: "document-text",
-      color: colors.accentBlue,
+      color: colors.accentRed,
     },
   ];
 }
@@ -581,10 +581,10 @@ export default function CharacterSheetScreen() {
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={["#d32f2f", colors.accentRed]}
+            colors={["#00D4E8", colors.accentRed]}
             style={sheetStyles.errorButtonGradient}
           >
-            <Text style={sheetStyles.errorButtonText}>Volver</Text>
+            <Text style={[sheetStyles.errorButtonText, { color: colors.textInverted }]}>Volver</Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -630,10 +630,10 @@ export default function CharacterSheetScreen() {
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={["#d32f2f", colors.accentRed]}
+            colors={["#00D4E8", colors.accentRed]}
             style={sheetStyles.errorButtonGradient}
           >
-            <Text style={sheetStyles.errorButtonText}>Volver</Text>
+            <Text style={[sheetStyles.errorButtonText, { color: colors.textInverted }]}>Volver</Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -740,14 +740,14 @@ export default function CharacterSheetScreen() {
                 <StatBadge
                   label="CA"
                   value={ac}
-                  color={colors.accentBlue}
+                  color={colors.accentGold}
                   delay={150}
                   labelColor={colors.statsLabel}
                 />
                 <StatBadge
                   label="VEL"
                   value={`${character.speed.walk}`}
-                  color={colors.accentGreen}
+                  color={colors.accentGold}
                   delay={200}
                   labelColor={colors.statsLabel}
                 />
@@ -964,7 +964,7 @@ const sheetStyles = StyleSheet.create({
   errorButton: {
     borderRadius: 12,
     overflow: "hidden",
-    shadowColor: "#8f3d38", // overridden inline via colors.accentRed
+    shadowColor: "#00BCD4", // overridden inline via colors.accentRed
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

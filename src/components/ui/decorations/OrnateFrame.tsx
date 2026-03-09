@@ -21,7 +21,7 @@ interface OrnateFrameProps {
 
 export function OrnateFrame({
   children,
-  color = "#CDC9B2",
+  color = "#00E5FF",
   borderColor: frameBorder,
   backgroundColor = "transparent",
   cornerSize = 20,

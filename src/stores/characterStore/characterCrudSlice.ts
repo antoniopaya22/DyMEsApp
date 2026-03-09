@@ -27,6 +27,7 @@ import {
   type ClassResourcesState,
 } from "./helpers";
 import type { CharacterStore, CharacterCrudState, CharacterCrudActions } from "./types";
+import { useCharacterListStore, toCharacterSummary } from "@/stores/characterListStore";
 
 type SetState = (partial: Partial<CharacterStore>) => void;
 type GetState = () => CharacterStore;
@@ -138,6 +139,10 @@ export function createCharacterCrudSlice(
             classResources,
           );
         }
+
+        // Sync summary to character list store
+        const summary = toCharacterSummary(updatedChar);
+        await useCharacterListStore.getState().updateCharacterSummary(character.id, summary);
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Error al guardar";

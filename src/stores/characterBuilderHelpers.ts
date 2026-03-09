@@ -55,8 +55,11 @@ export interface ProficiencyDataSources {
   raceTools?: string[];
   raceLanguages: string[];
   subraceWeapons?: string[];
+  subraceArmors?: string[];
   subraceTools?: string[];
   backgroundTools?: string[];
+  /** Herramienta elegida por el jugador (ej: enano elige una herramienta de artesano) */
+  raceToolChoice?: string;
 }
 
 /** Spell choices coming from the character-creation draft. */
@@ -252,6 +255,7 @@ export function buildProficiencies(
     armors: [
       ...sources.classArmors,
       ...(sources.raceArmors ?? []),
+      ...(sources.subraceArmors ?? []),
     ],
     weapons: [
       ...sources.classWeapons,
@@ -263,6 +267,7 @@ export function buildProficiencies(
       ...(sources.backgroundTools ?? []),
       ...(sources.subraceTools ?? []),
       ...(sources.raceTools ?? []),
+      ...(sources.raceToolChoice ? [sources.raceToolChoice] : []),
     ],
     languages: [
       ...sources.raceLanguages,

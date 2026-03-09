@@ -206,11 +206,11 @@ export default function CharacterNameStep() {
                     <Ionicons
                       name={icon as any}
                       size={22}
-                      color={selected ? "white" : colors.textSecondary}
+                      color={selected ? colors.textInverted : colors.textSecondary}
                     />
                     <Text
                       className="text-sm font-semibold mt-1"
-                      style={{ color: selected ? "white" : colors.textSecondary }}
+                      style={{ color: selected ? colors.textInverted : colors.textSecondary }}
                     >
                       {label}
                     </Text>
@@ -262,10 +262,10 @@ export default function CharacterNameStep() {
             onPress={handleNext}
             disabled={!isValid}
           >
-            <Text className="text-white font-bold text-base mr-2">
+            <Text className="font-bold text-base mr-2" style={{ color: colors.textInverted }}>
               Siguiente: Raza
             </Text>
-            <Ionicons name="arrow-forward" size={20} color="white" />
+            <Ionicons name="arrow-forward" size={20} color={colors.textInverted} />
           </TouchableOpacity>
         </View>
       </View>

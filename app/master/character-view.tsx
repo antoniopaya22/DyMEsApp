@@ -37,10 +37,10 @@ import {
   ALIGNMENT_NAMES,
   CONDITION_NAMES,
 } from "@/constants/character";
-import { ABILITY_COLORS, ABILITY_KEYS, SPELL_LEVEL_COLORS } from "@/constants/abilities";
+import { ABILITY_KEYS, getSpellLevelColors } from "@/constants/abilities";
 import { COIN_ABBR } from "@/constants/items";
 import type { Character, AbilityKey, SkillKey } from "@/types/character";
-import type { ThemeColors } from "@/utils/theme";
+import { withAlpha, type ThemeColors } from "@/utils/theme";
 import type { SyncedCharacterData } from "@/hooks/useCharacterSync";
 import type { InternalMagicState, SlotInfo } from "@/stores/characterStore/helpers";
 import type { ClassResourcesState, ClassResourceInfo } from "@/stores/characterStore/classResourceTypes";
@@ -119,6 +119,7 @@ export default function MasterCharacterView() {
     playerName?: string;
   }>();
   const { colors } = useTheme();
+  const spellLevelColors = useMemo(() => getSpellLevelColors(colors), [colors]);
 
   const [character, setCharacter] = useState<Character | null>(null);
   const [magicState, setMagicState] = useState<InternalMagicState | null>(null);
@@ -402,7 +403,7 @@ export default function MasterCharacterView() {
       </View>
 
       {/* Character Summary Banner */}
-      <View style={[styles.summaryBanner, { backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }]}>
+      <View style={[styles.summaryBanner, { backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }]}>
         <View style={styles.summaryRow}>
           <View style={styles.summaryInfo}>
             <Text style={[styles.summaryName, { color: colors.textPrimary }]}>
@@ -479,17 +480,8 @@ export default function MasterCharacterView() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* ═══ Ability Scores ═══ */}
-        <SectionHeader
-          title="Características"
-          icon="stats-chart"
-          expanded={expandedSections.has("abilities")}
-          onToggle={() => toggleSection("abilities")}
-          colors={colors}
-          accentColor={colors.accentBlue}
-        />
-        {expandedSections.has("abilities") && (
-          <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }]}>
+        {/* â•â•â• Ability Scores â•â•â• */}
+        <Section title="Características" icon="stats-chart" expanded={expandedSections.has("abilities")} onToggle={() => toggleSection("abilities")} colors={colors}>
             {/* Ability grid */}
             <View style={styles.abilityGrid}>
               {ABILITY_KEYS.map((key) => {
@@ -499,18 +491,20 @@ export default function MasterCharacterView() {
                     key={key}
                     style={[
                       styles.abilityBox,
-                      { backgroundColor: `${ABILITY_COLORS[key]}08`, borderColor: `${ABILITY_COLORS[key]}25` },
+                      { backgroundColor: withAlpha(colors.accentRed, 0.06), borderColor: withAlpha(colors.accentRed, 0.18) },
                     ]}
                   >
-                    <Text style={[styles.abilityAbbr, { color: ABILITY_COLORS[key] }]}>
+                    <Text style={[styles.abilityAbbr, { color: colors.accentRed }]}>
                       {ABILITY_ABBR[key]}
                     </Text>
                     <Text style={[styles.abilityTotal, { color: colors.textPrimary }]}>
                       {detail.total}
                     </Text>
-                    <Text style={[styles.abilityMod, { color: ABILITY_COLORS[key] }]}>
-                      {formatModifier(detail.modifier)}
-                    </Text>
+                    <View style={[styles.abilityModPill, { backgroundColor: withAlpha(colors.accentRed, 0.13) }]}>
+                      <Text style={[styles.abilityMod, { color: colors.accentRed }]}>
+                        {formatModifier(detail.modifier)}
+                      </Text>
+                    </View>
                   </View>
                 );
               })}
@@ -540,7 +534,7 @@ export default function MasterCharacterView() {
                     <View key={key} style={styles.savingThrowItem}>
                       <View style={[
                         styles.profDot,
-                        { backgroundColor: st.proficient ? ABILITY_COLORS[key] : colors.bgSubtle },
+                        { backgroundColor: st.proficient ? colors.accentRed : colors.bgSubtle },
                       ]} />
                       <Text style={[styles.stAbbr, { color: colors.textMuted }]}>
                         {ABILITY_ABBR[key]}
@@ -553,43 +547,33 @@ export default function MasterCharacterView() {
                 })}
               </View>
             </View>
-          </View>
-        )}
+        </Section>
 
-        {/* ═══ Combat Stats ═══ */}
-        <SectionHeader
-          title="Combate"
-          icon="shield-half-outline"
-          expanded={expandedSections.has("combat")}
-          onToggle={() => toggleSection("combat")}
-          colors={colors}
-          accentColor={colors.accentGreen}
-        />
-        {expandedSections.has("combat") && (
-          <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }]}>
+        {/* â•â•â• Combat Stats â•â•â• */}
+        <Section title="Combate" icon="shield-half-outline" expanded={expandedSections.has("combat")} onToggle={() => toggleSection("combat")} colors={colors}>
             {/* Combat stats grid */}
             <View style={styles.combatGrid}>
-              <CombatStat
-                label="Velocidad"
-                value={`${character.speed.walk} ft`}
-                icon="footsteps-outline"
-                color={colors.accentBlue}
-                colors={colors}
-              />
-              <CombatStat
-                label="Iniciativa"
-                value={formatModifier(character.abilityScores.des.modifier)}
-                icon="flash-outline"
-                color={colors.accentAmber}
-                colors={colors}
-              />
-              <CombatStat
-                label="Dados golpe"
-                value={`${character.hitDice.remaining}/${character.hitDice.total} ${character.hitDice.die}`}
-                icon="dice-outline"
-                color={colors.accentGold}
-                colors={colors}
-              />
+              <View style={styles.combatCircleCard}>
+                <View style={[styles.combatStatCircle, { backgroundColor: withAlpha(colors.accentRed, 0.15) }]}>
+                  <Ionicons name="footsteps-outline" size={28} color={colors.accentRed} />
+                </View>
+                <Text style={[styles.combatStatValue, { color: colors.textPrimary }]}>{character.speed.walk} ft</Text>
+                <Text style={[styles.combatStatLabel, { color: colors.textMuted }]}>Velocidad</Text>
+              </View>
+              <View style={styles.combatCircleCard}>
+                <View style={[styles.combatStatCircle, { backgroundColor: withAlpha(colors.accentRed, 0.15) }]}>
+                  <Ionicons name="flash-outline" size={28} color={colors.accentRed} />
+                </View>
+                <Text style={[styles.combatStatValue, { color: colors.textPrimary }]}>{formatModifier(character.abilityScores.des.modifier)}</Text>
+                <Text style={[styles.combatStatLabel, { color: colors.textMuted }]}>Iniciativa</Text>
+              </View>
+              <View style={styles.combatCircleCard}>
+                <View style={[styles.combatStatCircle, { backgroundColor: withAlpha(colors.accentRed, 0.15) }]}>
+                  <Ionicons name="dice-outline" size={28} color={colors.accentRed} />
+                </View>
+                <Text style={[styles.combatStatValue, { color: colors.textPrimary }]}>{character.hitDice.remaining}/{character.hitDice.total} {character.hitDice.die}</Text>
+                <Text style={[styles.combatStatLabel, { color: colors.textMuted }]}>Dados golpe</Text>
+              </View>
             </View>
 
             {/* Death Saves */}
@@ -651,7 +635,7 @@ export default function MasterCharacterView() {
                   {character.damageModifiers.map((dm, i) => (
                     <View
                       key={`${dm.type}-${i}`}
-                      style={[styles.damageChip, { backgroundColor: `${colors.accentBlue}15` }]}
+                      style={[styles.damageChip, { backgroundColor: withAlpha(colors.accentBlue, 0.1) }]}
                     >
                       <Text style={[styles.damageChipText, { color: colors.accentBlue }]}>
                         {getDamageModLabel(dm.modifier)}{" "}
@@ -662,20 +646,10 @@ export default function MasterCharacterView() {
                 </View>
               </View>
             )}
-          </View>
-        )}
+        </Section>
 
-        {/* ═══ Skills ═══ */}
-        <SectionHeader
-          title="Habilidades"
-          icon="list-outline"
-          expanded={expandedSections.has("skills")}
-          onToggle={() => toggleSection("skills")}
-          colors={colors}
-          accentColor={colors.accentAmber}
-        />
-        {expandedSections.has("skills") && (
-          <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }]}>
+        {/* â•â•â• Skills â•â•â• */}
+        <Section title="Habilidades" icon="list-outline" expanded={expandedSections.has("skills")} onToggle={() => toggleSection("skills")} colors={colors}>
             <View style={styles.skillsList}>
               {(Object.entries(SKILLS) as [SkillKey, { nombre: string; habilidad: AbilityKey }][]).map(
                 ([key, skill]) => {
@@ -717,22 +691,11 @@ export default function MasterCharacterView() {
                 },
               )}
             </View>
-          </View>
-        )}
+        </Section>
 
-        {/* ═══ Spells ═══ */}
+        {/* â•â•â• Spells â•â•â• */}
         {(knownSpells.length > 0 || preparedSpells.length > 0) && (
-          <>
-            <SectionHeader
-              title="Hechizos"
-              icon="sparkles-outline"
-              expanded={expandedSections.has("spells")}
-              onToggle={() => toggleSection("spells")}
-              colors={colors}
-              accentColor={colors.accentDanger}
-            />
-            {expandedSections.has("spells") && (
-              <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }]}>
+          <Section title="Hechizos" icon="sparkles-outline" expanded={expandedSections.has("spells")} onToggle={() => toggleSection("spells")} colors={colors}>
                 {/* Prepared spells */}
                 {preparedSpells.length > 0 && (
                   <View style={styles.spellSection}>
@@ -747,15 +710,15 @@ export default function MasterCharacterView() {
                             style={[
                               styles.spellChip,
                               {
-                                backgroundColor: `${SPELL_LEVEL_COLORS[spell.nivel] ?? colors.textMuted}12`,
-                                borderColor: `${SPELL_LEVEL_COLORS[spell.nivel] ?? colors.textMuted}30`,
+                                backgroundColor: `${spellLevelColors[spell.nivel] ?? colors.textMuted}12`,
+                                borderColor: `${spellLevelColors[spell.nivel] ?? colors.textMuted}30`,
                               },
                             ]}
                           >
                             <Text
                               style={[
                                 styles.spellChipLevel,
-                                { color: SPELL_LEVEL_COLORS[spell.nivel] ?? colors.textMuted },
+                                { color: spellLevelColors[spell.nivel] ?? colors.textMuted },
                               ]}
                             >
                               {spell.nivel === 0 ? "T" : spell.nivel}
@@ -810,24 +773,12 @@ export default function MasterCharacterView() {
                     </View>
                   </View>
                 )}
-              </View>
-            )}
-          </>
+          </Section>
         )}
 
-        {/* ═══ Spell Slots & Class Resources ═══ */}
+        {/* â•â•â• Spell Slots & Class Resources â•â•â• */}
         {(magicState || classResources) && (
-          <>
-            <SectionHeader
-              title="Recursos"
-              icon="battery-half-outline"
-              expanded={expandedSections.has("resources")}
-              onToggle={() => toggleSection("resources")}
-              colors={colors}
-              accentColor={colors.accentAmber}
-            />
-            {expandedSections.has("resources") && (
-              <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }]}>
+          <Section title="Recursos" icon="battery-half-outline" expanded={expandedSections.has("resources")} onToggle={() => toggleSection("resources")} colors={colors}>
                 {/* Spell Slots */}
                 {magicState && Object.keys(magicState.spellSlots).length > 0 && (
                   <View style={styles.resourceGroup}>
@@ -842,7 +793,7 @@ export default function MasterCharacterView() {
                           if (s.total === 0) return null;
                           const remaining = s.total - s.used;
                           return (
-                            <View key={level} style={[styles.slotBox, { backgroundColor: `${colors.accentBlue}10`, borderColor: `${colors.accentBlue}25` }]}>
+                            <View key={level} style={[styles.slotBox, { backgroundColor: withAlpha(colors.accentBlue, 0.06), borderColor: withAlpha(colors.accentBlue, 0.15) }]}>
                               <Text style={[styles.slotLevel, { color: colors.accentBlue }]}>
                                 Nv. {level}
                               </Text>
@@ -934,24 +885,12 @@ export default function MasterCharacterView() {
                     ))}
                   </View>
                 )}
-              </View>
-            )}
-          </>
+          </Section>
         )}
 
-        {/* ═══ Inventory & Money ═══ */}
+        {/* â•â•â• Inventory & Money â•â•â• */}
         {inventory && (
-          <>
-            <SectionHeader
-              title="Inventario"
-              icon="bag-outline"
-              expanded={expandedSections.has("inventory")}
-              onToggle={() => toggleSection("inventory")}
-              colors={colors}
-              accentColor={colors.accentGold}
-            />
-            {expandedSections.has("inventory") && (
-              <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }]}>
+          <Section title="Inventario" icon="bag-outline" expanded={expandedSections.has("inventory")} onToggle={() => toggleSection("inventory")} colors={colors}>
                 {/* Money */}
                 <View style={styles.resourceGroup}>
                   <View style={styles.coinHeader}>
@@ -1034,7 +973,7 @@ export default function MasterCharacterView() {
                               </Text>
                             )}
                             {item.equipado && (
-                              <View style={[styles.equippedBadge, { backgroundColor: `${colors.accentGreen}20` }]}>
+                              <View style={[styles.equippedBadge, { backgroundColor: withAlpha(colors.accentGreen, 0.12) }]}>
                                 <Text style={[styles.equippedText, { color: colors.accentGreen }]}>Equipado</Text>
                               </View>
                             )}
@@ -1076,28 +1015,16 @@ export default function MasterCharacterView() {
                       onPress={handleAddItem}
                       disabled={!addItemName.trim()}
                     >
-                      <Ionicons name="add" size={18} color={addItemName.trim() ? "#FFF" : colors.textMuted} />
+                      <Ionicons name="add" size={18} color={addItemName.trim() ? colors.textInverted : colors.textMuted} />
                     </TouchableOpacity>
                   </View>
                 </View>
-              </View>
-            )}
-          </>
+          </Section>
         )}
 
-        {/* ═══ Traits ═══ */}
+        {/* â•â•â• Traits â•â•â• */}
         {character.traits.length > 0 && (
-          <>
-            <SectionHeader
-              title="Rasgos y capacidades"
-              icon="ribbon-outline"
-              expanded={expandedSections.has("traits")}
-              onToggle={() => toggleSection("traits")}
-              colors={colors}
-              accentColor={colors.accentGold}
-            />
-            {expandedSections.has("traits") && (
-              <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }]}>
+          <Section title="Rasgos y capacidades" icon="ribbon-outline" expanded={expandedSections.has("traits")} onToggle={() => toggleSection("traits")} colors={colors}>
                 {character.traits.map((trait) => (
                   <View key={trait.id} style={[styles.traitRow, { borderBottomColor: colors.borderSeparator }]}>
                     <View style={styles.traitHeader}>
@@ -1125,22 +1052,11 @@ export default function MasterCharacterView() {
                     )}
                   </View>
                 ))}
-              </View>
-            )}
-          </>
+          </Section>
         )}
 
-        {/* ═══ Proficiencies ═══ */}
-        <SectionHeader
-          title="Competencias"
-          icon="construct-outline"
-          expanded={expandedSections.has("proficiencies")}
-          onToggle={() => toggleSection("proficiencies")}
-          colors={colors}
-          accentColor={colors.accentBlue}
-        />
-        {expandedSections.has("proficiencies") && (
-          <View style={[styles.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }]}>
+        {/* â•â•â• Proficiencies â•â•â• */}
+        <Section title="Competencias" icon="construct-outline" expanded={expandedSections.has("proficiencies")} onToggle={() => toggleSection("proficiencies")} colors={colors}>
             {character.proficiencies.armors.length > 0 && (
               <ProficiencyGroup
                 label="Armaduras"
@@ -1169,76 +1085,55 @@ export default function MasterCharacterView() {
                 colors={colors}
               />
             )}
-          </View>
-        )}
+        </Section>
 
         {/* Bottom padding */}
         <View style={{ height: 40 }} />
       </Animated.ScrollView>
 
-      {/* Master badge */}
-      <View style={[styles.readOnlyBadge, { backgroundColor: colors.bgElevated, borderColor: colors.borderSubtle }]}>
-        <Ionicons name="eye-outline" size={12} color={colors.accentGold} />
-        <Text style={[styles.readOnlyText, { color: colors.textMuted }]}>Vista de Master</Text>
-      </View>
     </View>
   );
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────
 
-function SectionHeader({
+function Section({
   title,
   icon,
   expanded,
   onToggle,
   colors,
-  accentColor,
+  children,
 }: Readonly<{
   title: string;
   icon: keyof typeof Ionicons.glyphMap;
   expanded: boolean;
   onToggle: () => void;
   colors: ThemeColors;
-  accentColor: string;
+  children: React.ReactNode;
 }>) {
   return (
-    <TouchableOpacity
-      style={styles.sectionHeader}
-      onPress={onToggle}
-      activeOpacity={0.7}
-    >
-      <View style={[styles.sectionIconBg, { backgroundColor: `${accentColor}15` }]}>
-        <Ionicons name={icon} size={16} color={accentColor} />
-      </View>
-      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{title}</Text>
-      <Ionicons
-        name={expanded ? "chevron-up" : "chevron-down"}
-        size={16}
-        color={colors.textMuted}
-      />
-    </TouchableOpacity>
-  );
-}
-
-function CombatStat({
-  label,
-  value,
-  icon,
-  color,
-  colors,
-}: Readonly<{
-  label: string;
-  value: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-  colors: ThemeColors;
-}>) {
-  return (
-    <View style={[styles.combatStatBox, { backgroundColor: `${color}08`, borderColor: `${color}25` }]}>
-      <Ionicons name={icon} size={16} color={color} />
-      <Text style={[styles.combatStatValue, { color: colors.textPrimary }]}>{value}</Text>
-      <Text style={[styles.combatStatLabel, { color: colors.textMuted }]}>{label}</Text>
+    <View style={[styles.sectionWrapper, { backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }]}>
+      <TouchableOpacity
+        style={styles.sectionHeader}
+        onPress={onToggle}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.sectionIconBg, { backgroundColor: withAlpha(colors.accentGold, 0.13) }]}>
+          <Ionicons name={icon} size={16} color={colors.accentGold} />
+        </View>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{title}</Text>
+        <Ionicons
+          name={expanded ? "chevron-up" : "chevron-down"}
+          size={16}
+          color={colors.textMuted}
+        />
+      </TouchableOpacity>
+      {expanded && (
+        <View style={[styles.sectionContent, { borderTopColor: colors.borderDefault }]}>
+          {children}
+        </View>
+      )}
     </View>
   );
 }
@@ -1367,11 +1262,19 @@ const styles = StyleSheet.create({
   // ScrollView
   scrollContent: { paddingHorizontal: 16, paddingTop: 8 },
 
+  // Section wrapper (unified card)
+  sectionWrapper: {
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 12,
+    overflow: "hidden",
+  },
+
   // Section header
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    padding: 14,
     gap: 10,
   },
   sectionIconBg: {
@@ -1383,12 +1286,12 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { flex: 1, fontSize: 15, fontWeight: "800", letterSpacing: -0.2 },
 
-  // Section card
-  sectionCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 14,
-    marginBottom: 4,
+  // Section content (shown when expanded)
+  sectionContent: {
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    borderTopWidth: 1,
+    paddingTop: 12,
   },
 
   // Abilities
@@ -1407,6 +1310,12 @@ const styles = StyleSheet.create({
   },
   abilityAbbr: { fontSize: 11, fontWeight: "800", letterSpacing: 1 },
   abilityTotal: { fontSize: 22, fontWeight: "900", marginVertical: 2 },
+  abilityModPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginTop: 4,
+  },
   abilityMod: { fontSize: 14, fontWeight: "700" },
 
   profRow: {
@@ -1438,16 +1347,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  combatStatBox: {
+  combatCircleCard: {
     flex: 1,
     alignItems: "center",
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
     gap: 4,
   },
-  combatStatValue: { fontSize: 16, fontWeight: "800" },
-  combatStatLabel: { fontSize: 10, fontWeight: "600", textTransform: "uppercase" },
+  combatStatCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  combatStatValue: { fontSize: 14, fontWeight: "800", textAlign: "center" },
+  combatStatLabel: { fontSize: 10, fontWeight: "600", textTransform: "uppercase", textAlign: "center" },
 
   deathSavesRow: { marginTop: 12, paddingTop: 12, borderTopWidth: 1 },
   deathSavesValues: { flexDirection: "row", gap: 24 },
@@ -1508,21 +1422,6 @@ const styles = StyleSheet.create({
   profGroup: { marginBottom: 10 },
   profGroupLabel: { fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 },
   profGroupItems: { fontSize: 13, lineHeight: 20 },
-
-  // Read-only badge
-  readOnlyBadge: {
-    position: "absolute",
-    bottom: 24,
-    alignSelf: "center",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    gap: 5,
-  },
-  readOnlyText: { fontSize: 11, fontWeight: "700" },
 
   // Resources / Spell slots
   resourceGroup: { marginBottom: 4 },

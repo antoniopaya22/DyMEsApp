@@ -16,10 +16,10 @@ import {
   Easing,
   StyleSheet,
   Platform,
-  Image,
   PanResponder,
   useWindowDimensions,
 } from "react-native";
+import { Image } from "expo-image";
 import * as Clipboard from "expo-clipboard";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -61,14 +61,14 @@ function getTabs(colors: import("@/utils/theme").ThemeColors): TabDef[] {
       label: "Combate",
       icon: "heart-outline",
       iconActive: "heart",
-      color: colors.accentGreen,
+      color: colors.accentRed,
     },
     {
       id: "spells",
       label: "Habilidades",
       icon: "star-outline",
       iconActive: "star",
-      color: colors.accentDanger,
+      color: colors.accentRed,
     },
     {
       id: "overview",
@@ -82,14 +82,14 @@ function getTabs(colors: import("@/utils/theme").ThemeColors): TabDef[] {
       label: "Inventario",
       icon: "bag-outline",
       iconActive: "bag",
-      color: colors.accentGold,
+      color: colors.accentRed,
     },
     {
       id: "notes",
       label: "Notas",
       icon: "document-text-outline",
       iconActive: "document-text",
-      color: colors.accentBlue,
+      color: colors.accentRed,
     },
   ];
 }
@@ -98,7 +98,6 @@ function getTabs(colors: import("@/utils/theme").ThemeColors): TabDef[] {
 
 const STATUS_BAR_TOP = Platform.OS === "ios" ? 54 : 38;
 const HERO_HEIGHT = 240;
-const COMPACT_BAR_H = STATUS_BAR_TOP + 52;
 
 // ─── HP Color Helper ─────────────────────────────────────────────────
 
@@ -451,11 +450,8 @@ export default function CharacterSheetScreen() {
   const hpBarWidth = useRef(new Animated.Value(0)).current;
   const headerEntrance = useRef(new Animated.Value(0)).current;
 
-  // ── Collapsible header scroll ──
+  // ── Header scroll context (shared with tabs) ──
   const scrollY = useRef(new Animated.Value(0)).current;
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
-  const collapsedRef = useRef(false);
-  const cooldownRef = useRef(0); // timestamp of last toggle
   const headerOnScroll = useMemo(
     () =>
       Animated.event(
@@ -468,29 +464,6 @@ export default function CharacterSheetScreen() {
     () => ({ scrollY, onScroll: headerOnScroll }),
     [scrollY, headerOnScroll],
   );
-
-  // Hysteresis: collapse at >30px, expand only when ≤0; 400ms cooldown
-  useEffect(() => {
-    const COLLAPSE_AT = 30;
-    const EXPAND_AT = 0;
-    const COOLDOWN_MS = 400;
-
-    const id = scrollY.addListener(({ value }) => {
-      const now = Date.now();
-      if (now - cooldownRef.current < COOLDOWN_MS) return;
-
-      if (!collapsedRef.current && value > COLLAPSE_AT) {
-        collapsedRef.current = true;
-        cooldownRef.current = now;
-        setHeaderCollapsed(true);
-      } else if (collapsedRef.current && value <= EXPAND_AT) {
-        collapsedRef.current = false;
-        cooldownRef.current = now;
-        setHeaderCollapsed(false);
-      }
-    });
-    return () => scrollY.removeListener(id);
-  }, [scrollY]);
 
   // ── Swipe between tabs ──
   const { width: screenWidth } = useWindowDimensions();
@@ -701,10 +674,10 @@ export default function CharacterSheetScreen() {
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={["#d32f2f", colors.accentRed]}
+            colors={["#00D4E8", colors.accentRed]}
             style={sheetStyles.errorButtonGradient}
           >
-            <Text style={sheetStyles.errorButtonText}>Volver</Text>
+            <Text style={[sheetStyles.errorButtonText, { color: colors.textInverted }]}>Volver</Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -750,10 +723,10 @@ export default function CharacterSheetScreen() {
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={["#d32f2f", colors.accentRed]}
+            colors={["#00D4E8", colors.accentRed]}
             style={sheetStyles.errorButtonGradient}
           >
-            <Text style={sheetStyles.errorButtonText}>Volver</Text>
+            <Text style={[sheetStyles.errorButtonText, { color: colors.textInverted }]}>Volver</Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -817,8 +790,7 @@ export default function CharacterSheetScreen() {
       {/* ── Header ── */}
       <View style={sheetStyles.header}>
 
-        {/* ── Expanded hero OR Collapsed compact bar ── */}
-        {!headerCollapsed ? (
+        {/* ── Hero header (always expanded) ── */}
           <View style={sheetStyles.heroImageContainer}>
             {avatarSource ? (
               <TouchableOpacity
@@ -829,7 +801,9 @@ export default function CharacterSheetScreen() {
                 <Image
                   source={avatarSource}
                   style={sheetStyles.heroImage}
-                  resizeMode="cover"
+                  contentFit="cover"
+                  contentPosition="top"
+                  transition={200}
                 />
               </TouchableOpacity>
             ) : (
@@ -866,62 +840,6 @@ export default function CharacterSheetScreen() {
               </Text>
             </View>
           </View>
-        ) : (
-          <View
-            style={[
-              sheetStyles.collapsedBar,
-              {
-                backgroundColor: colors.bgElevated,
-                borderBottomColor: colors.borderSubtle,
-              },
-            ]}
-          >
-            <TouchableOpacity
-              style={sheetStyles.collapsedBackBtn}
-              onPress={handleGoBack}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-            </TouchableOpacity>
-
-            {avatarSource ? (
-              <TouchableOpacity activeOpacity={0.8} onPress={() => setAvatarPreview(true)}>
-                <Image
-                  source={avatarSource}
-                  style={sheetStyles.collapsedAvatar}
-                  resizeMode="cover"
-                />
-              </TouchableOpacity>
-            ) : (
-              <View style={[sheetStyles.collapsedAvatar, { backgroundColor: `${accentColor}20` }]}>
-                <Ionicons name={classIcon} size={18} color={accentColor} />
-              </View>
-            )}
-
-            <View style={sheetStyles.collapsedInfo}>
-              <Text
-                style={[sheetStyles.collapsedName, { color: colors.textPrimary }]}
-                numberOfLines={1}
-              >
-                {character.nombre}
-              </Text>
-              <Text
-                style={[sheetStyles.collapsedSub, { color: colors.textSecondary }]}
-                numberOfLines={1}
-              >
-                {classData.nombre} · Nv.{character.nivel}
-              </Text>
-            </View>
-
-            {/* Compact HP */}
-            <View style={sheetStyles.collapsedHp}>
-              <Ionicons name="heart" size={12} color={hpColor} />
-              <Text style={[sheetStyles.collapsedHpText, { color: hpColor }]}>
-                {character.hp.current}/{character.hp.max}
-              </Text>
-            </View>
-          </View>
-        )}
 
         {/* Stats Footer */}
         <Animated.View
@@ -945,14 +863,14 @@ export default function CharacterSheetScreen() {
             <StatBadge
               label="CA"
               value={ac}
-              color={colors.accentBlue}
+              color={colors.accentGold}
               delay={150}
               labelColor={colors.statsLabel}
             />
             <StatBadge
               label="VEL"
               value={`${character.speed.walk}`}
-              color={colors.accentGreen}
+              color={colors.accentGold}
               delay={200}
               labelColor={colors.statsLabel}
             />
@@ -960,8 +878,8 @@ export default function CharacterSheetScreen() {
             {/* HP Section */}
             <View style={sheetStyles.hpFooterSection}>
               <View style={sheetStyles.hpFooterValueRow}>
-                <Ionicons name="heart" size={14} color={hpColor} />
-                <Text style={[sheetStyles.hpFooterCurrent, { color: hpColor }]}>
+                <Ionicons name="heart" size={14} color={colors.accentGold} />
+                <Text style={[sheetStyles.hpFooterCurrent, { color: colors.accentGold }]}>
                   {character.hp.current}
                 </Text>
                 <Text style={[sheetStyles.hpFooterMax, { color: colors.statsLabel }]}>
@@ -1138,7 +1056,7 @@ const sheetStyles = StyleSheet.create({
   errorButton: {
     borderRadius: 12,
     overflow: "hidden",
-    shadowColor: "#8f3d38", // overridden inline via colors.accentRed
+    shadowColor: "#00BCD4", // overridden inline via colors.accentRed
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -1150,7 +1068,7 @@ const sheetStyles = StyleSheet.create({
     alignItems: "center",
   },
   errorButtonText: {
-    color: "#ffffff", // overridden inline via colors.textPrimary
+    color: "#0B1221",
     fontWeight: "700",
     fontSize: 15,
   },
@@ -1226,55 +1144,6 @@ const sheetStyles = StyleSheet.create({
     textShadowColor: "rgba(0,0,0,0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
-  },
-
-  // ── Collapsed Compact Bar ──
-  collapsedBar: {
-    height: COMPACT_BAR_H,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingTop: STATUS_BAR_TOP,
-    paddingHorizontal: 12,
-    gap: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  collapsedBackBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  collapsedAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  collapsedInfo: {
-    flex: 1,
-  },
-  collapsedName: {
-    fontSize: 15,
-    fontWeight: "800",
-    letterSpacing: -0.3,
-  },
-  collapsedSub: {
-    fontSize: 11,
-    fontWeight: "500",
-    marginTop: 1,
-  },
-  collapsedHp: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingRight: 4,
-  },
-  collapsedHpText: {
-    fontSize: 14,
-    fontWeight: "800",
   },
 
   // ── Stats Footer ──

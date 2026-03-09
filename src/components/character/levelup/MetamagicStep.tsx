@@ -9,6 +9,7 @@ import {
   type MetamagicOption,
 } from "@/types/spell";
 import { useTheme } from "@/hooks";
+import { withAlpha } from "@/utils/theme";
 import type { LevelUpSummary } from "@/data/srd/leveling";
 
 interface MetamagicStepProps {
@@ -53,15 +54,15 @@ export default function MetamagicStep({
             width: 64,
             height: 64,
             borderRadius: 32,
-            backgroundColor: "rgba(168, 85, 247, 0.1)",
+            backgroundColor: withAlpha(colors.accentRed, 0.1),
             borderWidth: 1,
-            borderColor: "rgba(168, 85, 247, 0.2)",
+            borderColor: withAlpha(colors.accentRed, 0.2),
             alignItems: "center",
             justifyContent: "center",
             marginBottom: 12,
           }}
         >
-          <Ionicons name="flash" size={28} color={colors.accentPurple} />
+          <Ionicons name="flash" size={28} color={colors.accentRed} />
         </View>
         <Text
           style={{
@@ -104,12 +105,12 @@ export default function MetamagicStep({
       {alreadyChosen.length > 0 && (
         <View
           style={{
-            backgroundColor: colors.borderSubtle,
+            backgroundColor: colors.bgCard,
             borderRadius: 12,
             padding: 12,
             marginBottom: 12,
             borderWidth: 1,
-            borderColor: colors.borderSeparator,
+            borderColor: colors.borderDefault,
           }}
         >
           <Text
@@ -152,15 +153,15 @@ export default function MetamagicStep({
               disabled={isFull}
               style={{
                 backgroundColor: isSelected
-                  ? "rgba(168, 85, 247, 0.1)"
+                  ? withAlpha(colors.accentRed, 0.1)
                   : isFull
-                    ? colors.borderSubtle + "88"
-                    : colors.borderSubtle,
+                    ? withAlpha(colors.bgCard, 0.5)
+                    : colors.bgCard,
                 borderRadius: 14,
                 borderWidth: isSelected ? 2 : 1,
                 borderColor: isSelected
-                  ? "rgba(168, 85, 247, 0.5)"
-                  : colors.borderSeparator,
+                  ? withAlpha(colors.accentRed, 0.5)
+                  : colors.borderDefault,
                 padding: 14,
                 opacity: isFull ? 0.5 : 1,
               }}
@@ -180,17 +181,17 @@ export default function MetamagicStep({
                     borderRadius: 6,
                     borderWidth: 2,
                     borderColor: isSelected
-                      ? colors.accentPurple
-                      : colors.textMuted + "55",
+                      ? colors.accentRed
+                      : withAlpha(colors.textMuted, 0.33),
                     backgroundColor: isSelected
-                      ? colors.accentPurple
+                      ? colors.accentRed
                       : "transparent",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
                   {isSelected && (
-                    <Ionicons name="checkmark" size={14} color="#fff" />
+                    <Ionicons name="checkmark" size={14} color={colors.textInverted} />
                   )}
                 </View>
                 <View style={{ flex: 1 }}>
@@ -204,7 +205,7 @@ export default function MetamagicStep({
                     <Text
                       style={{
                         color: isSelected
-                          ? colors.accentPurple
+                          ? colors.accentRed
                           : colors.textPrimary,
                         fontSize: 15,
                         fontWeight: "700",
@@ -215,8 +216,8 @@ export default function MetamagicStep({
                     <View
                       style={{
                         backgroundColor: isSelected
-                          ? "rgba(168, 85, 247, 0.15)"
-                          : colors.borderSeparator,
+                          ? withAlpha(colors.accentRed, 0.15)
+                          : withAlpha(colors.textMuted, 0.15),
                         paddingHorizontal: 8,
                         paddingVertical: 2,
                         borderRadius: 8,
@@ -225,7 +226,7 @@ export default function MetamagicStep({
                       <Text
                         style={{
                           color: isSelected
-                            ? colors.accentPurple
+                            ? colors.accentRed
                             : colors.textMuted,
                           fontSize: 11,
                           fontWeight: "700",

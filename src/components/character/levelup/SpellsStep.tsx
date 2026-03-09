@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks";
+import { withAlpha } from "@/utils/theme";
 import {
   getCantripsForClass,
   getSpellsForClassUpToLevel,
@@ -150,8 +151,8 @@ export default function SpellsStep({
     onPress: () => void,
     disabled: boolean,
   ) => {
-    const bgColor = selected ? "rgba(59, 130, 246, 0.12)" : colors.bgCard;
-    const cardBorderColor = selected ? colors.accentBlue : colors.borderSubtle;
+    const bgColor = selected ? withAlpha(colors.accentRed, 0.12) : colors.bgCard;
+    const cardBorderColor = selected ? colors.accentRed : colors.borderDefault;
     const isExpanded = expandedSpellIds.has(spell.id);
     const desc = getSpellDescription(spell.id);
 
@@ -194,22 +195,22 @@ export default function SpellsStep({
               borderRadius: 12,
               borderWidth: 2,
               borderColor: selected
-                ? colors.accentBlue
-                : colors.textMuted + "44",
-              backgroundColor: selected ? colors.accentBlue : "transparent",
+                ? colors.accentRed
+                : withAlpha(colors.textMuted, 0.27),
+              backgroundColor: selected ? colors.accentRed : "transparent",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
             {selected && (
-              <Ionicons name="checkmark" size={14} color="#fff" />
+              <Ionicons name="checkmark" size={14} color={colors.textInverted} />
             )}
           </View>
           {/* Spell info */}
           <View style={{ flex: 1 }}>
             <Text
               style={{
-                color: selected ? colors.accentBlue : colors.textPrimary,
+                color: selected ? colors.accentRed : colors.textPrimary,
                 fontSize: 14,
                 fontWeight: "700",
               }}
@@ -255,7 +256,7 @@ export default function SpellsStep({
               paddingBottom: 12,
               paddingTop: 0,
               borderTopWidth: 1,
-              borderTopColor: colors.borderSubtle,
+              borderTopColor: colors.borderDefault,
               marginHorizontal: 8,
             }}
           >
@@ -371,8 +372,8 @@ export default function SpellsStep({
             style={{
               backgroundColor:
                 selected.length === max
-                  ? "rgba(34, 197, 94, 0.15)"
-                  : "rgba(59, 130, 246, 0.12)",
+                  ? withAlpha(colors.accentRed, 0.15)
+                  : withAlpha(colors.accentRed, 0.12),
               paddingHorizontal: 10,
               paddingVertical: 3,
               borderRadius: 10,
@@ -382,8 +383,8 @@ export default function SpellsStep({
               style={{
                 color:
                   selected.length === max
-                    ? colors.accentGreen
-                    : colors.accentBlue,
+                    ? colors.accentRed
+                    : colors.accentRed,
                 fontSize: 12,
                 fontWeight: "700",
               }}
@@ -467,15 +468,15 @@ export default function SpellsStep({
             width: 64,
             height: 64,
             borderRadius: 32,
-            backgroundColor: "rgba(59, 130, 246, 0.1)",
+            backgroundColor: withAlpha(colors.accentRed, 0.1),
             borderWidth: 1,
-            borderColor: "rgba(59, 130, 246, 0.2)",
+            borderColor: withAlpha(colors.accentRed, 0.2),
             alignItems: "center",
             justifyContent: "center",
             marginBottom: 12,
           }}
         >
-          <Ionicons name="sparkles" size={28} color={colors.accentBlue} />
+          <Ionicons name="sparkles" size={28} color={colors.accentRed} />
         </View>
         <Text
           style={{
@@ -508,16 +509,16 @@ export default function SpellsStep({
           style={{
             flexDirection: "row",
             alignItems: "center",
-            backgroundColor: "rgba(251, 191, 36, 0.12)",
+            backgroundColor: withAlpha(colors.accentRed, 0.12),
             borderRadius: 12,
             borderWidth: 1,
-            borderColor: "rgba(251, 191, 36, 0.3)",
+            borderColor: withAlpha(colors.accentRed, 0.3),
             padding: 12,
             marginBottom: 16,
             gap: 10,
           }}
         >
-          <Ionicons name="star" size={18} color={colors.accentGold} />
+          <Ionicons name="star" size={18} color={colors.accentRed} />
           <Text
             style={{
               color: colors.textPrimary,
@@ -537,7 +538,7 @@ export default function SpellsStep({
         style={{
           flexDirection: "row",
           alignItems: "center",
-          backgroundColor: colors.borderSubtle,
+          backgroundColor: colors.bgCard,
           borderRadius: 10,
           padding: 10,
           marginBottom: 16,
@@ -565,12 +566,12 @@ export default function SpellsStep({
       {/* Search filter */}
       <View
         style={{
-          backgroundColor: colors.borderSubtle,
+          backgroundColor: colors.bgCard,
           borderRadius: 12,
           borderWidth: 1,
           borderColor: spellSearch
-            ? "rgba(59, 130, 246, 0.4)"
-            : colors.borderSeparator,
+            ? withAlpha(colors.accentRed, 0.4)
+            : colors.borderDefault,
           paddingHorizontal: 14,
           paddingVertical: Platform.OS === "ios" ? 10 : 4,
           marginBottom: 16,
@@ -618,7 +619,7 @@ export default function SpellsStep({
           selected: newCantrips,
           setSelected: setNewCantrips,
           max: sl.newCantrips,
-          accentColor: colors.accentBlue,
+          accentColor: colors.accentRed,
           excludeIds: cantripExclude,
         })}
 
@@ -635,10 +636,10 @@ export default function SpellsStep({
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
-                    backgroundColor: "rgba(59, 130, 246, 0.12)",
+                    backgroundColor: withAlpha(colors.accentRed, 0.12),
                     borderRadius: 12,
                     borderWidth: 2,
-                    borderColor: colors.accentBlue,
+                    borderColor: colors.accentRed,
                     padding: 12,
                     marginBottom: 8,
                     gap: 10,
@@ -649,15 +650,15 @@ export default function SpellsStep({
                       width: 24,
                       height: 24,
                       borderRadius: 12,
-                      backgroundColor: colors.accentBlue,
+                      backgroundColor: colors.accentRed,
                       alignItems: "center",
                       justifyContent: "center",
                     }}
                   >
-                    <Ionicons name="checkmark" size={14} color="#fff" />
+                    <Ionicons name="checkmark" size={14} color={colors.textInverted} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.accentBlue, fontSize: 14, fontWeight: "700" }}>
+                    <Text style={{ color: colors.accentRed, fontSize: 14, fontWeight: "700" }}>
                       {name}
                     </Text>
                     <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: "500", marginTop: 2 }}>
@@ -686,8 +687,8 @@ export default function SpellsStep({
             borderRadius: 12,
             borderWidth: 1,
             borderColor: customCantripName.trim()
-              ? "rgba(59, 130, 246, 0.4)"
-              : colors.borderSubtle,
+              ? withAlpha(colors.accentRed, 0.4)
+              : colors.borderDefault,
             paddingHorizontal: 12,
             paddingVertical: Platform.OS === "ios" ? 8 : 4,
             marginBottom: 20,
@@ -715,13 +716,13 @@ export default function SpellsStep({
             <TouchableOpacity
               onPress={addCustomCantrip}
               style={{
-                backgroundColor: "rgba(59, 130, 246, 0.15)",
+                backgroundColor: withAlpha(colors.accentRed, 0.15),
                 borderRadius: 8,
                 paddingHorizontal: 10,
                 paddingVertical: 6,
               }}
             >
-              <Text style={{ color: colors.accentBlue, fontSize: 13, fontWeight: "700" }}>
+              <Text style={{ color: colors.accentRed, fontSize: 13, fontWeight: "700" }}>
                 Añadir
               </Text>
             </TouchableOpacity>
@@ -738,7 +739,7 @@ export default function SpellsStep({
           selected: newSpells,
           setSelected: setNewSpells,
           max: sl.newSpellsKnown,
-          accentColor: colors.accentBlue,
+          accentColor: colors.accentRed,
           excludeIds: spellExclude,
         })}
 
@@ -755,10 +756,10 @@ export default function SpellsStep({
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
-                    backgroundColor: "rgba(59, 130, 246, 0.12)",
+                    backgroundColor: withAlpha(colors.accentRed, 0.12),
                     borderRadius: 12,
                     borderWidth: 2,
-                    borderColor: colors.accentBlue,
+                    borderColor: colors.accentRed,
                     padding: 12,
                     marginBottom: 8,
                     gap: 10,
@@ -769,15 +770,15 @@ export default function SpellsStep({
                       width: 24,
                       height: 24,
                       borderRadius: 12,
-                      backgroundColor: colors.accentBlue,
+                      backgroundColor: colors.accentRed,
                       alignItems: "center",
                       justifyContent: "center",
                     }}
                   >
-                    <Ionicons name="checkmark" size={14} color="#fff" />
+                    <Ionicons name="checkmark" size={14} color={colors.textInverted} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.accentBlue, fontSize: 14, fontWeight: "700" }}>
+                    <Text style={{ color: colors.accentRed, fontSize: 14, fontWeight: "700" }}>
                       {name}
                     </Text>
                     <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: "500", marginTop: 2 }}>
@@ -806,8 +807,8 @@ export default function SpellsStep({
             borderRadius: 12,
             borderWidth: 1,
             borderColor: customSpellName.trim()
-              ? "rgba(59, 130, 246, 0.4)"
-              : colors.borderSubtle,
+              ? withAlpha(colors.accentRed, 0.4)
+              : colors.borderDefault,
             paddingHorizontal: 12,
             paddingVertical: Platform.OS === "ios" ? 8 : 4,
             marginBottom: 20,
@@ -835,13 +836,13 @@ export default function SpellsStep({
             <TouchableOpacity
               onPress={addCustomSpell}
               style={{
-                backgroundColor: "rgba(59, 130, 246, 0.15)",
+                backgroundColor: withAlpha(colors.accentRed, 0.15),
                 borderRadius: 8,
                 paddingHorizontal: 10,
                 paddingVertical: 6,
               }}
             >
-              <Text style={{ color: colors.accentBlue, fontSize: 13, fontWeight: "700" }}>
+              <Text style={{ color: colors.accentRed, fontSize: 13, fontWeight: "700" }}>
                 Añadir
               </Text>
             </TouchableOpacity>
@@ -858,7 +859,7 @@ export default function SpellsStep({
           selected: newSpellbook,
           setSelected: setNewSpellbook,
           max: sl.newSpellbookSpells,
-          accentColor: colors.accentPurple,
+          accentColor: colors.accentRed,
           excludeIds: bookExclude,
         })}
 
@@ -877,13 +878,13 @@ export default function SpellsStep({
               flexDirection: "row",
               alignItems: "center",
               backgroundColor: wantsToSwap
-                ? "rgba(251, 146, 60, 0.12)"
-                : colors.borderSubtle,
+                ? withAlpha(colors.accentRed, 0.12)
+                : colors.bgCard,
               borderRadius: 12,
               borderWidth: 1,
               borderColor: wantsToSwap
-                ? "rgba(251, 146, 60, 0.4)"
-                : colors.borderSeparator,
+                ? withAlpha(colors.accentRed, 0.4)
+                : colors.borderDefault,
               padding: 14,
               gap: 10,
             }}
@@ -891,7 +892,7 @@ export default function SpellsStep({
             <Ionicons
               name={wantsToSwap ? "swap-horizontal" : "swap-horizontal-outline"}
               size={20}
-              color={wantsToSwap ? colors.accentOrange : colors.textMuted}
+              color={wantsToSwap ? colors.accentRed : colors.textMuted}
             />
             <View style={{ flex: 1 }}>
               <Text
@@ -921,17 +922,17 @@ export default function SpellsStep({
                 borderRadius: 12,
                 borderWidth: 2,
                 borderColor: wantsToSwap
-                  ? colors.accentOrange
-                  : colors.textMuted + "44",
+                  ? colors.accentRed
+                  : withAlpha(colors.textMuted, 0.27),
                 backgroundColor: wantsToSwap
-                  ? colors.accentOrange
+                  ? colors.accentRed
                   : "transparent",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
               {wantsToSwap && (
-                <Ionicons name="checkmark" size={14} color="#fff" />
+                <Ionicons name="checkmark" size={14} color={colors.textInverted} />
               )}
             </View>
           </TouchableOpacity>
@@ -967,13 +968,13 @@ export default function SpellsStep({
                       activeOpacity={0.7}
                       style={{
                         backgroundColor: isSelected
-                          ? "rgba(239, 68, 68, 0.12)"
+                          ? withAlpha(colors.accentDanger, 0.12)
                           : colors.bgCard,
                         borderRadius: 12,
                         borderWidth: isSelected ? 2 : 1,
                         borderColor: isSelected
                           ? colors.accentDanger
-                          : colors.borderSubtle,
+                          : colors.borderDefault,
                         padding: 12,
                         flexDirection: "row",
                         alignItems: "center",
@@ -988,7 +989,7 @@ export default function SpellsStep({
                           borderWidth: 2,
                           borderColor: isSelected
                             ? colors.accentDanger
-                            : colors.textMuted + "44",
+                            : withAlpha(colors.textMuted, 0.27),
                           backgroundColor: isSelected
                             ? colors.accentDanger
                             : "transparent",
@@ -997,7 +998,7 @@ export default function SpellsStep({
                         }}
                       >
                         {isSelected && (
-                          <Ionicons name="close" size={12} color="#fff" />
+                          <Ionicons name="close" size={12} color={colors.textInverted} />
                         )}
                       </View>
                       <Text
@@ -1053,7 +1054,7 @@ export default function SpellsStep({
               {/* Select new spell */}
               <Text
                 style={{
-                  color: colors.accentGreen,
+                  color: colors.accentRed,
                   fontSize: 12,
                   fontWeight: "700",
                   textTransform: "uppercase",
@@ -1081,13 +1082,13 @@ export default function SpellsStep({
                       activeOpacity={0.7}
                       style={{
                         backgroundColor: isSelected
-                          ? "rgba(34, 197, 94, 0.12)"
+                          ? withAlpha(colors.accentRed, 0.12)
                           : colors.bgCard,
                         borderRadius: 12,
                         borderWidth: isSelected ? 2 : 1,
                         borderColor: isSelected
-                          ? colors.accentGreen
-                          : colors.borderSubtle,
+                          ? colors.accentRed
+                          : colors.borderDefault,
                         padding: 12,
                         flexDirection: "row",
                         alignItems: "center",
@@ -1101,10 +1102,10 @@ export default function SpellsStep({
                           borderRadius: 10,
                           borderWidth: 2,
                           borderColor: isSelected
-                            ? colors.accentGreen
-                            : colors.textMuted + "44",
+                            ? colors.accentRed
+                            : withAlpha(colors.textMuted, 0.27),
                           backgroundColor: isSelected
-                            ? colors.accentGreen
+                            ? colors.accentRed
                             : "transparent",
                           alignItems: "center",
                           justifyContent: "center",
@@ -1114,7 +1115,7 @@ export default function SpellsStep({
                           <Ionicons
                             name="checkmark"
                             size={12}
-                            color="#fff"
+                            color={colors.textInverted}
                           />
                         )}
                       </View>
@@ -1122,7 +1123,7 @@ export default function SpellsStep({
                         <Text
                           style={{
                             color: isSelected
-                              ? colors.accentGreen
+                              ? colors.accentRed
                               : colors.textPrimary,
                             fontSize: 14,
                             fontWeight: "600",

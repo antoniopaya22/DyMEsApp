@@ -220,120 +220,132 @@ export function AddItemModal({
             contentContainerStyle={{ paddingBottom: 40 }}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Name */}
-            <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5 mt-2" style={{ color: colors.textSecondary }}>
-              Nombre <Text style={{ color: colors.accentRed }}>*</Text>
-            </Text>
-            <TextInput
-              className="rounded-xl px-4 py-3 text-sm border mb-4"
-              style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
-              placeholder="Ej: Espada larga"
-              placeholderTextColor={colors.textMuted}
-              value={name}
-              onChangeText={setName}
-              maxLength={100}
-              autoFocus
-            />
+            {/* ── Card: Información básica ── */}
+            <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+              {/* Name */}
+              <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                Nombre <Text style={{ color: colors.accentRed }}>*</Text>
+              </Text>
+              <TextInput
+                className="rounded-xl px-4 py-3 text-sm border mb-4"
+                style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+                placeholder="Ej: Espada larga"
+                placeholderTextColor={colors.textMuted}
+                value={name}
+                onChangeText={setName}
+                maxLength={100}
+                autoFocus
+              />
 
-            {/* Category */}
-            <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
-              Categoría
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="mb-4"
-            >
-              {CATEGORY_OPTIONS.map((opt) => {
-                const isSelected = category === opt.value;
-                return (
-                  <TouchableOpacity
-                    key={opt.value}
-                    className="rounded-full px-3.5 py-2 mr-2 border"
-                    style={{
-                      backgroundColor: isSelected ? withAlpha(colors.accentRed, 0.2) : colors.bgSecondary,
-                      borderColor: isSelected ? withAlpha(colors.accentRed, 0.5) : colors.borderDefault,
-                    }}
-                    onPress={() => setCategory(opt.value)}
-                  >
-                    <Text
-                      className="text-xs font-medium"
-                      style={{ color: isSelected ? colors.accentRed : colors.textSecondary }}
+              {/* Category */}
+              <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                Categoría
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+              >
+                {CATEGORY_OPTIONS.map((opt) => {
+                  const isSelected = category === opt.value;
+                  return (
+                    <TouchableOpacity
+                      key={opt.value}
+                      className="rounded-full px-3.5 py-2 mr-2 border"
+                      style={{
+                        backgroundColor: isSelected ? withAlpha(colors.accentRed, 0.2) : colors.bgSecondary,
+                        borderColor: isSelected ? withAlpha(colors.accentRed, 0.5) : colors.borderDefault,
+                      }}
+                      onPress={() => setCategory(opt.value)}
                     >
-                      {ITEM_CATEGORY_ICONS[opt.value]} {opt.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-
-            {/* Quantity & Weight row */}
-            <View className="flex-row mb-4">
-              <View className="flex-1 mr-2">
-                <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
-                  Cantidad
-                </Text>
-                <TextInput
-                  className="rounded-xl px-4 py-3 text-sm border"
-                  style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
-                  placeholder="1"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="numeric"
-                  value={quantity}
-                  onChangeText={setQuantity}
-                />
-              </View>
-              <View className="flex-1 mx-1">
-                <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
-                  Peso (lb)
-                </Text>
-                <TextInput
-                  className="rounded-xl px-4 py-3 text-sm border"
-                  style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
-                  placeholder="0"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="decimal-pad"
-                  value={weight}
-                  onChangeText={setWeight}
-                />
-              </View>
-              <View className="flex-1 ml-2">
-                <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
-                  Valor (MO)
-                </Text>
-                <TextInput
-                  className="rounded-xl px-4 py-3 text-sm border"
-                  style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
-                  placeholder="—"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="decimal-pad"
-                  value={value}
-                  onChangeText={setValue}
-                />
-              </View>
+                      <View className="flex-row items-center">
+                        <Ionicons
+                          name={ITEM_CATEGORY_ICONS[opt.value] as any}
+                          size={14}
+                          color={isSelected ? colors.accentRed : colors.textSecondary}
+                        />
+                        <Text
+                          className="text-xs font-medium ml-1.5"
+                          style={{ color: isSelected ? colors.accentRed : colors.textSecondary }}
+                        >
+                          {opt.label}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
             </View>
 
-            {/* Description */}
-            <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
-              Descripción (opcional)
-            </Text>
-            <TextInput
-              className="rounded-xl px-4 py-3 text-sm border mb-6 min-h-[80px]"
-              style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
-              placeholder="Añade una descripción..."
-              placeholderTextColor={colors.textMuted}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-              value={description}
-              onChangeText={setDescription}
-              maxLength={500}
-            />
+            {/* ── Card: Detalles ── */}
+            <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+              {/* Quantity & Weight row */}
+              <View className="flex-row mb-4">
+                <View className="flex-1 mr-2">
+                  <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                    Cantidad
+                  </Text>
+                  <TextInput
+                    className="rounded-xl px-4 py-3 text-sm border"
+                    style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+                    placeholder="1"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="numeric"
+                    value={quantity}
+                    onChangeText={setQuantity}
+                  />
+                </View>
+                <View className="flex-1 mx-1">
+                  <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                    Peso (lb)
+                  </Text>
+                  <TextInput
+                    className="rounded-xl px-4 py-3 text-sm border"
+                    style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+                    placeholder="0"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="decimal-pad"
+                    value={weight}
+                    onChangeText={setWeight}
+                  />
+                </View>
+                <View className="flex-1 ml-2">
+                  <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                    Valor (MO)
+                  </Text>
+                  <TextInput
+                    className="rounded-xl px-4 py-3 text-sm border"
+                    style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+                    placeholder="—"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="decimal-pad"
+                    value={value}
+                    onChangeText={setValue}
+                  />
+                </View>
+              </View>
+
+              {/* Description */}
+              <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                Descripción (opcional)
+              </Text>
+              <TextInput
+                className="rounded-xl px-4 py-3 text-sm border min-h-[80px]"
+                style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+                placeholder="Añade una descripción..."
+                placeholderTextColor={colors.textMuted}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+                value={description}
+                onChangeText={setDescription}
+                maxLength={500}
+              />
+            </View>
 
             {/* ── Weapon Configuration (only when category is "arma") ── */}
             {category === "arma" && (
               <View
-                className="rounded-xl border p-4 mb-6"
+                className="rounded-card border p-4 mb-4"
                 style={{
                   borderColor: colors.accentDanger + "40",
                   backgroundColor: colors.accentDanger + "08",
@@ -605,7 +617,7 @@ export function AddItemModal({
               onPress={handleSubmit}
               disabled={!name.trim()}
             >
-              <Text className="text-white font-bold text-base">
+              <Text className="font-bold text-base" style={{ color: colors.textInverted }}>
                 Añadir al Inventario
               </Text>
             </TouchableOpacity>

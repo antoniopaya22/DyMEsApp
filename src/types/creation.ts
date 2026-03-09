@@ -135,6 +135,12 @@ export interface CharacterCreationDraft {
   appearance?: Appearance;
   /** Bonificadores de característica libres elegidos (ej: semielfo elige 2 × +1) */
   freeAbilityBonuses?: AbilityKey[];
+  /** ID del linaje dracónico elegido (solo para dracónido) */
+  dragonLineage?: string;
+  /** Herramienta elegida por la raza (ej: enano elige 1 de 3) */
+  raceToolChoice?: string;
+  /** Truco racial elegido (ej: alto elfo elige 1 truco de mago) */
+  racialCantripChoice?: string;
 
   /** Timestamp para recuperar borradores */
   lastSaved: string;

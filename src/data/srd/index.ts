@@ -111,6 +111,10 @@ export type { SrdSpell, SrdMagicSchool } from "./spells";
 export { getSpellDescription } from "./spellDescriptions";
 export type { SpellDescription } from "./spellDescriptions";
 
+// ─── Catálogo de objetos SRD ─────────────────────────────────────────
+export { findSrdItem, getAllSrdItems } from "./items";
+export type { SrdItemTemplate } from "./items";
+
 // ─── Rasgos de subclase ─────────────────────────────────────────────
 export {
   SUBCLASS_FEATURES,

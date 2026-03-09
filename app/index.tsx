@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   StyleSheet,
   Dimensions,
   RefreshControl,
+  Animated,
+  Easing,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -27,7 +29,7 @@ import {
   AppHeader,
 } from "@/components/ui";
 import { useTheme, useDialog, useToast } from "@/hooks";
-import { CharacterCard, HomeEmptyState, StatsRow } from "@/components/campaigns";
+import { CharacterCard, HomeEmptyState } from "@/components/campaigns";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -43,6 +45,31 @@ export default function HomeScreen() {
   const { dialogProps, showDestructive } = useDialog();
   const { toastProps, showSuccess } = useToast();
 
+  const fabScale = useRef(new Animated.Value(1)).current;
+  const fabGlow = useRef(new Animated.Value(0.35)).current;
+
+  // Subtle pulsing glow on FAB
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(fabGlow, {
+          toValue: 0.55,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(fabGlow, {
+          toValue: 0.30,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [fabGlow]);
+
   useFocusEffect(
     useCallback(() => {
       loadCharacters();
@@ -52,11 +79,6 @@ export default function HomeScreen() {
   const filteredCharacters = characters.filter((c) =>
     c.nombre.toLowerCase().includes(searchQuery.toLowerCase()),
   );
-
-  const averageLevel =
-    characters.length > 0
-      ? characters.reduce((sum, c) => sum + c.nivel, 0) / characters.length
-      : 0;
 
   const handleDeleteCharacter = (char: CharacterSummary) => {
     showDestructive(
@@ -133,7 +155,6 @@ export default function HomeScreen() {
     if (characters.length === 0) return null;
     return (
       <View style={styles.listHeaderContainer}>
-        <StatsRow total={characters.length} averageLevel={averageLevel} />
         {filteredCharacters.length !== characters.length && (
           <Text style={[styles.filterResultText, { color: colors.textMuted }]}>
             {filteredCharacters.length}{" "}
@@ -238,20 +259,46 @@ export default function HomeScreen() {
       />
 
       {/* FAB — New character */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push("/create")}
-        activeOpacity={0.85}
+      <Animated.View
+        style={[
+          styles.fab,
+          {
+            transform: [{ scale: fabScale }],
+            shadowOpacity: fabGlow,
+          },
+        ]}
       >
-        <LinearGradient
-          colors={["#d32f2f", colors.accentRed, "#a51c1c"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.fabGradient}
+        <TouchableOpacity
+          onPress={() => router.push("/create")}
+          onPressIn={() => {
+            Animated.timing(fabScale, {
+              toValue: 0.9,
+              duration: 100,
+              easing: Easing.out(Easing.ease),
+              useNativeDriver: true,
+            }).start();
+          }}
+          onPressOut={() => {
+            Animated.spring(fabScale, {
+              toValue: 1,
+              friction: 5,
+              tension: 200,
+              useNativeDriver: true,
+            }).start();
+          }}
+          activeOpacity={1}
+          style={styles.fabTouchable}
         >
-          <Ionicons name="add" size={28} color="white" />
-        </LinearGradient>
-      </TouchableOpacity>
+          <LinearGradient
+            colors={["#00D4E8", colors.accentRed, "#0097A7"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.fabGradient}
+          >
+            <Ionicons name="add" size={28} color={colors.textInverted} />
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
 
       <ConfirmDialog {...dialogProps} />
       <Toast {...toastProps} />
@@ -271,15 +318,19 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 32,
     right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    overflow: "hidden",
-    shadowColor: "#8f3d38",
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    shadowColor: "#00BCD4",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  fabTouchable: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    overflow: "hidden",
   },
   fabGradient: {
     flex: 1,

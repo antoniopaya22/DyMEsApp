@@ -6,7 +6,7 @@
  */
 
 import { useState, useMemo, useCallback } from "react";
-import { View, Text, Animated, TouchableOpacity } from "react-native";
+import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useCharacterStore } from "@/stores/characterStore";
 import { useHeaderScroll } from "@/hooks";
@@ -149,11 +149,11 @@ export default function NotesTab() {
 
       <TouchableOpacity
         className="flex-1 border rounded-card p-3 ml-2 flex-row items-center justify-center"
-        style={{ backgroundColor: withAlpha(colors.accentBlue, 0.15), borderColor: withAlpha(colors.accentBlue, 0.3) }}
+        style={{ backgroundColor: withAlpha(colors.accentRed, 0.15), borderColor: withAlpha(colors.accentRed, 0.3) }}
         onPress={handleCreateDiaryEntry}
       >
-        <Ionicons name="journal-outline" size={18} color={colors.accentBlue} />
-        <Text className="text-sm font-semibold ml-2" style={{ color: colors.accentBlue }}>
+        <Ionicons name="journal-outline" size={18} color={colors.accentRed} />
+        <Text className="text-sm font-semibold ml-2" style={{ color: colors.accentRed }}>
           Diario de Sesión
         </Text>
       </TouchableOpacity>
@@ -161,105 +161,132 @@ export default function NotesTab() {
   );
 
   const renderNotesList = () => {
-    if (processedNotes.length === 0) {
-      const hasFilters =
-        searchQuery.trim().length > 0 ||
-        activeTagFilter !== null ||
-        typeFilter !== null;
-
+    if (processedNotes.length > 0) {
       return (
-        <View className="rounded-card border p-6 items-center mb-4" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
-          <View className="h-16 w-16 rounded-full items-center justify-center mb-4" style={{ backgroundColor: colors.bgSecondary }}>
-            <Ionicons
-              name={hasFilters ? "search-outline" : "document-text-outline"}
-              size={32}
-              color={colors.textMuted}
-            />
+        <View className="mb-3">
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+              {processedNotes.length} nota(s)
+            </Text>
           </View>
-          <Text className="text-base font-semibold text-center mb-1" style={{ color: colors.textPrimary }}>
-            {hasFilters ? "Sin resultados" : "Sin notas"}
-          </Text>
-          <Text className="text-sm text-center leading-5 mb-4" style={{ color: colors.textSecondary }}>
-            {hasFilters
-              ? "No se encontraron notas con los filtros actuales."
-              : "Crea tu primera nota para empezar a registrar tu aventura."}
-          </Text>
-          {hasFilters ? (
-            <TouchableOpacity
-              className="rounded-lg px-4 py-2.5"
-              style={{ backgroundColor: colors.bgSecondary }}
-              onPress={() => {
-                setSearchQuery("");
-                setActiveTagFilter(null);
-                setTypeFilter(null);
-              }}
-            >
-              <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>
-                Limpiar filtros
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              className="rounded-lg px-6 py-2.5"
-              style={{ backgroundColor: colors.accentRed }}
-              onPress={handleCreateNote}
-            >
-              <Text className="text-white text-sm font-semibold">
-                Crear nota
-              </Text>
-            </TouchableOpacity>
-          )}
         </View>
       );
     }
+    return null;
+  };
+
+  const NotesEmptyState = () => {
+    const hasFilters =
+      searchQuery.trim().length > 0 ||
+      activeTagFilter !== null ||
+      typeFilter !== null;
 
     return (
-      <View className="mb-4">
-        <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textSecondary }}>
-            {processedNotes.length} nota(s)
-          </Text>
-        </View>
-        {processedNotes.map((note) => (
-          <NoteCard
-            key={note.id}
-            note={note}
-            customTags={customTags}
-            isExpanded={expandedNoteId === note.id}
-            onToggleExpand={() =>
-              setExpandedNoteId(
-                expandedNoteId === note.id ? null : note.id,
-              )
-            }
-            onEdit={() => handleEditNote(note)}
-            onDelete={() => handleDeleteNote(note)}
-            onTogglePin={() => handleTogglePin(note.id)}
+      <View className="rounded-card border p-6 items-center mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+        <View className="h-16 w-16 rounded-full items-center justify-center mb-4" style={{ backgroundColor: colors.bgSecondary }}>
+          <Ionicons
+            name={hasFilters ? "search-outline" : "document-text-outline"}
+            size={32}
+            color={colors.textMuted}
           />
-        ))}
+        </View>
+        <Text className="text-base font-semibold text-center mb-1" style={{ color: colors.textPrimary }}>
+          {hasFilters ? "Sin resultados" : "Sin notas"}
+        </Text>
+        <Text className="text-sm text-center leading-5 mb-4" style={{ color: colors.textSecondary }}>
+          {hasFilters
+            ? "No se encontraron notas con los filtros actuales."
+            : "Crea tu primera nota para empezar a registrar tu aventura."}
+        </Text>
+        {hasFilters ? (
+          <TouchableOpacity
+            className="rounded-lg px-4 py-2.5"
+            style={{ backgroundColor: colors.bgSecondary }}
+            onPress={() => {
+              setSearchQuery("");
+              setActiveTagFilter(null);
+              setTypeFilter(null);
+            }}
+          >
+            <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>
+              Limpiar filtros
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            className="rounded-lg px-6 py-2.5"
+            style={{ backgroundColor: colors.accentRed }}
+            onPress={handleCreateNote}
+          >
+            <Text className="text-sm font-semibold" style={{ color: colors.textInverted }}>
+              Crear nota
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
 
+  const renderNoteItem = useCallback(({ item: note }: { item: Note }) => (
+    <NoteCard
+      key={note.id}
+      note={note}
+      customTags={customTags}
+      isExpanded={expandedNoteId === note.id}
+      onToggleExpand={() =>
+        setExpandedNoteId(
+          expandedNoteId === note.id ? null : note.id,
+        )
+      }
+      onEdit={() => handleEditNote(note)}
+      onDelete={() => handleDeleteNote(note)}
+      onTogglePin={() => handleTogglePin(note.id)}
+    />
+  ), [expandedNoteId, customTags, handleEditNote, handleDeleteNote, handleTogglePin]);
+
+  const noteKeyExtractor = useCallback((note: Note) => note.id, []);
+
+  const NotesListHeader = () => (
+    <>
+      {renderStatsBar()}
+      <QuickNoteBar onSubmit={handleQuickNote} onShowToast={showToast} />
+      {renderActionButtons()}
+      <NoteFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        typeFilter={typeFilter}
+        onTypeFilterChange={setTypeFilter}
+        sortOptions={sortOptions}
+        onSortChange={setSortOptions}
+        activeTagFilter={activeTagFilter}
+        onTagFilterChange={setActiveTagFilter}
+        showSortOptions={showSortOptions}
+        onToggleSortOptions={() => setShowSortOptions(!showSortOptions)}
+      />
+      {renderNotesList()}
+    </>
+  );
+
   const renderStatsBar = () => (
-    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
+    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
       <View className="flex-row justify-between">
         <StatBadge
           icon="document-text"
           label="Total"
           value={String(notes.length)}
-          color={colors.textMuted}
+          color={colors.accentRed}
         />
         <StatBadge
           icon="journal"
           label="Diario"
           value={String(notes.filter((n) => n.tipo === "diario").length)}
-          color={colors.accentBlue}
+          color={colors.accentRed}
         />
         <StatBadge
           icon="pin"
           label="Fijadas"
           value={String(notes.filter((n) => n.fijada).length)}
-          color={colors.accentAmber}
+          color={colors.accentRed}
         />
         <StatBadge
           icon="today"
@@ -271,7 +298,7 @@ export default function NotesTab() {
                 .map((n) => n.numeroSesion),
             ).size,
           )}
-          color={colors.accentGreen}
+          color={colors.accentRed}
         />
       </View>
     </View>
@@ -279,35 +306,19 @@ export default function NotesTab() {
 
   return (
     <View className="flex-1">
-      <Animated.ScrollView
-        className="flex-1"
+      <FlatList
+        data={processedNotes}
+        renderItem={renderNoteItem}
+        keyExtractor={noteKeyExtractor}
+        ListHeaderComponent={NotesListHeader}
+        ListEmptyComponent={NotesEmptyState}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         onScroll={onScroll}
         scrollEventThrottle={16}
-      >
-        {renderStatsBar()}
-
-        <QuickNoteBar onSubmit={handleQuickNote} onShowToast={showToast} />
-
-        {renderActionButtons()}
-
-        <NoteFilterBar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          typeFilter={typeFilter}
-          onTypeFilterChange={setTypeFilter}
-          sortOptions={sortOptions}
-          onSortChange={setSortOptions}
-          activeTagFilter={activeTagFilter}
-          onTagFilterChange={setActiveTagFilter}
-          showSortOptions={showSortOptions}
-          onToggleSortOptions={() => setShowSortOptions(!showSortOptions)}
-        />
-
-        {renderNotesList()}
-      </Animated.ScrollView>
+        removeClippedSubviews
+      />
 
       <NoteEditorModal
         visible={showEditor}

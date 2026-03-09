@@ -58,20 +58,20 @@ export default function DiceFAB({
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (!hidden) {
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 5,
-        tension: 100,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(scaleAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-    }
+    const anim = hidden
+      ? Animated.timing(scaleAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        })
+      : Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 5,
+          tension: 100,
+          useNativeDriver: true,
+        });
+    anim.start();
+    return () => anim.stop();
   }, [hidden, scaleAnim]);
 
   // Subtle idle animation - gentle rotation/pulse

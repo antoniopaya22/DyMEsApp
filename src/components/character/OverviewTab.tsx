@@ -40,7 +40,7 @@ import { useTheme, useDialog } from "@/hooks";
 import { withAlpha } from "@/utils/theme";
 import { CollapsibleSection, InfoBadge, ConfirmDialog } from "@/components/ui";
 import { TraitCard } from "./TraitCard";
-import { ABILITY_COLORS, ABILITY_KEYS } from "@/constants/abilities";
+import { ABILITY_KEYS } from "@/constants/abilities";
 import { rollD20 } from "@/utils/dice";
 import { getSkillRollModifiers } from "@/utils/skillRollModifiers";
 import type { SkillRollModifiers } from "@/utils/skillRollModifiers";
@@ -187,9 +187,9 @@ export default function OverviewTab() {
                         fontSize: 28,
                         fontWeight: "bold" as const,
                         color: result.isCritical
-                          ? "#22c55e"
+                          ? colors.accentGreen
                           : result.isFumble
-                            ? "#ef4444"
+                            ? colors.accentDanger
                             : colors.textPrimary,
                       },
                     },
@@ -312,54 +312,46 @@ export default function OverviewTab() {
 
   const renderBasicInfo = () => {
     return (
-    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
+    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
       <View className="flex-row flex-wrap">
         <InfoBadge
           icon="book-outline"
           label={backgroundDisplayName}
-          color={colors.accentGold}
         />
         {character.alineamiento && (
           <InfoBadge
             icon="compass-outline"
             label={ALIGNMENT_NAMES[character.alineamiento]}
-            color={colors.accentPurple}
           />
         )}
         <InfoBadge
           icon="star-outline"
           label={`XP: ${character.experiencia}`}
-          color={colors.accentGreen}
         />
         <InfoBadge
           icon="ribbon-outline"
           label={`Competencia: +${character.proficiencyBonus}`}
-          color={colors.accentBlue}
         />
         <InfoBadge
           icon="walk-outline"
           label={`${character.speed.walk} pies`}
-          color={colors.accentGreen}
         />
         {character.speed.swim ? (
           <InfoBadge
             icon="water-outline"
             label={`Nadar: ${character.speed.swim} pies`}
-            color={colors.accentLightBlue}
           />
         ) : null}
         {character.speed.climb ? (
           <InfoBadge
             icon="trending-up-outline"
             label={`Trepar: ${character.speed.climb} pies`}
-            color={colors.accentOrange}
           />
         ) : null}
         {character.speed.fly ? (
           <InfoBadge
             icon="airplane-outline"
             label={`Volar: ${character.speed.fly} pies`}
-            color={colors.accentPurple}
           />
         ) : null}
       </View>
@@ -377,18 +369,17 @@ export default function OverviewTab() {
       <View className="flex-row flex-wrap justify-between">
         {ABILITY_ORDER.map((key) => {
           const score = character.abilityScores[key];
-          const color = ABILITY_COLORS[key];
           return (
             <TouchableOpacity
               key={key}
               activeOpacity={0.7}
               onPress={() => handleAbilityRoll(key)}
               className="w-[31%] rounded-xl p-3 mb-3 items-center border"
-              style={{ backgroundColor: colors.bgSecondary, borderColor: colors.borderDefault }}
+              style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
             >
               <Text
                 className="text-xs font-bold uppercase tracking-wider mb-1"
-                style={{ color }}
+                style={{ color: colors.accentRed }}
               >
                 {ABILITY_ABBR[key]}
               </Text>
@@ -397,9 +388,9 @@ export default function OverviewTab() {
               </Text>
               <View
                 className="rounded-full px-3 py-1 mt-1"
-                style={{ backgroundColor: `${color}22` }}
+                style={{ backgroundColor: withAlpha(colors.accentRed, 0.13) }}
               >
-                <Text className="text-sm font-bold" style={{ color }}>
+                <Text className="text-sm font-bold" style={{ color: colors.accentRed }}>
                   {formatModifier(score.modifier)}
                 </Text>
               </View>
@@ -427,7 +418,6 @@ export default function OverviewTab() {
           {ABILITY_ORDER.map((key) => {
             const save = character.savingThrows[key];
             const bonus = getSavingThrowBonus(key);
-            const color = ABILITY_COLORS[key];
             return (
               <TouchableOpacity
                 key={key}
@@ -439,10 +429,10 @@ export default function OverviewTab() {
                   className="flex-row items-center rounded-lg p-2.5 border"
                   style={{
                     backgroundColor: save.proficient
-                      ? `${color}11`
-                      : colors.bgPrimary,
+                      ? withAlpha(colors.accentRed, 0.15)
+                      : colors.bgCard,
                     borderColor: save.proficient
-                      ? `${color}44`
+                      ? withAlpha(colors.accentRed, 0.5)
                       : colors.borderDefault,
                   }}
                 >
@@ -450,12 +440,12 @@ export default function OverviewTab() {
                     className="h-6 w-6 rounded-full items-center justify-center mr-2"
                     style={{
                       backgroundColor: save.proficient
-                        ? `${color}33`
+                        ? withAlpha(colors.accentRed, 0.35)
                         : colors.bgElevated,
                     }}
                   >
                     {save.proficient ? (
-                      <Ionicons name="checkmark" size={14} color={color} />
+                      <Ionicons name="checkmark" size={14} color="#fff" />
                     ) : (
                       <View
                         className="h-2 w-2 rounded-full"
@@ -463,13 +453,13 @@ export default function OverviewTab() {
                       />
                     )}
                   </View>
-                  <Text className="text-xs font-semibold flex-1" style={{ color: colors.textSecondary }}>
+                  <Text className="text-xs font-bold flex-1" style={{ color: save.proficient ? colors.accentRed : colors.textMuted }}>
                     {ABILITY_ABBR[key]}
                   </Text>
                   <Text
                     className="text-sm font-bold"
                     style={{
-                      color: save.proficient ? color : colors.textSecondary,
+                      color: save.proficient ? colors.accentRed : colors.textMuted,
                     }}
                   >
                     {formatModifier(bonus)}
@@ -501,7 +491,6 @@ export default function OverviewTab() {
           const baseBonus = getSkillBonus(key);
           const isProficient = proficiency.level === "proficient";
           const isExpertise = proficiency.level === "expertise";
-          const abilityColor = ABILITY_COLORS[skill.habilidad];
 
           // Sumar bonificadores pasivos de rasgos de clase/subclase
           const modifiers = getSkillRollModifiers(character, key);
@@ -523,14 +512,14 @@ export default function OverviewTab() {
                 {isExpertise ? (
                   <View
                     className="h-5 w-5 rounded-full items-center justify-center"
-                    style={{ backgroundColor: `${abilityColor}33` }}
+                    style={{ backgroundColor: withAlpha(colors.accentRed, 0.2) }}
                   >
-                    <Ionicons name="star" size={12} color={abilityColor} />
+                    <Ionicons name="star" size={12} color={colors.accentRed} />
                   </View>
                 ) : isProficient ? (
                   <View
                     className="h-4 w-4 rounded-full"
-                    style={{ backgroundColor: abilityColor }}
+                    style={{ backgroundColor: colors.accentRed }}
                   />
                 ) : (
                   <View className="h-4 w-4 rounded-full border-2" style={{ borderColor: colors.textMuted }} />
@@ -562,7 +551,7 @@ export default function OverviewTab() {
                 style={{
                   color:
                     isProficient || isExpertise
-                      ? abilityColor
+                      ? colors.accentRed
                       : colors.textMuted,
                 }}
               >
@@ -739,26 +728,26 @@ export default function OverviewTab() {
             {(a.age || a.height || a.weight) && (
               <View className="flex-row flex-wrap mb-2" style={{ gap: 8 }}>
                 {a.age ? (
-                  <InfoBadge icon="calendar-outline" label={a.age} color={colors.accentBlue} />
+                  <InfoBadge icon="calendar-outline" label={a.age} />
                 ) : null}
                 {a.height ? (
-                  <InfoBadge icon="resize-outline" label={a.height} color={colors.accentGreen} />
+                  <InfoBadge icon="resize-outline" label={a.height} />
                 ) : null}
                 {a.weight ? (
-                  <InfoBadge icon="barbell-outline" label={a.weight} color={colors.accentOrange} />
+                  <InfoBadge icon="barbell-outline" label={a.weight} />
                 ) : null}
               </View>
             )}
             {(a.eyeColor || a.hairColor || a.skinColor) && (
               <View className="flex-row flex-wrap mb-2" style={{ gap: 8 }}>
                 {a.eyeColor ? (
-                  <InfoBadge icon="eye-outline" label={`Ojos: ${a.eyeColor}`} color={colors.accentPurple} />
+                  <InfoBadge icon="eye-outline" label={`Ojos: ${a.eyeColor}`} />
                 ) : null}
                 {a.hairColor ? (
-                  <InfoBadge icon="cut-outline" label={`Pelo: ${a.hairColor}`} color={colors.accentGold} />
+                  <InfoBadge icon="cut-outline" label={`Pelo: ${a.hairColor}`} />
                 ) : null}
                 {a.skinColor ? (
-                  <InfoBadge icon="hand-left-outline" label={`Piel: ${a.skinColor}`} color={colors.accentRed} />
+                  <InfoBadge icon="hand-left-outline" label={`Piel: ${a.skinColor}`} />
                 ) : null}
               </View>
             )}
@@ -811,9 +800,9 @@ export default function OverviewTab() {
               paddingVertical: 12,
               paddingHorizontal: 16,
               borderRadius: 12,
-              backgroundColor: "rgba(239, 68, 68, 0.08)",
+              backgroundColor: withAlpha(colors.accentDanger, 0.08),
               borderWidth: 1,
-              borderColor: "rgba(239, 68, 68, 0.25)",
+              borderColor: withAlpha(colors.accentDanger, 0.25),
               gap: 8,
             }}
           >
@@ -876,7 +865,7 @@ function SpeedBadge({
 }) {
   const { colors: sbColors } = useTheme();
   return (
-    <View className="flex-row items-center rounded-lg px-3 py-2 mr-2 mb-2 border" style={{ backgroundColor: sbColors.bgSecondary, borderColor: sbColors.borderDefault }}>
+    <View className="flex-row items-center rounded-lg px-3 py-2 mr-2 mb-2 border" style={{ backgroundColor: sbColors.bgCard, borderColor: sbColors.borderDefault }}>
       <Ionicons name={icon} size={16} color={sbColors.accentGreen} />
       <View className="ml-2">
         <Text className="text-[10px] uppercase" style={{ color: sbColors.textMuted }}>{label}</Text>
@@ -911,7 +900,7 @@ function ProficiencyGroup({
           <View
             key={idx}
             className="rounded-lg px-2.5 py-1.5 mr-1.5 mb-1.5 border"
-            style={{ backgroundColor: pgColors.bgSecondary, borderColor: pgColors.borderDefault }}
+            style={{ backgroundColor: pgColors.chipBg, borderColor: pgColors.chipBorder }}
           >
             <Text className="text-xs" style={{ color: pgColors.textSecondary }}>
               {item}

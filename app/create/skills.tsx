@@ -3,14 +3,12 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import {
   useCreationStore,
-  TOTAL_STEPS,
   getGrantedSkills,
   getAvailableClassSkills,
   getRequiredSkillCount,
@@ -18,6 +16,7 @@ import {
 import { SKILLS, ABILITY_NAMES, type SkillKey } from "@/types/character";
 import { useTheme, useScrollToTop } from "@/hooks";
 import { getCreationThemeOverrides } from "@/utils/creationStepTheme";
+import WizardStepLayout from "@/components/creation/WizardStepLayout";
 
 const CURRENT_STEP = 6;
 
@@ -93,8 +92,6 @@ export default function SkillsStep() {
     router.back();
   };
 
-  const progressPercent = (CURRENT_STEP / TOTAL_STEPS) * 100;
-
   // Group skills by ability
   const skillsByAbility: Record<
     string,
@@ -111,56 +108,17 @@ export default function SkillsStep() {
   }
 
   return (
-    <View style={[styles.container, themed.container]}>
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: 40 }}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <TouchableOpacity
-              style={[styles.backButton, themed.backButton]}
-              onPress={handleBack}
-            >
-              <Ionicons
-                name="arrow-back"
-                size={22}
-                color={colors.textPrimary}
-              />
-            </TouchableOpacity>
-            <Text style={[styles.stepText, themed.stepText]}>
-              Paso {CURRENT_STEP} de {TOTAL_STEPS}
-            </Text>
-            <View style={{ height: 40, width: 40 }} />
-          </View>
-          <View style={[styles.progressBar, themed.progressBar]}>
-            <View
-              style={[styles.progressFill, { width: `${progressPercent}%` }]}
-            />
-          </View>
-        </View>
-
-        {/* Title */}
-        <View style={styles.titleSection}>
-          <View style={styles.iconCircle}>
-            <Ionicons
-              name="school-outline"
-              size={40}
-              color={colors.accentRed}
-            />
-          </View>
-          <Text style={[styles.title, themed.title]}>
-            Competencias en Habilidades
-          </Text>
-          <Text style={[styles.subtitle, themed.subtitle]}>
-            Elige {requiredCount} habilidad{requiredCount !== 1 ? "es" : ""} de
-            la lista de tu clase. Las habilidades ya otorgadas por raza y
-            trasfondo aparecen marcadas.
-          </Text>
-        </View>
-
+    <WizardStepLayout
+      currentStep={CURRENT_STEP}
+      title="Competencias en Habilidades"
+      subtitle={`Elige ${requiredCount} habilidad${requiredCount !== 1 ? "es" : ""} de la lista de tu clase. Las habilidades ya otorgadas por raza y trasfondo aparecen marcadas.`}
+      iconName="school-outline"
+      nextLabel="Siguiente: Hechizos"
+      canProceed={isValid}
+      onNext={handleNext}
+      onBack={handleBack}
+      scrollRef={scrollRef}
+    >
         {/* Selection counter */}
         <View style={styles.counterRow}>
           <View style={[styles.counterBadge, themed.card]}>
@@ -186,7 +144,7 @@ export default function SkillsStep() {
                     <Ionicons
                       name="checkmark-circle"
                       size={20}
-                      color={colors.accentGreen}
+                      color={colors.accentGold}
                     />
                   </View>
                   <View style={styles.skillInfo}>
@@ -239,8 +197,8 @@ export default function SkillsStep() {
                   key={sk}
                   style={[
                     styles.skillCard,
-                    themed.card,
-                    isSelected && styles.skillCardSelected,
+                    themed.cardElevated,
+                    isSelected && themed.chipSelected,
                     isDisabled && styles.skillCardDisabled,
                   ]}
                   onPress={() => handleToggleSkill(sk)}
@@ -251,11 +209,11 @@ export default function SkillsStep() {
                       style={[
                         styles.checkbox,
                         themed.checkbox,
-                        isSelected && styles.checkboxSelected,
+                        isSelected && { borderColor: colors.accentRed, backgroundColor: colors.accentRed },
                       ]}
                     >
                       {isSelected && (
-                        <Ionicons name="checkmark" size={16} color="white" />
+                        <Ionicons name="checkmark" size={16} color={colors.textInverted} />
                       )}
                     </View>
                     <View style={styles.skillInfo}>
@@ -301,8 +259,7 @@ export default function SkillsStep() {
                         style={[
                           styles.refBadge,
                           themed.refBadge,
-                          isGranted && styles.refBadgeGranted,
-                          isChosen && styles.refBadgeChosen,
+                          (isGranted || isChosen) && themed.chipSelected,
                         ]}
                       >
                         <Text
@@ -324,111 +281,25 @@ export default function SkillsStep() {
               </View>
             ))}
         </View>
-      </ScrollView>
-
-      {/* Footer */}
-      <View style={[styles.footer, themed.footer]}>
-        <TouchableOpacity
-          style={[
-            styles.nextButton,
-            !isValid && [styles.nextButtonDisabled, themed.nextButtonDisabled],
-          ]}
-          onPress={handleNext}
-          disabled={!isValid}
-        >
-          <Text style={styles.nextButtonText}>Siguiente: Habilidades</Text>
-          <Ionicons name="arrow-forward" size={20} color="white" />
-        </TouchableOpacity>
-      </View>
-    </View>
+    </WizardStepLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#272519",
-  },
-  scroll: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 64,
-    paddingBottom: 16,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  backButton: {
-    height: 40,
-    width: 40,
-    borderRadius: 20,
-    backgroundColor: "#2E2C1E",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepText: {
-    color: "#AAA37B",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: "#2E2C1E",
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#8f3d38",
-    borderRadius: 3,
-  },
-  titleSection: {
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  iconCircle: {
-    height: 80,
-    width: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(143,61,56,0.15)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  title: {
-    color: "#ffffff",
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: "#AAA37B",
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 22,
-    paddingHorizontal: 16,
-  },
   counterRow: {
     alignItems: "center",
     marginBottom: 20,
   },
   counterBadge: {
-    backgroundColor: "#323021",
+    backgroundColor: "#101B2E",
     borderRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#1E2D42",
   },
   counterText: {
-    color: "#CDC9B2",
+    color: "#00E5FF",
     fontSize: 15,
     fontWeight: "bold",
   },
@@ -450,29 +321,29 @@ const styles = StyleSheet.create({
   grantedRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(34,197,94,0.07)",
+    backgroundColor: "rgba(128,121,83,0.07)",
     borderRadius: 10,
     padding: 12,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: "rgba(34,197,94,0.3)",
+    borderColor: "rgba(128,121,83,0.3)",
   },
   grantedIcon: {
     marginRight: 12,
   },
   grantedName: {
-    color: "#22c55e",
+    color: "#807953",
     fontSize: 15,
     fontWeight: "bold",
   },
   grantedBadge: {
-    backgroundColor: "rgba(34,197,94,0.15)",
+    backgroundColor: "rgba(128,121,83,0.15)",
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   grantedBadgeText: {
-    color: "#22c55e",
+    color: "#807953",
     fontSize: 11,
     fontWeight: "700",
     textTransform: "uppercase",
@@ -480,31 +351,28 @@ const styles = StyleSheet.create({
   emptyState: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#323021",
+    backgroundColor: "#101B2E",
     borderRadius: 10,
     padding: 14,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#1E2D42",
   },
   emptyText: {
-    color: "#AAA37B",
+    color: "#8899AA",
     fontSize: 14,
     lineHeight: 20,
     marginLeft: 10,
     flex: 1,
   },
   skillCard: {
-    backgroundColor: "#323021",
+    backgroundColor: "#182338",
     borderRadius: 10,
     padding: 14,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#2A3A52",
   },
-  skillCardSelected: {
-    borderColor: "#8f3d38",
-    backgroundColor: "rgba(143,61,56,0.08)",
-  },
+  // skillCardSelected → themed.chipSelected
   skillCardDisabled: {
     opacity: 0.4,
   },
@@ -522,10 +390,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 14,
   },
-  checkboxSelected: {
-    borderColor: "#8f3d38",
-    backgroundColor: "#8f3d38",
-  },
+  // checkboxSelected → inline { borderColor: colors.accentRed, backgroundColor: colors.accentRed }
   skillInfo: {
     flex: 1,
   },
@@ -539,7 +404,7 @@ const styles = StyleSheet.create({
     color: "#ffffff",
   },
   skillAbility: {
-    color: "#AAA37B",
+    color: "#8899AA",
     fontSize: 13,
   },
   refTitle: {
@@ -554,7 +419,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   refAbility: {
-    color: "#CDC9B2",
+    color: "#00E5FF",
     fontSize: 12,
     fontWeight: "700",
     marginBottom: 4,
@@ -565,21 +430,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   refBadge: {
-    backgroundColor: "#2E2C1E",
+    backgroundColor: "#101B2E",
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#1E2D42",
   },
-  refBadgeGranted: {
-    borderColor: "rgba(34,197,94,0.4)",
-    backgroundColor: "rgba(34,197,94,0.1)",
-  },
-  refBadgeChosen: {
-    borderColor: "rgba(143,61,56,0.5)",
-    backgroundColor: "rgba(143,61,56,0.15)",
-  },
+  // refBadgeGranted / refBadgeChosen → themed.chipSelected
   refBadgeText: {
     color: "#807953",
     fontSize: 12,
@@ -587,30 +445,5 @@ const styles = StyleSheet.create({
   refBadgeTextActive: {
     color: "#d9d9e6",
     fontWeight: "600",
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#514D35",
-  },
-  nextButton: {
-    backgroundColor: "#8f3d38",
-    borderRadius: 12,
-    paddingVertical: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  nextButtonDisabled: {
-    backgroundColor: "#423E2B",
-    opacity: 0.5,
-  },
-  nextButtonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginRight: 8,
   },
 });

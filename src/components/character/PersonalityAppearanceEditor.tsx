@@ -3,7 +3,7 @@
  * desde la hoja de personaje.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/hooks";
-import { withAlpha } from "@/utils/theme";
+import { withAlpha, type ThemeColors } from "@/utils/theme";
 import type { Personality, Appearance, Alignment } from "@/types/character";
 import { ALIGNMENT_NAMES } from "@/types/character";
 
@@ -53,17 +53,19 @@ const ALIGNMENT_KEYS: Alignment[] = [
   "caotico_malvado",
 ];
 
-const ALIGNMENT_COLORS: Record<string, string> = {
-  legal_bueno: "#3b82f6",
-  neutral_bueno: "#22c55e",
-  caotico_bueno: "#f59e0b",
-  legal_neutral: "#6366f1",
-  neutral: "#9ca3af",
-  caotico_neutral: "#f97316",
-  legal_malvado: "#8b5cf6",
-  neutral_malvado: "#ef4444",
-  caotico_malvado: "#dc2626",
-};
+function getAlignmentColors(colors: ThemeColors): Record<string, string> {
+  return {
+    legal_bueno: colors.accentBlue,
+    neutral_bueno: colors.accentGreen,
+    caotico_bueno: colors.accentAmber,
+    legal_neutral: colors.accentIndigo,
+    neutral: colors.textMuted,
+    caotico_neutral: colors.accentOrange,
+    legal_malvado: colors.accentPurple,
+    neutral_malvado: colors.accentDanger,
+    caotico_malvado: colors.accentDanger,
+  };
+}
 
 // ─── Component ───────────────────────────────────────────────────────
 
@@ -81,6 +83,7 @@ export default function PersonalityAppearanceEditor({
   initialTab = "personality",
 }: Props) {
   const { colors } = useTheme();
+  const alignmentColors = useMemo(() => getAlignmentColors(colors), [colors]);
 
   const [tab, setTab] = useState<EditorTab>(initialTab);
   const [saving, setSaving] = useState(false);
@@ -200,7 +203,7 @@ export default function PersonalityAppearanceEditor({
         textAlignVertical={options?.multiline ? "top" : "center"}
         style={{
           color: colors.textPrimary,
-          backgroundColor: colors.bgSecondary,
+          backgroundColor: colors.bgCard,
           borderColor: colors.borderDefault,
           borderWidth: 1,
           borderRadius: 12,
@@ -230,7 +233,7 @@ export default function PersonalityAppearanceEditor({
         <View className="flex-row flex-wrap" style={{ gap: 6 }}>
           {ALIGNMENT_KEYS.map((al) => {
             const isSelected = al === selectedAlignment;
-            const alColor = ALIGNMENT_COLORS[al] ?? colors.textMuted;
+            const alColor = alignmentColors[al] ?? colors.textMuted;
             return (
               <TouchableOpacity
                 key={al}
@@ -239,9 +242,9 @@ export default function PersonalityAppearanceEditor({
                 style={{
                   backgroundColor: isSelected
                     ? withAlpha(alColor, 0.2)
-                    : colors.bgSecondary,
+                    : colors.chipBg,
                   borderWidth: 1,
-                  borderColor: isSelected ? alColor : colors.borderDefault,
+                  borderColor: isSelected ? alColor : colors.chipBorder,
                 }}
               >
                 <Text
@@ -280,7 +283,7 @@ export default function PersonalityAppearanceEditor({
               style={{
                 flex: 1,
                 color: colors.textPrimary,
-                backgroundColor: colors.bgSecondary,
+                backgroundColor: colors.bgCard,
                 borderColor: colors.borderDefault,
                 borderWidth: 1,
                 borderRadius: 12,
@@ -365,7 +368,7 @@ export default function PersonalityAppearanceEditor({
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
-        <View className="flex-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <View className="flex-1" style={{ backgroundColor: colors.backdrop }}>
           <View
             className="flex-1 mt-12 rounded-t-3xl overflow-hidden"
             style={{ backgroundColor: colors.bgPrimary }}
@@ -461,7 +464,7 @@ export default function PersonalityAppearanceEditor({
                   opacity: saving ? 0.6 : 1,
                 }}
               >
-                <Text className="font-bold text-base" style={{ color: "#1a1a2e" }}>
+                <Text className="font-bold text-base" style={{ color: colors.textInverted }}>
                   {saving ? "Guardando..." : "Guardar Cambios"}
                 </Text>
               </TouchableOpacity>

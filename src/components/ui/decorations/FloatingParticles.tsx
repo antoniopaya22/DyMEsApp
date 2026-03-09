@@ -29,7 +29,7 @@ interface Particle {
 
 export function FloatingParticles({
   count = 12,
-  color = "#CDC9B2",
+  color = "#00E5FF",
   width = 300,
   height = 400,
   maxSize = 4,

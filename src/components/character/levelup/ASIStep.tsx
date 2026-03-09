@@ -10,7 +10,8 @@ import {
   type AbilityKey,
 } from "@/types/character";
 import { ASI_POINTS, MAX_ABILITY_SCORE } from "@/data/srd/leveling";
-import { ABILITY_KEYS, ABILITY_COLORS } from "./useLevelUpWizard";
+import { ABILITY_KEYS } from "./useLevelUpWizard";
+import { withAlpha } from "@/utils/theme";
 import type { Character } from "@/types/character";
 
 interface ASIStepProps {
@@ -64,27 +65,27 @@ export default function ASIStep({
             alignItems: "center",
             backgroundColor:
               asiRemaining > 0
-                ? "rgba(251, 191, 36, 0.12)"
-                : "rgba(34, 197, 94, 0.12)",
+                ? withAlpha(colors.accentRed, 0.12)
+                : withAlpha(colors.accentRed, 0.12),
             borderRadius: 10,
             paddingHorizontal: 14,
             paddingVertical: 6,
             borderWidth: 1,
             borderColor:
               asiRemaining > 0
-                ? "rgba(251, 191, 36, 0.3)"
-                : "rgba(34, 197, 94, 0.3)",
+                ? withAlpha(colors.accentRed, 0.3)
+                : withAlpha(colors.accentRed, 0.3),
             gap: 6,
           }}
         >
           <Ionicons
             name={asiRemaining > 0 ? "ellipsis-horizontal" : "checkmark-circle"}
             size={16}
-            color={asiRemaining > 0 ? colors.accentGold : colors.accentGreen}
+            color={colors.accentRed}
           />
           <Text
             style={{
-              color: asiRemaining > 0 ? colors.accentGold : colors.accentGreen,
+              color: colors.accentRed,
               fontSize: 14,
               fontWeight: "700",
             }}
@@ -104,7 +105,6 @@ export default function ASIStep({
           const newTotal = Math.min(MAX_ABILITY_SCORE, score.total + bonus);
           const newMod = calcModifier(newTotal);
           const atMax = newTotal >= MAX_ABILITY_SCORE;
-          const color = ABILITY_COLORS[key];
 
           return (
             <View
@@ -112,10 +112,10 @@ export default function ASIStep({
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                backgroundColor: bonus > 0 ? `${color}15` : colors.borderSubtle,
+                backgroundColor: bonus > 0 ? withAlpha(colors.accentRed, 0.08) : colors.bgCard,
                 borderRadius: 12,
                 borderWidth: 1,
-                borderColor: bonus > 0 ? `${color}40` : colors.borderSeparator,
+                borderColor: bonus > 0 ? withAlpha(colors.accentRed, 0.25) : colors.borderDefault,
                 padding: 12,
               }}
             >
@@ -125,7 +125,7 @@ export default function ASIStep({
                   width: 44,
                   height: 44,
                   borderRadius: 12,
-                  backgroundColor: `${color}20`,
+                  backgroundColor: withAlpha(colors.accentRed, 0.12),
                   alignItems: "center",
                   justifyContent: "center",
                   marginRight: 10,
@@ -133,7 +133,7 @@ export default function ASIStep({
               >
                 <Text
                   style={{
-                    color: color,
+                    color: colors.accentRed,
                     fontSize: 13,
                     fontWeight: "800",
                   }}
@@ -169,11 +169,11 @@ export default function ASIStep({
                       <Ionicons
                         name="arrow-forward"
                         size={10}
-                        color={colors.accentGreen}
+                        color={colors.accentRed}
                       />
                       <Text
                         style={{
-                          color: colors.accentGreen,
+                          color: colors.accentRed,
                           fontSize: 11,
                           fontWeight: "700" as const,
                         }}
@@ -184,7 +184,7 @@ export default function ASIStep({
                   )}
                   <Text
                     style={{
-                      color: bonus > 0 ? colors.accentGreen : colors.textMuted,
+                      color: bonus > 0 ? colors.accentRed : colors.textMuted,
                       fontSize: 12,
                       fontWeight: "500",
                     }}
@@ -212,15 +212,15 @@ export default function ASIStep({
                     borderRadius: 10,
                     backgroundColor:
                       bonus > 0
-                        ? "rgba(239, 68, 68, 0.2)"
-                        : colors.borderSubtle,
+                        ? withAlpha(colors.accentDanger, 0.2)
+                        : withAlpha(colors.textMuted, 0.1),
                     alignItems: "center",
                     justifyContent: "center",
                     borderWidth: 1,
                     borderColor:
                       bonus > 0
-                        ? "rgba(239, 68, 68, 0.3)"
-                        : colors.borderSubtle,
+                        ? withAlpha(colors.accentDanger, 0.3)
+                        : withAlpha(colors.textMuted, 0.1),
                     opacity: bonus > 0 ? 1 : 0.4,
                   }}
                 >
@@ -239,7 +239,7 @@ export default function ASIStep({
                 >
                   <Text
                     style={{
-                      color: bonus > 0 ? colors.accentGreen : colors.textMuted,
+                      color: bonus > 0 ? colors.accentRed : colors.textMuted,
                       fontSize: 16,
                       fontWeight: "800",
                     }}
@@ -258,15 +258,15 @@ export default function ASIStep({
                     borderRadius: 10,
                     backgroundColor:
                       asiRemaining > 0 && !atMax
-                        ? "rgba(34, 197, 94, 0.2)"
-                        : colors.borderSubtle,
+                        ? withAlpha(colors.accentRed, 0.2)
+                        : withAlpha(colors.textMuted, 0.1),
                     alignItems: "center",
                     justifyContent: "center",
                     borderWidth: 1,
                     borderColor:
                       asiRemaining > 0 && !atMax
-                        ? "rgba(34, 197, 94, 0.3)"
-                        : colors.borderSubtle,
+                        ? withAlpha(colors.accentRed, 0.3)
+                        : withAlpha(colors.textMuted, 0.1),
                     opacity: asiRemaining > 0 && !atMax ? 1 : 0.4,
                   }}
                 >
@@ -275,7 +275,7 @@ export default function ASIStep({
                     size={18}
                     color={
                       asiRemaining > 0 && !atMax
-                        ? colors.accentGreen
+                        ? colors.accentRed
                         : colors.textMuted
                     }
                   />

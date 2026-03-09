@@ -110,13 +110,13 @@ export function HomeEmptyState({ onCreateFirst }: HomeEmptyStateProps) {
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={["#d32f2f", colors.accentRed, "#a51c1c"]}
+            colors={["#00D4E8", colors.accentRed, "#0097A7"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.emptyButtonGradient}
           >
-            <Ionicons name="add" size={22} color="white" />
-            <Text style={styles.emptyButtonText}>Crear primer personaje</Text>
+            <Ionicons name="add" size={22} color={colors.textInverted} />
+            <Text style={[styles.emptyButtonText, { color: colors.textInverted }]}>Crear primer personaje</Text>
           </LinearGradient>
         </TouchableOpacity>
 
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   emptyButton: {
     borderRadius: 14,
     overflow: "hidden",
-    shadowColor: "#8f3d38",
+    shadowColor: "#00BCD4",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   emptyButtonText: {
-    color: "#ffffff",
+    color: "#0B1221",
     fontWeight: "800",
     fontSize: 16,
     marginLeft: 8,

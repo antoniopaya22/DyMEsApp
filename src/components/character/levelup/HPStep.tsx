@@ -1,9 +1,9 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/hooks";
 import { formatModifier, type Character } from "@/types/character";
+import { withAlpha } from "@/utils/theme";
 
 interface HPStepProps {
   hpMethod: "fixed" | "roll";
@@ -71,12 +71,12 @@ export default function HPStep({
             borderWidth: 2,
             borderColor:
               hpMethod === "fixed"
-                ? "rgba(34, 197, 94, 0.5)"
-                : colors.borderSeparator,
+                ? withAlpha(colors.accentRed, 0.5)
+                : colors.borderDefault,
             backgroundColor:
               hpMethod === "fixed"
-                ? "rgba(34, 197, 94, 0.08)"
-                : colors.borderSubtle,
+                ? withAlpha(colors.accentRed, 0.08)
+                : colors.bgCard,
             padding: 16,
           }}
         >
@@ -94,8 +94,8 @@ export default function HPStep({
                 borderRadius: 12,
                 backgroundColor:
                   hpMethod === "fixed"
-                    ? "rgba(34, 197, 94, 0.2)"
-                    : colors.borderSeparator,
+                    ? withAlpha(colors.accentRed, 0.2)
+                    : withAlpha(colors.textMuted, 0.15),
                 alignItems: "center",
                 justifyContent: "center",
               }}
@@ -104,7 +104,7 @@ export default function HPStep({
                 name="shield-checkmark-outline"
                 size={20}
                 color={
-                  hpMethod === "fixed" ? colors.accentGreen : colors.textMuted
+                  hpMethod === "fixed" ? colors.accentRed : colors.textMuted
                 }
               />
             </View>
@@ -113,7 +113,7 @@ export default function HPStep({
                 style={{
                   color:
                     hpMethod === "fixed"
-                      ? colors.accentGreen
+                      ? colors.accentRed
                       : colors.textPrimary,
                   fontSize: 16,
                   fontWeight: "700",
@@ -137,8 +137,8 @@ export default function HPStep({
               style={{
                 backgroundColor:
                   hpMethod === "fixed"
-                    ? "rgba(34, 197, 94, 0.2)"
-                    : colors.borderSeparator,
+                    ? withAlpha(colors.accentRed, 0.2)
+                    : withAlpha(colors.textMuted, 0.15),
                 borderRadius: 10,
                 paddingHorizontal: 12,
                 paddingVertical: 6,
@@ -148,7 +148,7 @@ export default function HPStep({
                 style={{
                   color:
                     hpMethod === "fixed"
-                      ? colors.accentGreen
+                      ? colors.accentRed
                       : colors.textSecondary,
                   fontSize: 18,
                   fontWeight: "800",
@@ -169,12 +169,12 @@ export default function HPStep({
             borderWidth: 2,
             borderColor:
               hpMethod === "roll"
-                ? "rgba(251, 191, 36, 0.5)"
-                : colors.borderSeparator,
+                ? withAlpha(colors.accentRed, 0.5)
+                : colors.borderDefault,
             backgroundColor:
               hpMethod === "roll"
-                ? "rgba(251, 191, 36, 0.08)"
-                : colors.borderSubtle,
+                ? withAlpha(colors.accentRed, 0.08)
+                : colors.bgCard,
             padding: 16,
           }}
         >
@@ -192,8 +192,8 @@ export default function HPStep({
                 borderRadius: 12,
                 backgroundColor:
                   hpMethod === "roll"
-                    ? "rgba(251, 191, 36, 0.2)"
-                    : colors.borderSeparator,
+                    ? withAlpha(colors.accentRed, 0.2)
+                    : withAlpha(colors.textMuted, 0.15),
                 alignItems: "center",
                 justifyContent: "center",
               }}
@@ -202,7 +202,7 @@ export default function HPStep({
                 name="dice-outline"
                 size={20}
                 color={
-                  hpMethod === "roll" ? colors.accentGold : colors.textMuted
+                  hpMethod === "roll" ? colors.accentRed : colors.textMuted
                 }
               />
             </View>
@@ -211,7 +211,7 @@ export default function HPStep({
                 style={{
                   color:
                     hpMethod === "roll"
-                      ? colors.accentGold
+                      ? colors.accentRed
                       : colors.textPrimary,
                   fontSize: 16,
                   fontWeight: "700",
@@ -234,7 +234,7 @@ export default function HPStep({
             {hpMethod === "roll" && hpRolled !== null && (
               <View
                 style={{
-                  backgroundColor: "rgba(251, 191, 36, 0.2)",
+                  backgroundColor: withAlpha(colors.accentRed, 0.2),
                   borderRadius: 10,
                   paddingHorizontal: 12,
                   paddingVertical: 6,
@@ -242,7 +242,7 @@ export default function HPStep({
               >
                 <Text
                   style={{
-                    color: colors.accentGold,
+                    color: colors.accentRed,
                     fontSize: 18,
                     fontWeight: "800",
                   }}
@@ -268,9 +268,10 @@ export default function HPStep({
               opacity: isRolling ? 0.7 : 1,
             }}
           >
-            <LinearGradient
-              colors={[colors.accentAmber, "#d97706"]}
+            <View
               style={{
+                backgroundColor: colors.accentRed,
+                borderRadius: 16,
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
@@ -279,10 +280,10 @@ export default function HPStep({
                 gap: 8,
               }}
             >
-              <Ionicons name="dice" size={22} color={colors.textPrimary} />
+              <Ionicons name="dice" size={22} color={colors.textInverted} />
               <Text
                 style={{
-                  color: colors.textPrimary,
+                  color: colors.textInverted,
                   fontSize: 16,
                   fontWeight: "700",
                 }}
@@ -293,7 +294,7 @@ export default function HPStep({
                     ? "Volver a tirar"
                     : `Tirar ${classData?.hitDie ?? "d8"}`}
               </Text>
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
 
           {hpRolled !== null && !isRolling && (
@@ -317,17 +318,17 @@ export default function HPStep({
                 </Text>
                 <View
                   style={{
-                    backgroundColor: colors.borderSubtle,
+                    backgroundColor: colors.bgCard,
                     borderRadius: 10,
                     paddingHorizontal: 12,
                     paddingVertical: 6,
                     borderWidth: 1,
-                    borderColor: colors.borderSeparator,
+                    borderColor: colors.borderDefault,
                   }}
                 >
                   <Text
                     style={{
-                      color: colors.accentGold,
+                      color: colors.accentRed,
                       fontSize: 20,
                       fontWeight: "900",
                     }}
@@ -346,7 +347,7 @@ export default function HPStep({
                 </Text>
                 <Text
                   style={{
-                    color: colors.accentGreen,
+                    color: colors.accentRed,
                     fontSize: 18,
                     fontWeight: "800",
                   }}
@@ -364,10 +365,10 @@ export default function HPStep({
         <View
           style={{
             marginTop: 20,
-            backgroundColor: colors.borderSubtle,
+            backgroundColor: colors.bgCard,
             borderRadius: 12,
             borderWidth: 1,
-            borderColor: colors.borderSeparator,
+            borderColor: colors.borderDefault,
             padding: 14,
             flexDirection: "row",
             alignItems: "center",
@@ -398,7 +399,7 @@ export default function HPStep({
             </Text>
             <Text
               style={{
-                color: colors.accentGreen,
+                color: colors.accentRed,
                 fontSize: 14,
                 fontWeight: "700",
               }}
@@ -407,7 +408,7 @@ export default function HPStep({
             </Text>
             <Text
               style={{
-                color: colors.accentGreen,
+                color: colors.accentRed,
                 fontSize: 12,
                 fontWeight: "600",
               }}

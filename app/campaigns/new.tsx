@@ -179,7 +179,7 @@ export default function NewCampaignScreen() {
               ]}
             >
               <LinearGradient
-                colors={["rgba(178,172,136,0.04)", "rgba(178,172,136,0)"]}
+                colors={["rgba(0,229,255,0.04)", "rgba(0,229,255,0)"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFill}
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   fieldLabelRequired: {
-    color: "#8f3d38",
+    color: "#00BCD4",
     fontWeight: "800",
   },
   inputContainer: {
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   },
   fieldCounterBar: {
     height: "100%",
-    backgroundColor: "rgba(143,61,56,0.5)",
+    backgroundColor: "rgba(0,188,212,0.5)",
     borderRadius: 1,
   },
   fieldCounterText: {
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: "rgba(178,172,136,0.1)",
+    backgroundColor: "rgba(0,229,255,0.1)",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 8,

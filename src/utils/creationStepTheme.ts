@@ -41,6 +41,7 @@ export interface CreationThemeOverrides {
   // ── Cards / surfaces ──
   card: ViewStyle;
   cardAlt: ViewStyle;
+  cardElevated: ViewStyle;
   input: TextStyle;
 
   // ── Text ──
@@ -52,6 +53,8 @@ export interface CreationThemeOverrides {
   // ── Footer ──
   footer: ViewStyle;
   nextButtonDisabled: ViewStyle;
+  /** Text/icon color for elements on primary accent background (buttons, chips) */
+  textOnPrimary: TextStyle;
 
   // ── Misc ──
   spinnerBtn: ViewStyle;
@@ -219,6 +222,11 @@ export function getCreationThemeOverrides(
       backgroundColor: colors.bgSecondary,
       borderColor: colors.borderDefault,
     },
+    // Elevated surface for better contrast against bgPrimary
+    cardElevated: {
+      backgroundColor: colors.bgElevated,
+      borderColor: `${colors.textMuted}33`,
+    },
     // Text input fields
     input: {
       backgroundColor: colors.bgInput,
@@ -247,6 +255,9 @@ export function getCreationThemeOverrides(
     nextButtonDisabled: {
       backgroundColor: colors.bgSecondary,
       opacity: 0.5,
+    },
+    textOnPrimary: {
+      color: colors.textInverted,
     },
 
     // ── Misc ──
@@ -281,7 +292,7 @@ export function getCreationThemeOverrides(
 
     // ── Field hints & labels ──
     fieldHint: {
-      color: colors.textSecondary,
+      color: colors.textPrimary,
     },
     fieldLabel: {
       color: colors.textPrimary,
@@ -304,18 +315,18 @@ export function getCreationThemeOverrides(
 
     // ── Alignment grid (personality) ──
     alignmentHeaderText: {
-      color: colors.textMuted,
+      color: colors.textSecondary,
     },
     alignmentRowText: {
-      color: colors.textMuted,
+      color: colors.textSecondary,
     },
     alignmentCell: {
-      backgroundColor: colors.bgSecondary,
-      borderColor: colors.borderDefault,
+      backgroundColor: colors.bgElevated,
+      borderColor: `${colors.textMuted}55`,
     },
     alignmentDescBox: {
-      backgroundColor: colors.bgSecondary,
-      borderColor: colors.borderDefault,
+      backgroundColor: colors.bgElevated,
+      borderColor: `${colors.textMuted}55`,
     },
     alignmentDescName: {
       color: colors.textPrimary,
@@ -356,17 +367,17 @@ export function getCreationThemeOverrides(
 
     // ── Granted / reference skills ──
     grantedRow: {
-      backgroundColor: `${colors.accentGreen}12`,
-      borderColor: `${colors.accentGreen}30`,
+      backgroundColor: `${colors.accentGold}12`,
+      borderColor: `${colors.accentGold}30`,
     },
     grantedName: {
-      color: colors.accentGreen,
+      color: colors.accentGold,
     },
     grantedBadge: {
-      backgroundColor: `${colors.accentGreen}15`,
+      backgroundColor: `${colors.accentGold}15`,
     },
     grantedBadgeText: {
-      color: colors.accentGreen,
+      color: colors.accentGold,
     },
     emptyState: {
       backgroundColor: colors.bgCard,

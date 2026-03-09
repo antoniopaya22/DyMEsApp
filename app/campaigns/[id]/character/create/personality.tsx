@@ -4,12 +4,11 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
 } from "react-native";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useCreationStore, TOTAL_STEPS } from "@/stores/creationStore";
+import { useCreationStore } from "@/stores/creationStore";
 import { getBackgroundData, generateRandomPersonality } from "@/data/srd";
 import {
   ALIGNMENT_NAMES,
@@ -18,6 +17,7 @@ import {
 } from "@/types/character";
 import { useTheme, useScrollToTop } from "@/hooks";
 import { getCreationThemeOverrides } from "@/utils/creationStepTheme";
+import WizardStepLayout from "@/components/creation/WizardStepLayout";
 
 const CURRENT_STEP = 9;
 
@@ -37,11 +37,11 @@ const ALIGNMENT_COLORS: Record<string, string> = {
   legal_bueno: "#3b82f6",
   neutral_bueno: "#22c55e",
   caotico_bueno: "#f59e0b",
-  legal_neutral: "#6366f1",
+  legal_neutral: "#818cf8",
   neutral: "#9ca3af",
   caotico_neutral: "#f97316",
-  legal_malvado: "#8b5cf6",
-  neutral_malvado: "#ef4444",
+  legal_malvado: "#a78bfa",
+  neutral_malvado: "#f87171",
   caotico_malvado: "#dc2626",
 };
 
@@ -158,61 +158,19 @@ export default function PersonalityStep() {
     router.back();
   };
 
-  const progressPercent = (CURRENT_STEP / TOTAL_STEPS) * 100;
-
   return (
-    <View style={[styles.container, themed.container]}>
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: 40 }}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <TouchableOpacity
-              style={[styles.backButton, themed.backButton]}
-              onPress={handleBack}
-            >
-              <Ionicons
-                name="arrow-back"
-                size={22}
-                color={colors.textPrimary}
-              />
-            </TouchableOpacity>
-            <Text style={[styles.stepText, themed.stepText]}>
-              Paso {CURRENT_STEP} de {TOTAL_STEPS}
-            </Text>
-            <View style={{ height: 40, width: 40 }} />
-          </View>
-          <View style={[styles.progressBar, themed.progressBar]}>
-            <View
-              style={[styles.progressFill, { width: `${progressPercent}%` }]}
-            />
-          </View>
-        </View>
-
-        {/* Title */}
-        <View style={styles.titleSection}>
-          <View style={styles.iconCircle}>
-            <Ionicons
-              name="chatbubble-ellipses-outline"
-              size={40}
-              color={colors.accentRed}
-            />
-          </View>
-          <Text style={[styles.title, themed.title]}>
-            Personalidad y Alineamiento
-          </Text>
-          <Text style={[styles.subtitle, themed.subtitle]}>
-            Define la personalidad de tu personaje: cómo actúa, qué valora y
-            cuáles son sus defectos. También elige su alineamiento moral.{"\n"}
-            Este paso es completamente opcional. Si prefieres, puedes pulsar
-            "Siguiente" e ir directamente al siguiente paso.
-          </Text>
-        </View>
-
+    <WizardStepLayout
+      currentStep={CURRENT_STEP}
+      title="Personalidad y Alineamiento"
+      subtitle={`Define la personalidad de tu personaje: cómo actúa, qué valora y cuáles son sus defectos. También elige su alineamiento moral.\nEste paso es completamente opcional. Si prefieres, puedes pulsar "Siguiente" e ir directamente al siguiente paso.`}
+      iconName="chatbubble-ellipses-outline"
+      nextLabel="Siguiente: Apariencia"
+      canProceed={isValid}
+      onNext={handleNext}
+      onBack={handleBack}
+      scrollRef={scrollRef}
+      keyboardShouldPersistTaps="handled"
+    >
         {/* Randomize button */}
         {backgroundData && (
           <View style={styles.section}>
@@ -358,7 +316,7 @@ export default function PersonalityStep() {
           </Text>
 
           {/* Alignment Grid */}
-          <View style={[styles.alignmentGrid, themed.card]}>
+          <View style={[styles.alignmentGrid, themed.cardElevated]}>
             {/* Column headers */}
             <View style={styles.alignmentHeaderRow}>
               <View style={styles.alignmentHeaderSpacer} />
@@ -467,23 +425,8 @@ export default function PersonalityStep() {
             </View>
           )}
         </View>
-      </ScrollView>
 
-      {/* Footer */}
-      <View style={[styles.footer, themed.footer]}>
-        <TouchableOpacity
-          style={[
-            styles.nextButton,
-            !isValid && [styles.nextButtonDisabled, themed.nextButtonDisabled],
-          ]}
-          onPress={handleNext}
-          disabled={!isValid}
-        >
-          <Text style={styles.nextButtonText}>Siguiente: Apariencia</Text>
-          <Ionicons name="arrow-forward" size={20} color="white" />
-        </TouchableOpacity>
-      </View>
-    </View>
+    </WizardStepLayout>
   );
 
   function renderAlignmentCell(a: Alignment) {
@@ -507,7 +450,7 @@ export default function PersonalityStep() {
           <Ionicons name="checkmark-circle" size={22} color={color} />
         ) : (
           <View
-            style={[styles.alignmentCellDot, { borderColor: `${color}60` }]}
+            style={[styles.alignmentCellDot, { borderColor: `${color}99` }]}
           />
         )}
       </TouchableOpacity>
@@ -516,76 +459,6 @@ export default function PersonalityStep() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#272519",
-  },
-  scroll: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 64,
-    paddingBottom: 16,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  backButton: {
-    height: 40,
-    width: 40,
-    borderRadius: 20,
-    backgroundColor: "#2E2C1E",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepText: {
-    color: "#AAA37B",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: "#2E2C1E",
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#8f3d38",
-    borderRadius: 3,
-  },
-  titleSection: {
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  iconCircle: {
-    height: 80,
-    width: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(143,61,56,0.15)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  title: {
-    color: "#ffffff",
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: "#AAA37B",
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 22,
-    paddingHorizontal: 16,
-  },
   section: {
     paddingHorizontal: 20,
     marginBottom: 20,
@@ -597,7 +470,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   required: {
-    color: "#8f3d38",
+    color: "#00BCD4",
     fontSize: 14,
   },
   optional: {
@@ -606,16 +479,16 @@ const styles = StyleSheet.create({
     fontWeight: "400",
   },
   fieldHint: {
-    color: "#AAA37B",
+    color: "#AAB8C8",
     fontSize: 13,
     lineHeight: 18,
     marginBottom: 10,
   },
   textArea: {
-    backgroundColor: "#2E2C1E",
+    backgroundColor: "#101B2E",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#1E2D42",
     paddingHorizontal: 16,
     paddingVertical: 12,
     color: "#ffffff",
@@ -636,23 +509,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(178,172,136,0.1)",
+    backgroundColor: "rgba(0,229,255,0.1)",
     borderRadius: 12,
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: "rgba(178,172,136,0.25)",
+    borderColor: "rgba(0,229,255,0.25)",
   },
   randomButtonText: {
-    color: "#CDC9B2",
+    color: "#00E5FF",
     fontSize: 15,
     fontWeight: "600",
     marginLeft: 8,
   },
   alignmentGrid: {
-    backgroundColor: "#323021",
+    backgroundColor: "#182338",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#2A3A52",
     padding: 10,
     marginBottom: 12,
   },
@@ -668,7 +541,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   alignmentHeaderText: {
-    color: "#807953",
+    color: "#AAB8C8",
     fontSize: 12,
     fontWeight: "700",
     textTransform: "uppercase",
@@ -683,7 +556,7 @@ const styles = StyleSheet.create({
     width: 64,
   },
   alignmentRowText: {
-    color: "#807953",
+    color: "#AAB8C8",
     fontSize: 12,
     fontWeight: "700",
   },
@@ -692,24 +565,24 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: "#514D35",
+    borderColor: "#3A4D66",
     alignItems: "center",
     justifyContent: "center",
     marginHorizontal: 3,
-    backgroundColor: "#2E2C1E",
+    backgroundColor: "#1E3048",
   },
   alignmentCellDot: {
     height: 18,
     width: 18,
     borderRadius: 9,
-    borderWidth: 2,
+    borderWidth: 2.5,
   },
   alignmentDescBox: {
-    backgroundColor: "#2E2C1E",
+    backgroundColor: "#182338",
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: "#514D35",
+    borderColor: "#2A3A52",
   },
   alignmentDescHeader: {
     flexDirection: "row",
@@ -728,33 +601,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   alignmentDescText: {
-    color: "#D4D1BD",
+    color: "#CBD5E1",
     fontSize: 14,
     lineHeight: 20,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#514D35",
-  },
-  nextButton: {
-    backgroundColor: "#8f3d38",
-    borderRadius: 12,
-    paddingVertical: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  nextButtonDisabled: {
-    backgroundColor: "#423E2B",
-    opacity: 0.5,
-  },
-  nextButtonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginRight: 8,
   },
 });

@@ -166,7 +166,26 @@ export const useCharacterListStore = create<CharacterListStore>((set, get) => ({
         set({ migrated: true });
       }
 
-      const characters = sortByLastAccess(stored);
+      // Reconciliar resúmenes con los datos reales del personaje
+      let needsPersist = false;
+      const reconciled: CharacterSummary[] = [];
+      for (const summary of stored) {
+        const fullChar = await getItem<Character>(STORAGE_KEYS.CHARACTER(summary.id));
+        if (fullChar) {
+          const fresh = toCharacterSummary(fullChar);
+          if (fresh.nivel !== summary.nivel || fresh.nombre !== summary.nombre || fresh.actualizadoEn !== summary.actualizadoEn) {
+            needsPersist = true;
+          }
+          reconciled.push(fresh);
+        } else {
+          reconciled.push(summary);
+        }
+      }
+      if (needsPersist) {
+        await persistList(reconciled);
+      }
+
+      const characters = sortByLastAccess(reconciled);
       set({ characters, loading: false });
     } catch (err) {
       const message =

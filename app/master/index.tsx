@@ -125,8 +125,8 @@ export default function MasterHomeScreen() {
       style={[
         styles.campaignCard,
         {
-          backgroundColor: colors.bgCard,
-          borderColor: colors.borderSubtle,
+          backgroundColor: colors.bgElevated,
+          borderColor: colors.borderDefault,
         },
       ]}
       onPress={() => handlePressCampaign(item)}
@@ -248,7 +248,7 @@ export default function MasterHomeScreen() {
         onPress={() => setShowCreate(true)}
         activeOpacity={0.85}
       >
-        <Ionicons name="add" size={28} color="#FFF" />
+        <Ionicons name="add" size={28} color={colors.textInverted} />
       </TouchableOpacity>
 
       {/* Create Campaign Inline Modal */}
@@ -264,7 +264,7 @@ export default function MasterHomeScreen() {
               styles.modalContent,
               {
                 backgroundColor: colors.bgElevated,
-                borderColor: colors.borderSubtle,
+                borderColor: colors.borderDefault,
               },
             ]}
           >
@@ -336,9 +336,9 @@ export default function MasterHomeScreen() {
                 disabled={!newName.trim() || creating}
               >
                 {creating ? (
-                  <ActivityIndicator size="small" color="#FFF" />
+                  <ActivityIndicator size="small" color={colors.textInverted} />
                 ) : (
-                  <Text style={[styles.modalBtnText, { color: "#FFF" }]}>
+                  <Text style={[styles.modalBtnText, { color: colors.textInverted }]}>
                     Crear
                   </Text>
                 )}

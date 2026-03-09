@@ -17,10 +17,12 @@
  * />
  */
 
-import React from "react";
+import React, { useRef, useCallback } from "react";
 import {
   TouchableOpacity,
   Text,
+  Animated,
+  Easing,
   StyleSheet,
   type StyleProp,
   type ViewStyle,
@@ -60,25 +62,48 @@ export default function GradientButton({
 }: GradientButtonProps) {
   const { colors, isDark } = useTheme();
 
-  const enabledColors = gradientColors ?? [
-    "#d32f2f",
-    colors.accentRed,
-    "#a51c1c",
-  ];
+  const enabledColors = gradientColors ?? (isDark
+    ? ["#33EBFF", colors.accentRed, "#00BCD4"]
+    : ["#0E8BA5", colors.accentRed, "#0B5E73"]);
 
-  const disabledColors: readonly [string, string, ...string[]] = isDark
-    ? [colors.bgElevated, colors.bgCard, colors.bgSecondary]
-    : ["#C5C1A6", "#B9B393", "#AAA37B"];
+  const disabledColors: readonly [string, string, ...string[]] = [
+    colors.bgElevated,
+    colors.bgCard,
+    colors.bgSecondary,
+  ];
 
   const isDisabled = disabled || loading;
 
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = useCallback(() => {
+    Animated.timing(scaleAnim, {
+      toValue: 0.96,
+      duration: 100,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+  }, [scaleAnim]);
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 5,
+      tension: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [scaleAnim]);
+
   return (
-    <TouchableOpacity
-      style={[styles.button, isDisabled && styles.buttonDisabled, style]}
-      onPress={onPress}
-      disabled={isDisabled}
-      activeOpacity={0.85}
-    >
+    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
+      <TouchableOpacity
+        style={[styles.button, isDisabled && styles.buttonDisabled]}
+        onPress={onPress}
+        onPressIn={!isDisabled ? handlePressIn : undefined}
+        onPressOut={!isDisabled ? handlePressOut : undefined}
+        disabled={isDisabled}
+        activeOpacity={1}
+      >
       <LinearGradient
         colors={isDisabled ? disabledColors : enabledColors}
         start={{ x: 0, y: 0 }}
@@ -90,15 +115,16 @@ export default function GradientButton({
         ) : (
           <>
             {icon && (
-              <Ionicons name={icon} size={22} color="white" />
+              <Ionicons name={icon} size={22} color={colors.textInverted} />
             )}
-            <Text style={[styles.label, icon ? { marginLeft: 8 } : undefined]}>
+            <Text style={[styles.label, { color: colors.textInverted }, icon ? { marginLeft: 8 } : undefined]}>
               {label}
             </Text>
           </>
         )}
       </LinearGradient>
     </TouchableOpacity>
+    </Animated.View>
   );
 }
 
@@ -106,7 +132,7 @@ const styles = StyleSheet.create({
   button: {
     borderRadius: 14,
     overflow: "hidden",
-    shadowColor: "#8f3d38",
+    shadowColor: "#00BCD4",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -115,7 +141,6 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     shadowOpacity: 0,
     elevation: 0,
-    opacity: 0.5,
   },
   gradient: {
     flexDirection: "row",
@@ -125,7 +150,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   label: {
-    color: "#ffffff",
     fontWeight: "800",
     fontSize: 16,
     letterSpacing: 0.2,

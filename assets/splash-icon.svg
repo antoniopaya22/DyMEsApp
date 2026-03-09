@@ -1,18 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
     <radialGradient id="splashBg" cx="50%" cy="40%" r="70%">
-      <stop offset="0%" stop-color="#272519"/>
-      <stop offset="100%" stop-color="#17160F"/>
+      <stop offset="0%" stop-color="#0B1221"/>
+      <stop offset="100%" stop-color="#060A14"/>
     </radialGradient>
     <linearGradient id="sFaceHL" x1="50%" y1="0%" x2="50%" y2="100%">
-      <stop offset="0%" stop-color="#ef5350" stop-opacity="0.95"/>
-      <stop offset="55%" stop-color="#8f3d38"/>
+      <stop offset="0%" stop-color="#33EBFF" stop-opacity="0.95"/>
+      <stop offset="55%" stop-color="#00BCD4"/>
       <stop offset="100%" stop-color="#7f0000"/>
     </linearGradient>
     <linearGradient id="sFaceMain" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#d32f2f"/>
-      <stop offset="50%" stop-color="#8f3d38"/>
+      <stop offset="0%" stop-color="#00D4E8"/>
+      <stop offset="50%" stop-color="#00BCD4"/>
       <stop offset="100%" stop-color="#8e0000"/>
     </linearGradient>
     <linearGradient id="sFaceSH" x1="50%" y1="0%" x2="50%" y2="100%">
@@ -20,8 +20,8 @@
       <stop offset="100%" stop-color="#5d0000"/>
     </linearGradient>
     <radialGradient id="sCenterGrad" cx="50%" cy="42%" r="60%">
-      <stop offset="0%" stop-color="#ef5350" stop-opacity="0.35"/>
-      <stop offset="45%" stop-color="#8f3d38"/>
+      <stop offset="0%" stop-color="#33EBFF" stop-opacity="0.35"/>
+      <stop offset="45%" stop-color="#00BCD4"/>
       <stop offset="100%" stop-color="#7f0000" stop-opacity="0.95"/>
     </radialGradient>
     <linearGradient id="sEdgeShine" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -30,12 +30,12 @@
       <stop offset="100%" stop-color="#000000" stop-opacity="0.18"/>
     </linearGradient>
     <radialGradient id="sOuterGlow" cx="50%" cy="42%" r="40%">
-      <stop offset="0%" stop-color="#8f3d38" stop-opacity="0.2"/>
-      <stop offset="100%" stop-color="#8f3d38" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#00BCD4" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#00BCD4" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="sRuneGlow" cx="50%" cy="42%" r="35%">
-      <stop offset="0%" stop-color="#CDC9B2" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="#CDC9B2" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#00E5FF" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#00E5FF" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
@@ -47,49 +47,49 @@
 
   <!-- Runic ring -->
   <circle cx="256" cy="215.04" r="158.72" fill="url(#sRuneGlow)"/>
-  <circle cx="256" cy="215.04" r="153.6" fill="none" stroke="#CDC9B2" stroke-width="1.536" stroke-opacity="0.4"/>
-  <circle cx="256" cy="215.04" r="142.33599999999998" fill="none" stroke="#CDC9B2" stroke-width="1.024" stroke-opacity="0.2"/>
+  <circle cx="256" cy="215.04" r="153.6" fill="none" stroke="#00E5FF" stroke-width="1.536" stroke-opacity="0.4"/>
+  <circle cx="256" cy="215.04" r="142.33599999999998" fill="none" stroke="#00E5FF" stroke-width="1.024" stroke-opacity="0.2"/>
 
   <!-- Rune characters -->
-  <text x="256.0" y="71.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">á</text>
-  <text x="282.0" y="74.0" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">š</text>
-  <text x="307.1" y="80.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5"> </text>
-  <text x="330.8" y="91.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">á</text>
-  <text x="352.1" y="106.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">š</text>
-  <text x="370.5" y="125.1" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">¢</text>
-  <text x="385.5" y="146.4" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">á</text>
-  <text x="396.5" y="170.1" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">š</text>
-  <text x="403.2" y="195.2" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">¦</text>
-  <text x="405.5" y="221.2" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">á</text>
-  <text x="403.2" y="247.1" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">š</text>
-  <text x="396.5" y="272.3" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">¨</text>
-  <text x="385.5" y="295.9" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">á</text>
-  <text x="370.5" y="317.3" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">š</text>
-  <text x="352.1" y="335.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">±</text>
-  <text x="330.8" y="350.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">á</text>
-  <text x="307.1" y="361.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">š</text>
-  <text x="282.0" y="368.4" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">²</text>
-  <text x="256.0" y="370.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">á</text>
-  <text x="230.0" y="368.4" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">š</text>
-  <text x="204.9" y="361.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">·</text>
-  <text x="181.2" y="350.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">á</text>
-  <text x="159.9" y="335.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">š</text>
-  <text x="141.5" y="317.3" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">¹</text>
-  <text x="126.5" y="295.9" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">á</text>
-  <text x="115.5" y="272.3" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">š</text>
-  <text x="108.8" y="247.1" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">º</text>
-  <text x="106.5" y="221.2" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">á</text>
-  <text x="108.8" y="195.2" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">š</text>
-  <text x="115.5" y="170.1" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">¾</text>
-  <text x="126.5" y="146.4" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">á</text>
-  <text x="141.5" y="125.1" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">›</text>
-  <text x="159.9" y="106.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5"></text>
-  <text x="181.2" y="91.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">á</text>
-  <text x="204.9" y="80.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">›</text>
-  <text x="230.0" y="74.0" text-anchor="middle" font-size="14.336" font-family="serif" fill="#CDC9B2" fill-opacity="0.5">ƒ</text>
+  <text x="256.0" y="71.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Ã¡</text>
+  <text x="282.0" y="74.0" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Å¡</text>
+  <text x="307.1" y="80.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Â </text>
+  <text x="330.8" y="91.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Ã¡</text>
+  <text x="352.1" y="106.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Å¡</text>
+  <text x="370.5" y="125.1" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Â¢</text>
+  <text x="385.5" y="146.4" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Ã¡</text>
+  <text x="396.5" y="170.1" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Å¡</text>
+  <text x="403.2" y="195.2" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Â¦</text>
+  <text x="405.5" y="221.2" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Ã¡</text>
+  <text x="403.2" y="247.1" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Å¡</text>
+  <text x="396.5" y="272.3" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Â¨</text>
+  <text x="385.5" y="295.9" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Ã¡</text>
+  <text x="370.5" y="317.3" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Å¡</text>
+  <text x="352.1" y="335.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Â±</text>
+  <text x="330.8" y="350.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Ã¡</text>
+  <text x="307.1" y="361.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Å¡</text>
+  <text x="282.0" y="368.4" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Â²</text>
+  <text x="256.0" y="370.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Ã¡</text>
+  <text x="230.0" y="368.4" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Å¡</text>
+  <text x="204.9" y="361.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Â·</text>
+  <text x="181.2" y="350.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Ã¡</text>
+  <text x="159.9" y="335.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Å¡</text>
+  <text x="141.5" y="317.3" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Â¹</text>
+  <text x="126.5" y="295.9" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Ã¡</text>
+  <text x="115.5" y="272.3" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Å¡</text>
+  <text x="108.8" y="247.1" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Âº</text>
+  <text x="106.5" y="221.2" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Ã¡</text>
+  <text x="108.8" y="195.2" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Å¡</text>
+  <text x="115.5" y="170.1" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Â¾</text>
+  <text x="126.5" y="146.4" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Ã¡</text>
+  <text x="141.5" y="125.1" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">â€º</text>
+  <text x="159.9" y="106.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Â</text>
+  <text x="181.2" y="91.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Ã¡</text>
+  <text x="204.9" y="80.7" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">â€º</text>
+  <text x="230.0" y="74.0" text-anchor="middle" font-size="14.336" font-family="serif" fill="#00E5FF" fill-opacity="0.5">Æ’</text>
 
   <!-- Die border glow -->
-  <circle cx="256" cy="215.04" r="118.784" fill="none" stroke="#8f3d38" stroke-width="2.048" stroke-opacity="0.3"/>
+  <circle cx="256" cy="215.04" r="118.784" fill="none" stroke="#00BCD4" stroke-width="2.048" stroke-opacity="0.3"/>
 
   <!-- Outer faces -->
   <polygon points="256.00,102.40 363.13,180.23 293.08,164.01" fill="url(#sFaceHL)" stroke="#5d0000" stroke-width="1.536" stroke-opacity="0.6" opacity="0.99"/>
@@ -106,18 +106,18 @@
   <polygon points="218.92,164.01 293.08,164.01 256.00,102.40" fill="url(#sFaceMain)" stroke="#5d0000" stroke-width="1.536" stroke-opacity="0.45" opacity="0.92"/>
 
   <!-- Center pentagon -->
-  <polygon points="293.08,164.01 315.99,234.53 256.00,278.12 196.01,234.53 218.92,164.01" fill="url(#sCenterGrad)" stroke="#ef5350" stroke-width="2.048" stroke-opacity="0.25"/>
+  <polygon points="293.08,164.01 315.99,234.53 256.00,278.12 196.01,234.53 218.92,164.01" fill="url(#sCenterGrad)" stroke="#33EBFF" stroke-width="2.048" stroke-opacity="0.25"/>
 
   <!-- Specular highlights -->
   <polygon points="256.00,102.40 363.13,180.23 293.08,164.01" fill="url(#sEdgeShine)" opacity="0.45"/>
   <polygon points="148.87,180.23 256.00,102.40 218.92,164.01" fill="url(#sEdgeShine)" opacity="0.3"/>
 
   <!-- Edge lines -->
-  <line x1="256.0" y1="102.4" x2="293.1" y2="164.0" stroke="#ef5350" stroke-width="1.024" stroke-opacity="0.4"/>
-  <line x1="363.1" y1="180.2" x2="316.0" y2="234.5" stroke="#ef5350" stroke-width="1.024" stroke-opacity="0.15"/>
-  <line x1="322.2" y1="306.2" x2="256.0" y2="278.1" stroke="#ef5350" stroke-width="1.024" stroke-opacity="0.15"/>
-  <line x1="189.8" y1="306.2" x2="196.0" y2="234.5" stroke="#ef5350" stroke-width="1.024" stroke-opacity="0.15"/>
-  <line x1="148.9" y1="180.2" x2="218.9" y2="164.0" stroke="#ef5350" stroke-width="1.024" stroke-opacity="0.4"/>
+  <line x1="256.0" y1="102.4" x2="293.1" y2="164.0" stroke="#33EBFF" stroke-width="1.024" stroke-opacity="0.4"/>
+  <line x1="363.1" y1="180.2" x2="316.0" y2="234.5" stroke="#33EBFF" stroke-width="1.024" stroke-opacity="0.15"/>
+  <line x1="322.2" y1="306.2" x2="256.0" y2="278.1" stroke="#33EBFF" stroke-width="1.024" stroke-opacity="0.15"/>
+  <line x1="189.8" y1="306.2" x2="196.0" y2="234.5" stroke="#33EBFF" stroke-width="1.024" stroke-opacity="0.15"/>
+  <line x1="148.9" y1="180.2" x2="218.9" y2="164.0" stroke="#33EBFF" stroke-width="1.024" stroke-opacity="0.4"/>
 
   <!-- "20" text -->
   <text x="257.024" y="238.59199999999998" text-anchor="middle" font-size="61.44" font-weight="900" font-family="Arial, Helvetica, sans-serif" fill="#000000" fill-opacity="0.4">20</text>
@@ -127,19 +127,19 @@
   <circle cx="256.0" cy="102.4" r="3.072" fill="#ffffff" fill-opacity="0.5"/>
 
   <!-- Brand text below -->
-  <text x="256" y="419.84" text-anchor="middle" font-size="33.28" font-weight="900" font-family="Arial, Helvetica, sans-serif" fill="#CDC9B2" fill-opacity="0.9" letter-spacing="5.12">D&amp;D ESPAÃ‘OL</text>
+  <text x="256" y="419.84" text-anchor="middle" font-size="33.28" font-weight="900" font-family="Arial, Helvetica, sans-serif" fill="#00E5FF" fill-opacity="0.9" letter-spacing="5.12">D&amp;D ESPAÃƒâ€˜OL</text>
 
   <!-- Subtitle -->
-  <text x="256" y="442.88" text-anchor="middle" font-size="15.36" font-weight="700" font-family="Arial, Helvetica, sans-serif" fill="#CDC9B2" fill-opacity="0.45" letter-spacing="7.68">5Âª EDICIÃ“N</text>
+  <text x="256" y="442.88" text-anchor="middle" font-size="15.36" font-weight="700" font-family="Arial, Helvetica, sans-serif" fill="#00E5FF" fill-opacity="0.45" letter-spacing="7.68">5Ã‚Âª EDICIÃƒâ€œN</text>
 
   <!-- Decorative lines around text -->
-  <line x1="143.36" y1="401.91999999999996" x2="230.4" y2="401.91999999999996" stroke="#CDC9B2" stroke-width="1.024" stroke-opacity="0.25"/>
-  <line x1="281.6" y1="401.91999999999996" x2="368.64" y2="401.91999999999996" stroke="#CDC9B2" stroke-width="1.024" stroke-opacity="0.25"/>
+  <line x1="143.36" y1="401.91999999999996" x2="230.4" y2="401.91999999999996" stroke="#00E5FF" stroke-width="1.024" stroke-opacity="0.25"/>
+  <line x1="281.6" y1="401.91999999999996" x2="368.64" y2="401.91999999999996" stroke="#00E5FF" stroke-width="1.024" stroke-opacity="0.25"/>
 
   <!-- Small diamonds flanking subtitle -->
-  <polygon points="194.56,439.296 197.12,436.736 199.68,439.296 197.12,441.856" fill="#CDC9B2" fill-opacity="0.4"/>
-  <polygon points="317.44,439.296 314.88,436.736 312.32,439.296 314.88,441.856" fill="#CDC9B2" fill-opacity="0.4"/>
+  <polygon points="194.56,439.296 197.12,436.736 199.68,439.296 197.12,441.856" fill="#00E5FF" fill-opacity="0.4"/>
+  <polygon points="317.44,439.296 314.88,436.736 312.32,439.296 314.88,441.856" fill="#00E5FF" fill-opacity="0.4"/>
 
   <!-- Sparkle accents -->
-  <polygon points="384,107.52 389.12,96.25599999999999 394.24,107.52 389.12,118.78399999999999" fill="#CDC9B2" fill-opacity="0.65"/>
+  <polygon points="384,107.52 389.12,96.25599999999999 394.24,107.52 389.12,118.78399999999999" fill="#00E5FF" fill-opacity="0.65"/>
 </svg>

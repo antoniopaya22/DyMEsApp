@@ -56,7 +56,7 @@ export function NoteCard({
     <TouchableOpacity
       key={note.id}
       className="rounded-card border mb-2 overflow-hidden"
-      style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
+      style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}
       onPress={onToggleExpand}
       onLongPress={onEdit}
       activeOpacity={0.7}
@@ -67,7 +67,7 @@ export function NoteCard({
           {/* Pin indicator */}
           {note.fijada && (
             <View className="mr-2 mt-0.5">
-              <Ionicons name="pin" size={14} color={colors.accentAmber} />
+              <Ionicons name="pin" size={14} color={colors.accentRed} />
             </View>
           )}
 
@@ -77,7 +77,7 @@ export function NoteCard({
             style={{
               backgroundColor:
                 note.tipo === "diario"
-                  ? `${colors.accentBlue}20`
+                  ? withAlpha(colors.accentRed, 0.12)
                   : `${colors.textMuted}20`,
             }}
           >
@@ -89,7 +89,7 @@ export function NoteCard({
               }
               size={16}
               color={
-                note.tipo === "diario" ? colors.accentBlue : colors.textMuted
+                note.tipo === "diario" ? colors.accentRed : colors.textMuted
               }
             />
           </View>
@@ -106,7 +106,7 @@ export function NoteCard({
 
             {/* Session info for diary notes */}
             {note.tipo === "diario" && note.numeroSesion !== null && (
-              <Text className="text-[10px] font-medium mt-0.5" style={{ color: colors.accentBlue }}>
+              <Text className="text-[10px] font-medium mt-0.5" style={{ color: colors.accentRed }}>
                 Sesión #{note.numeroSesion}
                 {note.fechaSesion ? ` · ${note.fechaSesion}` : ""}
               </Text>
@@ -132,7 +132,7 @@ export function NoteCard({
                     className="flex-row items-center rounded-full px-2 py-0.5 mr-1.5 mb-1"
                     style={{ backgroundColor: `${tag.color}20` }}
                   >
-                    <Text className="text-[10px]">{tag.icon}</Text>
+                    <Ionicons name={tag.icon as any} size={10} color={tag.color} />
                     <Text
                       className="text-[10px] font-medium ml-0.5"
                       style={{ color: tag.color }}
@@ -180,9 +180,9 @@ export function NoteCard({
               <Ionicons
                 name="eye-outline"
                 size={12}
-                color={colors.accentAmber}
+                color={colors.accentRed}
               />
-              <Text className="text-[10px] ml-1" style={{ color: colors.accentGold }}>
+              <Text className="text-[10px] ml-1" style={{ color: colors.accentRed }}>
                 Visible para el Master
               </Text>
             </View>
@@ -194,9 +194,9 @@ export function NoteCard({
               <Ionicons
                 name="person-circle-outline"
                 size={12}
-                color={colors.accentPurple}
+                color={colors.accentRed}
               />
-              <Text className="text-[10px] ml-1" style={{ color: colors.accentPurple }}>
+              <Text className="text-[10px] ml-1" style={{ color: colors.accentRed }}>
                 Enviada por el Master
               </Text>
             </View>
@@ -229,10 +229,10 @@ export function NoteCard({
                 className="flex-row items-center rounded-lg px-3 py-2 mr-2 border active:opacity-70"
                 style={{
                   backgroundColor: note.fijada
-                    ? withAlpha(colors.accentAmber, 0.15)
-                    : colors.bgSecondary,
+                    ? withAlpha(colors.accentRed, 0.15)
+                    : colors.bgCard,
                   borderColor: note.fijada
-                    ? withAlpha(colors.accentAmber, 0.3)
+                    ? withAlpha(colors.accentRed, 0.3)
                     : colors.borderDefault,
                 }}
                 onPress={onTogglePin}
@@ -240,13 +240,13 @@ export function NoteCard({
                 <Ionicons
                   name={note.fijada ? "pin" : "pin-outline"}
                   size={14}
-                  color={note.fijada ? colors.accentAmber : colors.textMuted}
+                  color={note.fijada ? colors.accentRed : colors.textMuted}
                 />
                 <Text
                   className="text-xs font-semibold ml-1"
                   style={{
                     color: note.fijada
-                      ? colors.accentAmber
+                      ? colors.accentRed
                       : colors.textSecondary,
                   }}
                 >
@@ -256,15 +256,15 @@ export function NoteCard({
 
               <TouchableOpacity
                 className="flex-row items-center border rounded-lg px-3 py-2 mr-2"
-                style={{ backgroundColor: colors.bgSecondary, borderColor: colors.borderDefault }}
+                style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
                 onPress={onEdit}
               >
                 <Ionicons
                   name="create-outline"
                   size={14}
-                  color={colors.accentBlue}
+                  color={colors.accentRed}
                 />
-                <Text className="text-xs font-semibold ml-1" style={{ color: colors.accentBlue }}>
+                <Text className="text-xs font-semibold ml-1" style={{ color: colors.accentRed }}>
                   Editar
                 </Text>
               </TouchableOpacity>

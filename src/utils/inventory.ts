@@ -10,7 +10,10 @@ import type {
   WeaponDetails,
   WeaponDamage,
 } from "@/types/item";
+import type { EquipmentChoice } from "@/data/srd/classes";
+import { findSrdItem } from "@/data/srd/items";
 import { COIN_TO_GOLD_RATE, DEFAULT_COINS } from "@/constants/items";
+import { randomUUID } from "expo-crypto";
 
 // ─── Peso y carga ────────────────────────────────────────────────────
 
@@ -221,5 +224,130 @@ export function createEmptyItem(id: string): InventoryItem {
     peso: 0,
     equipado: false,
     custom: true,
+  };
+}
+
+// ─── Inventario inicial desde creación de personaje ──────────────────
+
+/**
+ * Parsea un nombre de objeto que puede incluir cantidad con "×N" o "xN".
+ * Ej: "Jabalina ×4" → { nombre: "Jabalina", cantidad: 4 }
+ *     "Daga" → { nombre: "Daga", cantidad: 1 }
+ */
+function parseItemNameQuantity(raw: string): { nombre: string; cantidad: number } {
+  const match = raw.match(/^(.+?)\s*[×x](\d+)$/i);
+  if (match) {
+    return { nombre: match[1].trim(), cantidad: parseInt(match[2], 10) };
+  }
+  return { nombre: raw.trim(), cantidad: 1 };
+}
+
+/**
+ * Convierte una lista de nombres de objetos (strings) en InventoryItems.
+ * Agrupa duplicados sumando cantidades.
+ * Busca cada nombre en el catálogo SRD para asignar categoría, peso,
+ * detalles de arma/armadura, etc.
+ */
+function itemNamesToInventoryItems(names: string[]): InventoryItem[] {
+  const grouped = new Map<string, number>();
+
+  for (const raw of names) {
+    const { nombre, cantidad } = parseItemNameQuantity(raw);
+    grouped.set(nombre, (grouped.get(nombre) ?? 0) + cantidad);
+  }
+
+  return Array.from(grouped.entries()).map(([nombre, cantidad]) => {
+    const srd = findSrdItem(nombre);
+
+    return {
+      id: randomUUID(),
+      nombre: srd?.nombre ?? nombre,
+      descripcion: srd?.descripcion,
+      categoria: srd?.categoria ?? "otro",
+      cantidad,
+      peso: srd?.peso ?? 0,
+      valor: srd?.valor,
+      equipado: false,
+      custom: !srd,
+      weaponDetails: srd?.weaponDetails,
+      armorDetails: srd?.armorDetails,
+    };
+  });
+}
+
+/**
+ * Resuelve las elecciones de equipamiento del draft a una lista plana
+ * de nombres de objetos.
+ */
+function resolveEquipmentChoices(
+  equipmentChoices: EquipmentChoice[],
+  selectedChoices: Record<string, string>,
+): string[] {
+  const items: string[] = [];
+
+  for (const choice of equipmentChoices) {
+    const selectedOptionId = selectedChoices[choice.id];
+    if (!selectedOptionId) continue;
+
+    const option = choice.options.find((o) => o.id === selectedOptionId);
+    if (option) {
+      items.push(...option.items);
+    }
+  }
+
+  return items;
+}
+
+export interface StartingInventoryParams {
+  inventoryId: string;
+  characterId: string;
+  /** Opciones de equipamiento de la clase */
+  classEquipmentChoices: EquipmentChoice[];
+  /** Elecciones del usuario (choiceId → optionId) */
+  selectedChoices: Record<string, string>;
+  /** Equipo que siempre otorga la clase */
+  classDefaultEquipment: string[];
+  /** Equipo que otorga el trasfondo */
+  backgroundEquipment: string[];
+  /** Monedas de oro iniciales del trasfondo */
+  backgroundStartingGold: number;
+}
+
+/**
+ * Construye el inventario inicial del personaje a partir del equipamiento
+ * elegido durante la creación (clase + trasfondo).
+ */
+export function buildStartingInventory(params: StartingInventoryParams): Inventory {
+  const {
+    inventoryId,
+    characterId,
+    classEquipmentChoices,
+    selectedChoices,
+    classDefaultEquipment,
+    backgroundEquipment,
+    backgroundStartingGold,
+  } = params;
+
+  // Recopilar todos los nombres de objetos
+  const allItemNames: string[] = [
+    ...resolveEquipmentChoices(classEquipmentChoices, selectedChoices),
+    ...classDefaultEquipment,
+    ...backgroundEquipment,
+  ];
+
+  const items = itemNamesToInventoryItems(allItemNames);
+
+  const coins: Coins = {
+    ...DEFAULT_COINS,
+    mo: backgroundStartingGold,
+  };
+
+  return {
+    id: inventoryId,
+    characterId,
+    items,
+    coins,
+    coinTransactions: [],
+    maxAttunements: 3,
   };
 }

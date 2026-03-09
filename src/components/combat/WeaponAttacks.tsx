@@ -213,7 +213,7 @@ export function WeaponAttacks() {
 
   return (
     <>
-      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
+      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
         {/* Header */}
         <View className="flex-row items-center mb-3">
           <Ionicons name="flash-outline" size={20} color={colors.accentDanger} />
@@ -250,7 +250,7 @@ export function WeaponAttacks() {
                 borderRadius: 12,
                 borderWidth: 1,
                 borderColor: colors.borderSubtle,
-                backgroundColor: colors.bgSecondary,
+                backgroundColor: colors.bgCard,
                 overflow: "hidden",
               }}
             >
@@ -296,11 +296,11 @@ export function WeaponAttacks() {
                   <Ionicons
                     name="dice-outline"
                     size={14}
-                    color={colors.accentBlue}
+                    color={colors.accentRed}
                   />
                   <Text
                     className="ml-1.5 text-xs font-bold"
-                    style={{ color: colors.accentBlue }}
+                    style={{ color: colors.accentRed }}
                   >
                     Ataque {formatModifier(attackBonus)}
                   </Text>

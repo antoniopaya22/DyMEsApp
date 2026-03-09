@@ -30,7 +30,7 @@ import type { ClassId } from "@/types/character";
 import { getClassData } from "@/data/srd/classes";
 import { getSpellById } from "@/data/srd/spells";
 import { calcPreparedSpells } from "@/utils/spells";
-import { CLASS_ABILITY_THEME } from "@/constants/abilities";
+import { getClassAbilityTheme } from "@/constants/abilities";
 
 // Section components
 import ClassResourceSlots from "./abilities/ClassResourceSlots";
@@ -79,7 +79,7 @@ export default function AbilitiesTab() {
     SPELLCASTING_ABILITY[character.clase as keyof typeof SPELLCASTING_ABILITY];
   const preparationType = CLASS_SPELL_PREPARATION[character.clase];
   const classData = getClassData(character.clase);
-  const classTheme = CLASS_ABILITY_THEME[character.clase];
+  const classTheme = getClassAbilityTheme(colors)[character.clase];
 
   const isNonCaster = casterType === "none";
 

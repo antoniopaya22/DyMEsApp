@@ -219,19 +219,30 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={[
                 styles.submitButton,
-                { backgroundColor: colors.accentRed, opacity: canSubmit && !loading ? 1 : 0.5 },
+                (!canSubmit || loading) && styles.submitButtonDisabled,
               ]}
               onPress={handleEmailSubmit}
               disabled={!canSubmit || loading}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
             >
-              {loading ? (
-                <ActivityIndicator size="small" color="#FFF" />
-              ) : (
-                <Text style={styles.submitText}>
-                  {tab === "login" ? "Entrar" : "Crear cuenta"}
-                </Text>
-              )}
+              <LinearGradient
+                colors={
+                  canSubmit && !loading
+                    ? ["#00D4E8", colors.accentRed, "#0097A7"]
+                    : [colors.bgElevated, colors.bgCard, colors.bgSecondary]
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.submitGradient}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <Text style={[styles.submitText, { color: canSubmit ? "#FFFFFF" : colors.textMuted }]}>
+                    {tab === "login" ? "Entrar" : "Crear cuenta"}
+                  </Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </View>
 
@@ -293,17 +304,23 @@ const styles = StyleSheet.create({
     width: "100%",
     borderBottomWidth: 1,
     marginBottom: 16,
+    position: "relative",
   },
   tab: {
     flex: 1,
     alignItems: "center",
     paddingVertical: 10,
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
+  },
+  tabIndicator: {
+    position: "absolute",
+    bottom: -1,
+    left: 0,
+    width: "50%",
+    height: 2.5,
+    borderRadius: 2,
   },
   tabText: {
     fontSize: 15,
-    fontWeight: "600",
   },
 
   // ── Messages ──
@@ -332,10 +349,10 @@ const styles = StyleSheet.create({
   inputBox: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 12,
+    borderWidth: 1.5,
+    borderRadius: 14,
     paddingHorizontal: 14,
-    height: 48,
+    height: 50,
     gap: 10,
   },
   input: {
@@ -344,16 +361,29 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   submitButton: {
+    borderRadius: 14,
+    overflow: "hidden",
+    marginTop: 4,
+    shadowColor: "#00BCD4",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  submitButtonDisabled: {
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  submitGradient: {
     alignItems: "center",
     justifyContent: "center",
-    height: 48,
-    borderRadius: 12,
-    marginTop: 4,
+    height: 50,
+    borderRadius: 14,
   },
   submitText: {
-    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
+    letterSpacing: 0.2,
   },
 
   // ── Divider ──
@@ -379,14 +409,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    height: 50,
+    borderRadius: 14,
     elevation: 2,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
     gap: 10,
   },
   googleIconContainer: {
@@ -403,7 +432,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   googleButtonText: {
-    color: "#333333",
     fontSize: 15,
     fontWeight: "600",
   },
@@ -427,25 +455,56 @@ const TAB_LABELS: Record<AuthTab, string> = {
 function AuthTabBar({ tab, onSwitch }: Readonly<{ tab: AuthTab; onSwitch: (t: AuthTab) => void }>) {
   const { colors } = useTheme();
   const tabs: AuthTab[] = ["login", "register"];
+  const indicatorAnim = useRef(new Animated.Value(tab === "login" ? 0 : 1)).current;
+  const containerWidth = useRef(0);
+
+  useEffect(() => {
+    Animated.spring(indicatorAnim, {
+      toValue: tab === "login" ? 0 : 1,
+      friction: 20,
+      tension: 170,
+      useNativeDriver: true,
+    }).start();
+  }, [tab, indicatorAnim]);
+
+  const halfWidth = containerWidth.current / 2 || 180;
 
   return (
-    <View style={[styles.tabRow, { borderColor: colors.borderSubtle }]}>
+    <View
+      style={[styles.tabRow, { borderColor: colors.borderSubtle }]}
+      onLayout={(e) => {
+        containerWidth.current = e.nativeEvent.layout.width;
+      }}
+    >
+      {/* Sliding indicator */}
+      <Animated.View
+        style={[
+          styles.tabIndicator,
+          {
+            backgroundColor: colors.accentRed,
+            transform: [{
+              translateX: indicatorAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, halfWidth],
+              }),
+            }],
+          },
+        ]}
+      />
       {tabs.map((t) => {
         const active = tab === t;
         return (
           <TouchableOpacity
             key={t}
-            style={[
-              styles.tab,
-              active && { borderBottomColor: colors.accentRed, borderBottomWidth: 2 },
-            ]}
+            style={styles.tab}
             onPress={() => onSwitch(t)}
             activeOpacity={0.7}
           >
             <Text
               style={[
                 styles.tabText,
-                { color: active ? colors.accentRed : colors.textMuted },
+                { color: active ? colors.accentRed : colors.textMuted,
+                  fontWeight: active ? "700" : "500" },
               ]}
             >
               {TAB_LABELS[t]}
@@ -485,9 +544,18 @@ function MessageBox({
 }
 
 function GoogleSignInButton({ loading, onPress }: Readonly<{ loading: boolean; onPress: () => void }>) {
+  const { colors, isDark } = useTheme();
   return (
     <TouchableOpacity
-      style={[styles.googleButton, { opacity: loading ? 0.7 : 1 }]}
+      style={[
+        styles.googleButton,
+        {
+          opacity: loading ? 0.7 : 1,
+          backgroundColor: isDark ? colors.bgCard : "#FFFFFF",
+          borderColor: isDark ? colors.borderDefault : "transparent",
+          borderWidth: isDark ? 1 : 0,
+        },
+      ]}
       onPress={onPress}
       disabled={loading}
       activeOpacity={0.8}
@@ -499,7 +567,9 @@ function GoogleSignInButton({ loading, onPress }: Readonly<{ loading: boolean; o
           <View style={styles.googleIconContainer}>
             <Text style={styles.googleIcon}>G</Text>
           </View>
-          <Text style={styles.googleButtonText}>Continuar con Google</Text>
+          <Text style={[styles.googleButtonText, { color: isDark ? colors.textPrimary : "#333333" }]}>
+            Continuar con Google
+          </Text>
         </>
       )}
     </TouchableOpacity>

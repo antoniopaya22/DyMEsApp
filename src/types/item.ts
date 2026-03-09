@@ -43,6 +43,7 @@ export {
   formatWeaponDamage,
   createDefaultInventory,
   createEmptyItem,
+  buildStartingInventory,
 } from "@/utils/inventory";
 
 // ─── Categorías de objetos ───────────────────────────────────────────

@@ -28,7 +28,7 @@ const RUNE_CHARS = ["ᚠ", "ᚡ", "ᚢ", "ᚣ", "ᚤ", "ᚥ", "ᚦ", "ᚧ", "ᚨ
 
 export function MagicCircle({
   size = 200,
-  color = "#8f3d38",
+  color = "#00E5FF",
   animated = true,
   opacity: baseOpacity = 0.15,
   runeCount = 8,

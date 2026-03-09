@@ -20,7 +20,7 @@ interface CastleHeaderProps {
 }
 
 export function CastleHeader({
-  color = "#272519",
+  color = "#0B1221",
   height = 10,
   merlonWidth = 14,
   crenelWidth = 10,

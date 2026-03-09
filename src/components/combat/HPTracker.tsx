@@ -5,8 +5,8 @@
  * Extracted from CombatTab.tsx
  */
 
-import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import { useState, useRef, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, Animated, Easing } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useCharacterStore } from "@/stores/characterStore";
 import { useTheme } from "@/hooks";
@@ -21,30 +21,85 @@ export function HPTracker({ onShowToast }: HPTrackerProps) {
   const { colors } = useTheme();
   const { character, takeDamage, heal, setTempHP } = useCharacterStore();
 
+  const hp = character?.hp;
+  const hpColor = hp ? getHpColor(hp.current, hp.max, colors) : colors.textMuted;
+  const hpPct = hp && hp.max > 0 ? Math.min(100, (hp.current / hp.max) * 100) : 0;
+
   const [damageInput, setDamageInput] = useState("");
   const [healInput, setHealInput] = useState("");
   const [tempHpInput, setTempHpInput] = useState("");
 
-  if (!character) return null;
+  // Animated HP bar width
+  const hpBarAnim = useRef(new Animated.Value(hpPct / 100)).current;
+  // Flash overlay for damage/heal feedback
+  const flashAnim = useRef(new Animated.Value(0)).current;
+  const flashColorRef = useRef(colors.accentDanger);
+  // Pulse for HP number on change
+  const hpScaleAnim = useRef(new Animated.Value(1)).current;
 
-  const { hp } = character;
-  const hpColor = getHpColor(hp.current, hp.max, colors);
-  const hpPct = hp.max > 0 ? Math.min(100, (hp.current / hp.max) * 100) : 0;
+  // Animate HP bar smoothly when percentage changes
+  useEffect(() => {
+    const anim = Animated.timing(hpBarAnim, {
+      toValue: hpPct / 100,
+      duration: 500,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false, // width animation requires JS driver
+    });
+    anim.start();
+    return () => anim.stop();
+  }, [hpPct, hpBarAnim]);
+
+  // Pulse the HP number when it changes
+  useEffect(() => {
+    if (!hp) return;
+    const anim = Animated.sequence([
+      Animated.spring(hpScaleAnim, {
+        toValue: 1.15,
+        friction: 3,
+        tension: 200,
+        useNativeDriver: true,
+      }),
+      Animated.spring(hpScaleAnim, {
+        toValue: 1,
+        friction: 5,
+        tension: 100,
+        useNativeDriver: true,
+      }),
+    ]);
+    anim.start();
+    return () => anim.stop();
+  }, [hp?.current, hpScaleAnim]);
+
+  /** Flash the card border on damage or heal */
+  const triggerFlash = (color: string) => {
+    flashColorRef.current = color;
+    flashAnim.setValue(1);
+    Animated.timing(flashAnim, {
+      toValue: 0,
+      duration: 600,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  };
+
+  if (!character || !hp) return null;
 
   const handleDamage = async () => {
-    const amount = parseInt(damageInput, 10);
+    const parsed = parseInt(damageInput, 10);
+    const amount = damageInput.trim() === "" ? 1 : parsed;
     if (isNaN(amount) || amount <= 0) return;
+    triggerFlash(colors.accentDanger);
     await takeDamage(amount);
     setDamageInput("");
-    onShowToast(`-${amount} PG`);
   };
 
   const handleHeal = async () => {
-    const amount = parseInt(healInput, 10);
+    const parsed = parseInt(healInput, 10);
+    const amount = healInput.trim() === "" ? 1 : parsed;
     if (isNaN(amount) || amount <= 0) return;
+    triggerFlash(colors.accentGreen);
     await heal(amount);
     setHealInput("");
-    onShowToast(`+${amount} PG`);
   };
 
   const handleSetTempHP = async () => {
@@ -55,8 +110,20 @@ export function HPTracker({ onShowToast }: HPTrackerProps) {
     onShowToast(`PG temp: ${amount}`);
   };
 
+  const flashBorderColor = flashAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [colors.borderDefault, flashColorRef.current],
+  });
+
   return (
-    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
+    <Animated.View
+      className="rounded-card border p-4 mb-4"
+      style={{
+        backgroundColor: colors.bgElevated,
+        borderColor: flashBorderColor,
+        borderWidth: 1,
+      }}
+    >
       <Text className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: colors.textSecondary }}>
         Puntos de Golpe
       </Text>
@@ -64,9 +131,12 @@ export function HPTracker({ onShowToast }: HPTrackerProps) {
       {/* HP Bar */}
       <View className="items-center mb-4">
         <View className="flex-row items-baseline mb-1">
-          <Text className="text-5xl font-bold" style={{ color: hpColor }}>
+          <Animated.Text
+            className="text-5xl font-bold"
+            style={{ color: hpColor, transform: [{ scale: hpScaleAnim }] }}
+          >
             {hp.current}
-          </Text>
+          </Animated.Text>
           <Text className="text-xl font-semibold ml-1" style={{ color: colors.textMuted }}>
             / {hp.max}
           </Text>
@@ -74,8 +144,8 @@ export function HPTracker({ onShowToast }: HPTrackerProps) {
 
         {hp.temp > 0 && (
           <View className="flex-row items-center mb-1">
-            <Ionicons name="shield" size={14} color={colors.accentBlue} />
-            <Text className="text-sm font-semibold ml-1" style={{ color: colors.accentBlue }}>
+            <Ionicons name="shield" size={14} color={colors.accentRed} />
+            <Text className="text-sm font-semibold ml-1" style={{ color: colors.accentRed }}>
               +{hp.temp} temporales
             </Text>
           </View>
@@ -90,10 +160,13 @@ export function HPTracker({ onShowToast }: HPTrackerProps) {
 
         {/* Progress bar */}
         <View className="w-full h-3 rounded-full mt-2 overflow-hidden" style={{ backgroundColor: colors.bgSecondary }}>
-          <View
+          <Animated.View
             className="h-full rounded-full"
             style={{
-              width: `${hpPct}%`,
+              width: hpBarAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: ["0%", "100%"],
+              }),
               backgroundColor: hpColor,
             }}
           />
@@ -107,11 +180,11 @@ export function HPTracker({ onShowToast }: HPTrackerProps) {
           <View className="flex-row">
             <TextInput
               className="flex-1 rounded-l-lg px-3 py-2.5 text-sm border border-r-0"
-              style={{ backgroundColor: colors.bgSecondary, color: colors.textPrimary, borderColor: colors.borderDefault }}
+              style={{ backgroundColor: colors.bgCard, color: colors.textPrimary, borderColor: colors.borderDefault }}
               placeholder="Daño"
               placeholderTextColor={colors.textMuted}
               keyboardType="numeric"
-              value={damageInput}
+              defaultValue={damageInput}
               onChangeText={setDamageInput}
               onSubmitEditing={handleDamage}
               returnKeyType="done"
@@ -131,11 +204,11 @@ export function HPTracker({ onShowToast }: HPTrackerProps) {
           <View className="flex-row">
             <TextInput
               className="flex-1 rounded-l-lg px-3 py-2.5 text-sm border border-r-0"
-              style={{ backgroundColor: colors.bgSecondary, color: colors.textPrimary, borderColor: colors.borderDefault }}
+              style={{ backgroundColor: colors.bgCard, color: colors.textPrimary, borderColor: colors.borderDefault }}
               placeholder="Curar"
               placeholderTextColor={colors.textMuted}
               keyboardType="numeric"
-              value={healInput}
+              defaultValue={healInput}
               onChangeText={setHealInput}
               onSubmitEditing={handleHeal}
               returnKeyType="done"
@@ -155,23 +228,23 @@ export function HPTracker({ onShowToast }: HPTrackerProps) {
       <View className="flex-row">
         <TextInput
           className="flex-1 rounded-l-lg px-3 py-2.5 text-sm border border-r-0"
-          style={{ backgroundColor: colors.bgSecondary, color: colors.textPrimary, borderColor: colors.borderDefault }}
+          style={{ backgroundColor: colors.bgCard, color: colors.textPrimary, borderColor: colors.borderDefault }}
           placeholder="PG Temporales"
           placeholderTextColor={colors.textMuted}
           keyboardType="numeric"
-          value={tempHpInput}
+          defaultValue={tempHpInput}
           onChangeText={setTempHpInput}
           onSubmitEditing={handleSetTempHP}
           returnKeyType="done"
         />
         <TouchableOpacity
           className="rounded-r-lg px-3 items-center justify-center border"
-          style={{ backgroundColor: withAlpha(colors.accentBlue, 0.8), borderColor: withAlpha(colors.accentBlue, 0.8) }}
+          style={{ backgroundColor: withAlpha(colors.accentRed, 0.8), borderColor: withAlpha(colors.accentRed, 0.8) }}
           onPress={handleSetTempHP}
         >
           <Ionicons name="shield" size={18} color="white" />
         </TouchableOpacity>
       </View>
-    </View>
+    </Animated.View>
   );
 }

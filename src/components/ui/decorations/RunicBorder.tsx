@@ -29,7 +29,7 @@ interface RunicBorderProps {
 
 export function RunicBorder({
   children,
-  color = "#CDC9B2",
+  color = "#00E5FF",
   backgroundColor = "transparent",
   cornerSize = 12,
   showCornerRunes = true,

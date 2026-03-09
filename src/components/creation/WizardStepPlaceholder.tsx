@@ -157,10 +157,10 @@ export default function WizardStepPlaceholder({
             style={{ backgroundColor: colors.accentRed }}
             onPress={handleNext}
           >
-            <Text className="text-white font-bold text-base mr-2">
+            <Text className="font-bold text-base mr-2" style={{ color: colors.textInverted }}>
               {nextLabel ?? "Siguiente"}
             </Text>
-            <Ionicons name="arrow-forward" size={20} color="white" />
+            <Ionicons name="arrow-forward" size={20} color={colors.textInverted} />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity

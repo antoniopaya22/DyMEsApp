@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks";
+import { withAlpha } from "@/utils/theme";
 import {
   formatXP,
   ASI_POINTS,
@@ -31,14 +32,10 @@ function FeatureCard({ feature }: { feature: LevelFeature }) {
       onPress={() => setExpanded(!expanded)}
       activeOpacity={0.7}
       style={{
-        backgroundColor: feature.esSubclase
-          ? "rgba(236, 72, 153, 0.08)"
-          : "rgba(245, 158, 11, 0.08)",
+        backgroundColor: withAlpha(fcColors.accentRed, 0.08),
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: feature.esSubclase
-          ? "rgba(236, 72, 153, 0.2)"
-          : "rgba(245, 158, 11, 0.2)",
+        borderColor: withAlpha(fcColors.accentRed, 0.2),
         padding: 12,
         marginBottom: 8,
       }}
@@ -55,9 +52,7 @@ function FeatureCard({ feature }: { feature: LevelFeature }) {
             width: 32,
             height: 32,
             borderRadius: 8,
-            backgroundColor: feature.esSubclase
-              ? "rgba(236, 72, 153, 0.15)"
-              : "rgba(245, 158, 11, 0.15)",
+            backgroundColor: withAlpha(fcColors.accentRed, 0.15),
             alignItems: "center",
             justifyContent: "center",
           }}
@@ -65,7 +60,7 @@ function FeatureCard({ feature }: { feature: LevelFeature }) {
           <Ionicons
             name={feature.esSubclase ? "git-branch-outline" : "flash-outline"}
             size={16}
-            color={feature.esSubclase ? "#ec4899" : fcColors.accentAmber}
+            color={fcColors.accentRed}
           />
         </View>
         <View style={{ flex: 1 }}>
@@ -81,7 +76,7 @@ function FeatureCard({ feature }: { feature: LevelFeature }) {
           {feature.esSubclase && (
             <Text
               style={{
-                color: "#ec4899",
+                color: fcColors.accentRed,
                 fontSize: 11,
                 fontWeight: "600",
                 marginTop: 1,
@@ -141,9 +136,9 @@ export default function SummaryStep({
             width: 80,
             height: 80,
             borderRadius: 40,
-            backgroundColor: "rgba(251, 191, 36, 0.15)",
+            backgroundColor: withAlpha(colors.accentRed, 0.15),
             borderWidth: 2,
-            borderColor: colors.accentGold + "66",
+            borderColor: withAlpha(colors.accentRed, 0.3),
             alignItems: "center",
             justifyContent: "center",
             marginBottom: 8,
@@ -151,7 +146,7 @@ export default function SummaryStep({
         >
           <Text
             style={{
-              color: colors.accentGold,
+              color: colors.accentRed,
               fontSize: 32,
               fontWeight: "900",
             }}
@@ -188,16 +183,16 @@ export default function SummaryStep({
           style={{
             flexDirection: "row",
             alignItems: "center",
-            backgroundColor: "rgba(59, 130, 246, 0.12)",
+            backgroundColor: withAlpha(colors.accentRed, 0.12),
             borderRadius: 12,
             borderWidth: 1,
-            borderColor: "rgba(59, 130, 246, 0.3)",
+            borderColor: withAlpha(colors.accentRed, 0.3),
             padding: 12,
             marginBottom: 12,
             gap: 10,
           }}
         >
-          <Ionicons name="ribbon-outline" size={20} color={colors.accentBlue} />
+          <Ionicons name="ribbon-outline" size={20} color={colors.accentRed} />
           <View style={{ flex: 1 }}>
             <Text
               style={{
@@ -210,7 +205,7 @@ export default function SummaryStep({
             </Text>
             <Text
               style={{
-                color: colors.accentBlue,
+                color: colors.accentRed,
                 fontSize: 13,
                 fontWeight: "500",
               }}
@@ -227,16 +222,16 @@ export default function SummaryStep({
           style={{
             flexDirection: "row",
             alignItems: "center",
-            backgroundColor: "rgba(139, 92, 246, 0.12)",
+            backgroundColor: withAlpha(colors.accentRed, 0.12),
             borderRadius: 12,
             borderWidth: 1,
-            borderColor: "rgba(139, 92, 246, 0.3)",
+            borderColor: withAlpha(colors.accentRed, 0.3),
             padding: 12,
             marginBottom: 12,
             gap: 10,
           }}
         >
-          <Ionicons name="trending-up" size={20} color={colors.accentPurple} />
+          <Ionicons name="trending-up" size={20} color={colors.accentRed} />
           <View style={{ flex: 1 }}>
             <Text
               style={{
@@ -249,7 +244,7 @@ export default function SummaryStep({
             </Text>
             <Text
               style={{
-                color: colors.accentPurple,
+                color: colors.accentRed,
                 fontSize: 13,
                 fontWeight: "500",
               }}
@@ -266,16 +261,16 @@ export default function SummaryStep({
           style={{
             flexDirection: "row",
             alignItems: "center",
-            backgroundColor: "rgba(236, 72, 153, 0.12)",
+            backgroundColor: withAlpha(colors.accentRed, 0.12),
             borderRadius: 12,
             borderWidth: 1,
-            borderColor: "rgba(236, 72, 153, 0.3)",
+            borderColor: withAlpha(colors.accentRed, 0.3),
             padding: 12,
             marginBottom: 12,
             gap: 10,
           }}
         >
-          <Ionicons name="git-branch" size={20} color="#ec4899" />
+          <Ionicons name="git-branch" size={20} color={colors.accentRed} />
           <View style={{ flex: 1 }}>
             <Text
               style={{
@@ -286,7 +281,7 @@ export default function SummaryStep({
             >
               {classData?.subclassLabel ?? "Subclase"}
             </Text>
-            <Text style={{ color: "#ec4899", fontSize: 13, fontWeight: "500" }}>
+            <Text style={{ color: colors.accentRed, fontSize: 13, fontWeight: "500" }}>
               ¡Debes elegir tu especialización!
             </Text>
           </View>
@@ -307,16 +302,16 @@ export default function SummaryStep({
             style={{
               flexDirection: "row",
               alignItems: "center",
-              backgroundColor: "rgba(59, 130, 246, 0.12)",
+              backgroundColor: withAlpha(colors.accentRed, 0.12),
               borderRadius: 12,
               borderWidth: 1,
-              borderColor: "rgba(59, 130, 246, 0.3)",
+              borderColor: withAlpha(colors.accentRed, 0.3),
               padding: 12,
               marginBottom: 12,
               gap: 10,
             }}
           >
-            <Ionicons name="sparkles" size={20} color={colors.accentBlue} />
+            <Ionicons name="sparkles" size={20} color={colors.accentRed} />
             <View style={{ flex: 1 }}>
               <Text
                 style={{
@@ -329,7 +324,7 @@ export default function SummaryStep({
               </Text>
               <Text
                 style={{
-                  color: colors.accentBlue,
+                  color: colors.accentRed,
                   fontSize: 13,
                   fontWeight: "500",
                 }}
@@ -370,8 +365,10 @@ export default function SummaryStep({
             style={{
               alignItems: "center",
               padding: 20,
-              backgroundColor: colors.borderSubtle,
+              backgroundColor: colors.bgCard,
               borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.borderDefault,
             }}
           >
             <Ionicons name="heart" size={24} color={colors.accentDanger} />

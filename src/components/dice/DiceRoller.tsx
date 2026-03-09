@@ -18,6 +18,7 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
+  FlatList,
   ScrollView,
   Modal,
   Animated,
@@ -93,7 +94,7 @@ function getDiePresets(
     colors.accentAmber,     // d10
     colors.accentDanger,    // d12
     colors.accentPink,      // d20
-    colors.accentIndigo,    // d100
+    colors.accentOrange,    // d100
   ];
   return DIE_PRESET_SIDES.map((p, i) => ({ ...p, color: palette[i] }));
 }
@@ -111,7 +112,7 @@ function getDieColor(
     d10: colors.accentAmber,
     d12: colors.accentDanger,
     d20: colors.accentPink,
-    d100: colors.accentIndigo,
+    d100: colors.accentOrange,
   };
   return map[die] ?? colors.textPrimary;
 }
@@ -179,7 +180,7 @@ export default function DiceRoller({
   // ── Entrance / Exit animations ──
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
+      const anim = Animated.parallel([
         Animated.spring(slideUpAnim, {
           toValue: 0,
           friction: 9,
@@ -192,7 +193,9 @@ export default function DiceRoller({
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-      ]).start();
+      ]);
+      anim.start();
+      return () => anim.stop();
     } else {
       slideUpAnim.setValue(SCREEN_HEIGHT);
       backdropAnim.setValue(0);
@@ -378,7 +381,7 @@ export default function DiceRoller({
             style={[
               st.headerBtn,
               {
-                backgroundColor: colors.bgSecondary,
+                backgroundColor: colors.bgCard,
                 borderColor: colors.borderSubtle,
               },
             ]}
@@ -394,7 +397,7 @@ export default function DiceRoller({
             style={[
               st.headerBtn,
               {
-                backgroundColor: colors.bgSecondary,
+                backgroundColor: colors.bgCard,
                 borderColor: colors.borderSubtle,
               },
             ]}
@@ -476,7 +479,7 @@ export default function DiceRoller({
             style={[
               st.countBtn,
               {
-                backgroundColor: colors.bgSecondary,
+                backgroundColor: colors.bgCard,
                 borderColor: colors.borderSubtle,
               },
             ]}
@@ -502,7 +505,7 @@ export default function DiceRoller({
             style={[
               st.countBtn,
               {
-                backgroundColor: colors.bgSecondary,
+                backgroundColor: colors.bgCard,
                 borderColor: colors.borderSubtle,
               },
             ]}
@@ -575,7 +578,7 @@ export default function DiceRoller({
             style={[st.formulaInput, { color: colors.textPrimary }]}
             placeholder="2d6+3, 4d6kh3..."
             placeholderTextColor={colors.textMuted}
-            value={formula}
+            defaultValue={formula}
             onChangeText={setFormula}
             autoCapitalize="none"
             autoCorrect={false}
@@ -606,7 +609,7 @@ export default function DiceRoller({
           style={[
             st.modBtn,
             {
-              backgroundColor: colors.bgSecondary,
+              backgroundColor: colors.bgCard,
               borderColor: colors.borderSubtle,
             },
           ]}
@@ -634,7 +637,7 @@ export default function DiceRoller({
           style={[
             st.modBtn,
             {
-              backgroundColor: colors.bgSecondary,
+              backgroundColor: colors.bgCard,
               borderColor: colors.borderSubtle,
             },
           ]}
@@ -1015,8 +1018,12 @@ export default function DiceRoller({
         )}
       </View>
 
-      <ScrollView style={{ flex: 1 }}>
-        {history.length === 0 ? (
+      <FlatList
+        data={history}
+        renderItem={({ item }) => renderHistoryEntry(item)}
+        keyExtractor={(item) => item.id}
+        style={{ flex: 1 }}
+        ListEmptyComponent={
           <View style={st.historyEmpty}>
             <Ionicons
               name="hourglass-outline"
@@ -1033,10 +1040,8 @@ export default function DiceRoller({
               No hay tiradas recientes
             </Text>
           </View>
-        ) : (
-          history.map(renderHistoryEntry)
-        )}
-      </ScrollView>
+        }
+      />
     </View>
   );
 
@@ -1089,6 +1094,7 @@ export default function DiceRoller({
         <Animated.View
           style={[
             st.sheet,
+            showHistory && { height: SCREEN_HEIGHT * 0.88 },
             {
               backgroundColor: colors.bgCard,
               borderColor: colors.borderDefault,

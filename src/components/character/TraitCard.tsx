@@ -26,11 +26,11 @@ const ORIGIN_LABELS: Record<string, string> = {
 function useOriginColor(origen: string) {
   const { colors } = useTheme();
   const map: Record<string, string> = {
-    raza: colors.accentGreen,
-    clase: colors.accentBlue,
-    subclase: colors.accentPurple,
-    trasfondo: colors.accentAmber,
-    dote: colors.accentDanger,
+    raza: colors.accentRed,
+    clase: colors.accentRed,
+    subclase: colors.accentRed,
+    trasfondo: colors.accentRed,
+    dote: colors.accentRed,
     manual: colors.textMuted,
   };
   return map[origen] ?? colors.textMuted;
@@ -64,7 +64,7 @@ export function TraitCard({ trait, onUse, onRestore }: TraitCardProps) {
           : trait.recharge ?? null;
 
   return (
-    <View className="rounded-lg p-3 mb-2 border" style={{ backgroundColor: colors.bgSecondary, borderColor: colors.borderDefault }}>
+    <View className="rounded-lg p-3 mb-2 border" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
       <TouchableOpacity
         className="flex-row items-center"
         onPress={() => setExpanded(!expanded)}

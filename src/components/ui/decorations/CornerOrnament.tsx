@@ -15,7 +15,7 @@ interface CornerOrnamentProps {
 export function CornerOrnament({
   corner = "top-left",
   size = 24,
-  color = "#CDC9B2",
+  color = "#00E5FF",
   style,
 }: CornerOrnamentProps) {
   let rotation = "0deg";

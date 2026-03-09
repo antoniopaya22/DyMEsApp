@@ -12,8 +12,8 @@ import {
   Easing,
   StyleSheet,
   Platform,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -455,7 +455,7 @@ export default function CampaignDetailScreen() {
           style={{ backgroundColor: colors.accentRed }}
           onPress={() => router.replace("/")}
         >
-          <Text className="font-bold text-base" style={{ color: '#ffffff' }}>
+          <Text className="font-bold text-base" style={{ color: colors.textInverted }}>
             Volver al inicio
           </Text>
         </TouchableOpacity>
@@ -563,7 +563,7 @@ export default function CampaignDetailScreen() {
               onPress={handleSaveEdit}
               disabled={!editNombre.trim() || editSaving}
             >
-              <Text className="font-bold text-base" style={{ color: '#ffffff' }}>
+              <Text className="font-bold text-base" style={{ color: colors.textInverted }}>
                 {editSaving ? "Guardando..." : "Guardar Cambios"}
               </Text>
             </TouchableOpacity>
@@ -787,7 +787,9 @@ export default function CampaignDetailScreen() {
                     <Image
                       source={avatarSource}
                       style={detailStyles.characterAvatar}
-                      resizeMode="cover"
+                      contentFit="cover"
+                      contentPosition="top"
+                      transition={200}
                     />
                   ) : (
                     <View
@@ -821,7 +823,7 @@ export default function CampaignDetailScreen() {
             <ActionCard
               icon="shield-half-sharp"
               iconColor={colors.accentRed}
-              iconBg="rgba(143,61,56,0.15)"
+              iconBg="rgba(0,188,212,0.15)"
               title="Ver Hoja de Personaje"
               subtitle="Estadísticas, habilidades, inventario y más"
               onPress={handleOpenCharacterSheet}
@@ -864,7 +866,7 @@ export default function CampaignDetailScreen() {
               <QuickActionItem
                 icon="bag-handle"
                 iconColor={colors.accentGold}
-                iconBg="rgba(151,143,98,0.15)"
+                iconBg="rgba(0,229,255,0.15)"
                 label="Inventario"
                 sublabel="Objetos y oro"
                 onPress={handleOpenInventory}
@@ -970,13 +972,13 @@ export default function CampaignDetailScreen() {
                 activeOpacity={0.85}
               >
                 <LinearGradient
-                  colors={["#d32f2f", colors.accentRed, "#a51c1c"]}
+                  colors={["#00D4E8", colors.accentRed, "#0097A7"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={detailStyles.createButtonGradient}
                 >
-                  <Ionicons name="sparkles" size={20} color="white" />
-                  <Text style={detailStyles.createButtonText}>
+                  <Ionicons name="sparkles" size={20} color={colors.textInverted} />
+                  <Text style={[detailStyles.createButtonText, { color: colors.textInverted }]}>
                     Crear Personaje
                   </Text>
                 </LinearGradient>
@@ -1108,13 +1110,13 @@ const detailStyles = StyleSheet.create({
     marginBottom: 16,
   },
   heroLabel: {
-    color: "#CDC9B2", // overridden inline via colors.accentGold
+    color: "#00E5FF", // overridden inline via colors.accentGold
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 2,
     textTransform: "uppercase",
     marginBottom: 4,
-    textShadowColor: "rgba(178,172,136,0.2)",
+    textShadowColor: "rgba(0,229,255,0.2)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 6,
   },
@@ -1126,7 +1128,7 @@ const detailStyles = StyleSheet.create({
     marginBottom: 6,
   },
   heroDescription: {
-    color: "#AAA37B", // overridden inline via colors.textSecondary
+    color: "#8899AA", // overridden inline via colors.textSecondary
     fontSize: 14,
     lineHeight: 21,
     marginBottom: 12,
@@ -1147,7 +1149,7 @@ const detailStyles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.05)",
   },
   heroBadgeText: {
-    color: "#6C6746", // overridden inline via colors.textMuted
+    color: "#2D4054", // overridden inline via colors.textMuted
     fontSize: 11,
     fontWeight: "500",
     marginLeft: 5,
@@ -1204,7 +1206,7 @@ const detailStyles = StyleSheet.create({
     marginBottom: 2,
   },
   actionCardSubtitle: {
-    color: "#AAA37B", // overridden inline via colors.textSecondary
+    color: "#8899AA", // overridden inline via colors.textSecondary
     fontSize: 13,
     lineHeight: 18,
   },
@@ -1311,7 +1313,7 @@ const detailStyles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   createSubtitle: {
-    color: "#AAA37B", // overridden inline via colors.textSecondary
+    color: "#8899AA", // overridden inline via colors.textSecondary
     fontSize: 14,
     textAlign: "center",
     lineHeight: 21,
@@ -1322,7 +1324,7 @@ const detailStyles = StyleSheet.create({
     borderRadius: 14,
     overflow: "hidden",
     width: "100%",
-    shadowColor: "#8f3d38", // overridden inline via colors.accentRed
+    shadowColor: "#00BCD4", // overridden inline via colors.accentRed
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -1335,7 +1337,7 @@ const detailStyles = StyleSheet.create({
     paddingVertical: 15,
   },
   createButtonText: {
-    color: "#ffffff", // overridden inline via colors.textInverted
+    color: "#0B1221",
     fontWeight: "800",
     fontSize: 16,
     marginLeft: 8,
@@ -1345,7 +1347,7 @@ const detailStyles = StyleSheet.create({
     marginVertical: 20,
   },
   stepsTitle: {
-    color: "#6C6746",
+    color: "#2D4054",
     fontSize: 10,
     fontWeight: "700",
     textTransform: "uppercase",

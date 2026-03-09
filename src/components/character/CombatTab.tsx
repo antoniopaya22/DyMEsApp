@@ -138,42 +138,48 @@ export default function CombatTab() {
   const renderStatsRow = () => (
     <View className="flex-row mb-4">
       {/* Armor Class */}
-      <View className="flex-1 rounded-card border p-4 mr-2 items-center" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
-        <View className="h-14 w-14 rounded-full items-center justify-center mb-1" style={{ backgroundColor: withAlpha(colors.accentBlue, 0.15) }}>
-          <Ionicons name="shield" size={28} color={colors.accentBlue} />
+      <View className="flex-1 rounded-card border p-4 mr-2" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+        <View className="items-center">
+          <View className="h-14 w-14 rounded-full items-center justify-center mb-1" style={{ backgroundColor: withAlpha(colors.accentRed, 0.15) }}>
+            <Ionicons name="shield" size={28} color={colors.accentRed} />
+          </View>
+          <Text className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+            {ac}
+          </Text>
+          <Text className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: colors.textMuted }}>
+            Clase de Armadura
+          </Text>
         </View>
-        <Text className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
-          {ac}
-        </Text>
-        <Text className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: colors.textMuted }}>
-          Clase de Armadura
-        </Text>
       </View>
 
       {/* Initiative */}
-      <View className="flex-1 rounded-card border p-4 mx-1 items-center" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
-        <View className="h-14 w-14 rounded-full items-center justify-center mb-1" style={{ backgroundColor: withAlpha(colors.accentAmber, 0.15) }}>
-          <Ionicons name="flash" size={28} color={colors.accentAmber} />
+      <View className="flex-1 rounded-card border p-4 mx-1" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+        <View className="items-center">
+          <View className="h-14 w-14 rounded-full items-center justify-center mb-1" style={{ backgroundColor: withAlpha(colors.accentRed, 0.15) }}>
+            <Ionicons name="flash" size={28} color={colors.accentRed} />
+          </View>
+          <Text className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+            {formatModifier(character.abilityScores.des.modifier)}
+          </Text>
+          <Text className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: colors.textMuted }}>
+            Iniciativa
+          </Text>
         </View>
-        <Text className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
-          {formatModifier(character.abilityScores.des.modifier)}
-        </Text>
-        <Text className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: colors.textMuted }}>
-          Iniciativa
-        </Text>
       </View>
 
       {/* Speed */}
-      <View className="flex-1 rounded-card border p-4 ml-2 items-center" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
-        <View className="h-14 w-14 rounded-full items-center justify-center mb-1" style={{ backgroundColor: withAlpha(colors.accentGreen, 0.15) }}>
-          <Ionicons name="footsteps" size={28} color={colors.accentGreen} />
+      <View className="flex-1 rounded-card border p-4 ml-2" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+        <View className="items-center">
+          <View className="h-14 w-14 rounded-full items-center justify-center mb-1" style={{ backgroundColor: withAlpha(colors.accentRed, 0.15) }}>
+            <Ionicons name="footsteps" size={28} color={colors.accentRed} />
+          </View>
+          <Text className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+            {speed.walk}
+          </Text>
+          <Text className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: colors.textMuted }}>
+            Velocidad (pies)
+          </Text>
         </View>
-        <Text className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
-          {speed.walk}
-        </Text>
-        <Text className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: colors.textMuted }}>
-          Velocidad (pies)
-        </Text>
       </View>
     </View>
   );
@@ -182,22 +188,22 @@ export default function CombatTab() {
     if (!concentration) return null;
 
     return (
-      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgCard, borderColor: withAlpha(colors.accentPurple, 0.3) }}>
+      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: withAlpha(colors.accentRed, 0.3) }}>
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center flex-1">
-            <Ionicons name="eye" size={20} color={colors.accentPurple} />
+            <Ionicons name="eye" size={20} color={colors.accentRed} />
             <View className="ml-3 flex-1">
               <Text className="text-[10px] uppercase tracking-wider" style={{ color: colors.textMuted }}>
                 Concentración
               </Text>
-              <Text className="text-sm font-semibold" style={{ color: colors.accentPurple }}>
+              <Text className="text-sm font-semibold" style={{ color: colors.accentRed }}>
                 {concentration.spellName}
               </Text>
             </View>
           </View>
           <TouchableOpacity
             className="rounded-lg px-3 py-1.5"
-            style={{ backgroundColor: colors.bgSecondary }}
+            style={{ backgroundColor: colors.bgCard }}
             onPress={() => {
               showConfirm(
                 "Romper Concentración",
@@ -220,30 +226,26 @@ export default function CombatTab() {
 
   const renderRestButtons = () => (
     <View className="flex-row mb-4">
-      <TouchableOpacity
-        className="flex-1 rounded-card border p-4 mr-2 items-center"
-        style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
-        onPress={handleShortRest}
-      >
-        <Ionicons name="cafe-outline" size={24} color={colors.accentAmber} />
-        <Text className="text-sm font-semibold mt-1" style={{ color: colors.textPrimary }}>
-          Descanso Corto
-        </Text>
-        <Text className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>
-          Usa dados de golpe
-        </Text>
+      <TouchableOpacity onPress={handleShortRest} activeOpacity={0.7} className="flex-1 rounded-card border p-4 mr-2" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+        <View className="items-center">
+          <Ionicons name="cafe-outline" size={24} color={colors.accentRed} />
+          <Text className="text-sm font-semibold mt-1" style={{ color: colors.textPrimary }}>
+            Descanso Corto
+          </Text>
+          <Text className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>
+            Usa dados de golpe
+          </Text>
+        </View>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        className="flex-1 rounded-card border p-4 ml-2 items-center"
-        style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
-        onPress={handleLongRest}
-      >
-        <Ionicons name="moon-outline" size={24} color={colors.accentBlue} />
-        <Text className="text-sm font-semibold mt-1" style={{ color: colors.textPrimary }}>
-          Descanso Largo
-        </Text>
-        <Text className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>Recupera todo</Text>
+      <TouchableOpacity onPress={handleLongRest} activeOpacity={0.7} className="flex-1 rounded-card border p-4 ml-2" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+        <View className="items-center">
+          <Ionicons name="moon-outline" size={24} color={colors.accentRed} />
+          <Text className="text-sm font-semibold mt-1" style={{ color: colors.textPrimary }}>
+            Descanso Largo
+          </Text>
+          <Text className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>Recupera todo</Text>
+        </View>
       </TouchableOpacity>
     </View>
   );

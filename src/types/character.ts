@@ -403,6 +403,10 @@ export interface Character {
   hitDice: HitDicePool;
   deathSaves: DeathSaves;
   speed: SpeedInfo;
+  /** Visión en la oscuridad (rango en pies, 0 = sin darkvision) */
+  darkvision: number;
+  /** Linaje dracónico elegido (solo para dracónido) */
+  dragonLineage?: string;
   damageModifiers: DamageModifier[];
   conditions: ActiveCondition[];
   concentration: ConcentrationState | null;

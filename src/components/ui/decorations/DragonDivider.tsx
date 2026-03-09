@@ -30,7 +30,7 @@ interface DragonDividerProps {
 export function DragonDivider({
   width = "100%",
   height = 40,
-  color = "#CDC9B2",
+  color = "#00E5FF",
   lineColor,
   facing = "right",
   spacing = 12,

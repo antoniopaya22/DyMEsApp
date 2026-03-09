@@ -40,6 +40,8 @@ export interface SubraceData {
   /** Competencias adicionales de la subraza */
   weaponProficiencies?: string[];
   toolProficiencies?: string[];
+  /** Competencias con armaduras adicionales de la subraza */
+  armorProficiencies?: string[];
   /** Trucos o hechizos adicionales */
   cantrips?: string[];
   /** Conjuros innatos de la subraza (con nivel mínimo) */
@@ -48,6 +50,10 @@ export interface SubraceData {
   extraLanguages?: number;
   /** PG extra por nivel (ej: Enano de las Colinas) */
   hpBonusPerLevel?: number;
+  /** Override de velocidad base (ej: elfo del bosque tiene 35 pies) */
+  speedOverride?: number;
+  /** Override del rango de visión en la oscuridad (ej: drow tiene 120 pies) */
+  darkvisionOverride?: number;
 }
 
 export interface RaceData {
@@ -189,6 +195,7 @@ export const RACES: Record<RaceId, RaceData> = {
               "Eres competente con las armaduras ligeras y medias.",
           },
         ],
+        armorProficiencies: ["Armaduras ligeras", "Armaduras medias"],
       },
     ],
   },
@@ -253,6 +260,13 @@ export const RACES: Record<RaceId, RaceData> = {
           "Arco largo",
         ],
         extraLanguages: 1,
+        racialSpellcasting: {
+          ability: "int",
+          spells: [
+            // El jugador elige 1 truco de mago — se gestiona como cantrip elegible
+            // El spellId se resuelve en la creación (racialCantripChoice del draft)
+          ],
+        },
       },
       {
         id: "elfo_bosque",
@@ -260,6 +274,7 @@ export const RACES: Record<RaceId, RaceData> = {
         descripcion:
           "Posees sentidos e intuición agudos, y tus pies ágiles te llevan rápida y sigilosamente a través de tus bosques nativos.",
         abilityBonuses: { sab: 1 },
+        speedOverride: 35,
         traits: [
           {
             nombre: "Entrenamiento con Armas Élficas",
@@ -317,6 +332,7 @@ export const RACES: Record<RaceId, RaceData> = {
           "Espada corta",
           "Ballesta de mano",
         ],
+        darkvisionOverride: 120,
         racialSpellcasting: {
           ability: "car",
           spells: [
@@ -897,18 +913,18 @@ export function getRacialSpellsUnlockedAtLevel(
  * Devuelve el icono emoji representativo de cada raza.
  */
 export const RACE_ICONS: Record<RaceId, string> = {
-  enano: "⛏️",
-  elfo: "🧝",
-  mediano: "🍀",
-  humano: "🧑",
-  draconido: "🐉",
-  gnomo: "🔧",
-  semielfo: "🌿",
-  semiorco: "💪",
-  tiefling: "🔥",
-  hada: "🧚",
-  liebren: "🐇",
-  personalizada: "✨",
+  enano: "hammer-outline",
+  elfo: "leaf-outline",
+  mediano: "footsteps-outline",
+  humano: "person-outline",
+  draconido: "shield-half-outline",
+  gnomo: "construct-outline",
+  semielfo: "flower-outline",
+  semiorco: "skull-outline",
+  tiefling: "flame-outline",
+  hada: "sparkles-outline",
+  liebren: "paw-outline",
+  personalizada: "create-outline",
 };
 
 /** IDs de razas de expansión (no SRD básico) */

@@ -7,7 +7,7 @@
  *   2. null (sin imagen — el componente debe mostrar un fallback como icono/emoji)
  */
 
-import type { ImageSourcePropType } from "react-native";
+import type { ImageSource } from "expo-image";
 import type { ClassId, RaceId, Sexo } from "@/types/character";
 import { AVATAR_REGISTRY } from "@/constants/avatarRegistry";
 
@@ -19,7 +19,7 @@ export function getCharacterAvatar(
   clase: ClassId,
   raza: RaceId,
   sexo?: Sexo,
-): ImageSourcePropType | null {
+): ImageSource | null {
   if (!sexo || raza === "personalizada") return null;
 
   // Intento directo

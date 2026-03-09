@@ -1,9 +1,12 @@
-/**
+﻿/**
  * SpellCombatSection — Sección de magia para la pestaña de combate.
  *
- * Muestra: estadísticas de lanzamiento, espacios de conjuro (con usar/restaurar),
- * magia de pacto, puntos de hechicería, metamagia, y lista rápida de conjuros
- * con botón "Lanzar".
+ * Diseño claro y compacto:
+ *  1. Banner con stats clave (CD / Ataque) con texto explicativo
+ *  2. Espacios de conjuro con interacción táctil clara
+ *  3. Magia de pacto (Brujo)
+ *  4. Puntos de hechicería + metamagia (Hechicero)
+ *  5. Lista de conjuros — toca para lanzar y gastar espacio
  *
  * Es auto-contenido: lee todo del store directamente.
  */
@@ -13,7 +16,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme, useDialog, useToast } from "@/hooks";
 import { withAlpha } from "@/utils/theme";
-import { SPELL_LEVEL_COLORS } from "@/constants/abilities";
+import { getSpellLevelColors } from "@/constants/abilities";
 import { useCharacterStore } from "@/stores/characterStore";
 import {
   SPELLCASTING_ABILITY,
@@ -31,41 +34,8 @@ import {
 } from "@/types/character";
 import { getSpellById } from "@/data/srd/spells";
 import { getSpellDescription } from "@/data/srd/spellDescriptions";
+import { getClassData } from "@/data/srd/classes";
 import { ConfirmDialog, Toast } from "@/components/ui";
-
-// ─── Stat Box ────────────────────────────────────────────────────────
-
-function StatBox({
-  label,
-  value,
-  subValue,
-  color,
-}: {
-  label: string;
-  value: string;
-  subValue?: string;
-  color: string;
-}) {
-  const { colors } = useTheme();
-  return (
-    <View
-      className="flex-1 min-w-[100px] rounded-xl p-3 mr-2 mb-2 items-center border"
-      style={{ backgroundColor: colors.bgSecondary, borderColor: colors.borderDefault }}
-    >
-      <Text className="text-[10px] uppercase tracking-wider mb-1" style={{ color: colors.textMuted }}>
-        {label}
-      </Text>
-      <Text className="text-xl font-bold" style={{ color }}>
-        {value}
-      </Text>
-      {subValue && (
-        <Text className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>
-          {subValue}
-        </Text>
-      )}
-    </View>
-  );
-}
 
 // ─── Compact Spell Row ───────────────────────────────────────────────
 
@@ -83,23 +53,30 @@ function CastableSpellRow({
   onCast: (level: number) => void;
 }) {
   const { colors } = useTheme();
-  const color = SPELL_LEVEL_COLORS[level] ?? colors.accentBlue;
+  const spellColors = getSpellLevelColors(colors);
+  const color = colors.accentRed;
 
   const castingTimeInfo = (() => {
     const desc = getSpellDescription(spellId);
     if (!desc?.tiempo) return null;
     const t = desc.tiempo.toLowerCase();
     if (t.includes("acción adicional"))
-      return { icon: "flash" as const, color: colors.accentGreen, label: "Adic." };
+      return { icon: "flash" as const, color: colors.accentRed, label: "Adic." };
     if (t.includes("reacción"))
-      return { icon: "arrow-undo" as const, color: colors.accentPurple, label: "Reacc." };
+      return { icon: "arrow-undo" as const, color: colors.accentRed, label: "Reacc." };
     return null;
   })();
 
   return (
-    <View
+    <TouchableOpacity
+      activeOpacity={prepared ? 0.6 : 1}
+      onPress={() => prepared && onCast(level)}
       className="flex-row items-center rounded-lg p-2.5 mb-1.5 border"
-      style={{ backgroundColor: colors.bgSecondary, borderColor: colors.borderDefault }}
+      style={{
+        backgroundColor: colors.bgSecondary,
+        borderColor: colors.borderDefault,
+        opacity: prepared ? 1 : 0.45,
+      }}
     >
       {/* Level circle */}
       <View
@@ -139,19 +116,11 @@ function CastableSpellRow({
         </View>
       </View>
 
-      {/* Cast button */}
+      {/* Cast hint icon */}
       {prepared && (
-        <TouchableOpacity
-          className="rounded-lg px-3 py-1.5 active:opacity-70"
-          style={{ backgroundColor: withAlpha(colors.accentRed, 0.2) }}
-          onPress={() => onCast(level)}
-        >
-          <Text className="text-xs font-semibold" style={{ color: colors.accentRed }}>
-            Lanzar
-          </Text>
-        </TouchableOpacity>
+        <Ionicons name="sparkles" size={16} color={withAlpha(colors.accentRed, 0.6)} />
       )}
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -189,22 +158,24 @@ export function SpellCombatSection() {
   const profBonus = character.proficiencyBonus;
   const spellSaveDC = 8 + profBonus + abilityMod;
   const spellAttackBonus = profBonus + abilityMod;
+  const spellLevelColors = getSpellLevelColors(colors);
+  const classColor = getClassData(character.clase).color;
 
   // ── Spell data ──
 
   const allSpellIds = magicState
     ? [
         ...new Set([
-          ...magicState.knownSpellIds,
-          ...magicState.preparedSpellIds,
-          ...magicState.spellbookIds,
+          ...(magicState.knownSpellIds ?? []),
+          ...(magicState.preparedSpellIds ?? []),
+          ...(magicState.spellbookIds ?? []),
         ]),
       ]
     : [
         ...new Set([
-          ...character.knownSpellIds,
-          ...character.preparedSpellIds,
-          ...character.spellbookIds,
+          ...(character.knownSpellIds ?? []),
+          ...(character.preparedSpellIds ?? []),
+          ...(character.spellbookIds ?? []),
         ]),
       ];
 
@@ -275,235 +246,193 @@ export function SpellCombatSection() {
     else showToast("No quedan espacios de pacto");
   };
 
-  // ── Render: Spellcasting Info ──
+  // ── Render: Spellcasting Header ──
 
-  const renderSpellcastingInfo = () => (
-    <View
-      className="rounded-card border p-4 mb-4"
-      style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
-    >
-      <View className="flex-row items-center mb-3">
-        <Ionicons name="flame" size={20} color={colors.accentDanger} />
-        <Text className="text-base font-semibold ml-2" style={{ color: colors.textPrimary }}>
-          Lanzamiento de Conjuros
+  const renderSpellcastingHeader = () => {
+    const abilityName = spellcastingAbility
+      ? ABILITY_NAMES[spellcastingAbility]
+      : "—";
+
+    return (
+      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+        {/* Title row */}
+        <View className="flex-row items-center mb-1">
+          <Ionicons name="flame" size={20} color={colors.accentRed} />
+          <Text className="text-base font-bold ml-2" style={{ color: colors.textPrimary }}>
+            Lanzamiento de conjuros
+          </Text>
+        </View>
+
+        <Text className="text-sm mb-3" style={{ color: colors.textMuted }}>
+          Aptitud mágica:{" "}
+          <Text className="font-bold" style={{ color: colors.accentRed }}>
+            {abilityName} ({formatModifier(abilityMod)})
+          </Text>
         </Text>
-      </View>
 
-      <View className="flex-row flex-wrap">
-        {spellcastingAbility && (
-          <StatBox
-            label="Aptitud Mágica"
-            value={ABILITY_NAMES[spellcastingAbility]}
-            subValue={formatModifier(abilityMod)}
-            color={colors.accentPurple}
-          />
-        )}
-        <StatBox
-          label="CD de Salvación"
-          value={String(spellSaveDC)}
-          subValue={`8 + ${profBonus} + ${abilityMod}`}
-          color={colors.accentAmber}
-        />
-        <StatBox
-          label="Ataque Mágico"
-          value={formatModifier(spellAttackBonus)}
-          subValue={`${profBonus} + ${abilityMod}`}
-          color={colors.accentDanger}
-        />
+        <View className="flex-row" style={{ gap: 10 }}>
+          {/* Save DC */}
+          <View
+            className="flex-1 rounded-xl p-3 items-center border"
+            style={{
+              backgroundColor: withAlpha(colors.accentRed, 0.08),
+              borderColor: withAlpha(colors.accentRed, 0.25),
+            }}
+          >
+            <Text className="text-2xl font-bold" style={{ color: colors.accentRed }}>
+              {spellSaveDC}
+            </Text>
+            <Text className="text-xs font-bold mt-0.5" style={{ color: colors.textSecondary }}>
+              CD de Salvación
+            </Text>
+            <Text className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>
+              8 + {profBonus} (comp.) + {abilityMod} ({abilityName?.slice(0, 3).toLowerCase()}.)
+            </Text>
+          </View>
+
+          {/* Spell Attack */}
+          <View
+            className="flex-1 rounded-xl p-3 items-center border"
+            style={{
+              backgroundColor: withAlpha(colors.accentRed, 0.08),
+              borderColor: withAlpha(colors.accentRed, 0.25),
+            }}
+          >
+            <Text className="text-2xl font-bold" style={{ color: colors.accentRed }}>
+              {formatModifier(spellAttackBonus)}
+            </Text>
+            <Text className="text-xs font-bold mt-0.5" style={{ color: colors.textSecondary }}>
+              Mod. de Ataque
+            </Text>
+            <Text className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>
+              {profBonus} (comp.) + {abilityMod} ({abilityName?.slice(0, 3).toLowerCase()}.)
+            </Text>
+          </View>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   // ── Render: Spell Slots ──
 
   const renderSpellSlots = () => {
     if (!magicState) return null;
 
-    const slotEntries = Object.entries(magicState.spellSlots)
+    const slotEntries = Object.entries(magicState.spellSlots ?? {})
       .filter(([_, slot]) => slot && slot.total > 0)
       .sort(([a], [b]) => Number(a) - Number(b));
 
     if (slotEntries.length === 0 && !magicState.pactMagicSlots) return null;
 
     return (
-      <View
-        className="rounded-card border p-4 mb-4"
-        style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
-      >
-        <View className="flex-row items-center justify-between mb-3">
+      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+        <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center">
-            <Ionicons name="flash" size={20} color={colors.accentBlue} />
-            <Text
-              className="text-xs font-semibold uppercase tracking-wider ml-2"
-              style={{ color: colors.textSecondary }}
-            >
+            <Ionicons name="flash" size={20} color={colors.accentRed} />
+            <Text className="text-sm font-bold ml-2" style={{ color: colors.textPrimary }}>
               Espacios de Conjuro
             </Text>
           </View>
           <TouchableOpacity
             className="rounded-lg px-3 py-1.5 active:opacity-70"
-            style={{ backgroundColor: withAlpha(colors.accentBlue, 0.2) }}
+            style={{ backgroundColor: withAlpha(colors.accentRed, 0.15) }}
             onPress={handleRestoreAllSlots}
           >
-            <Text className="text-xs font-semibold" style={{ color: colors.accentBlue }}>
+            <Text className="text-xs font-semibold" style={{ color: colors.accentRed }}>
               Restaurar todos
             </Text>
           </TouchableOpacity>
         </View>
+
+        <Text className="text-[10px] mb-3" style={{ color: colors.textMuted }}>
+          Toca un diamante lleno para gastar, o uno vacío para recuperar
+        </Text>
 
         {/* Regular spell slots */}
         {slotEntries.map(([levelStr, slot]) => {
           if (!slot) return null;
           const level = Number(levelStr);
           const available = slot.total - slot.used;
-          const color = SPELL_LEVEL_COLORS[level] ?? colors.accentBlue;
+          const color = colors.accentRed;
 
           return (
-            <View key={level} className="mb-3">
-              <View className="flex-row items-center justify-between mb-1.5">
-                <Text className="text-sm font-medium" style={{ color: colors.textSecondary }}>
-                  Nivel {level}
-                </Text>
-                <Text className="text-xs" style={{ color: colors.textMuted }}>
-                  {available}/{slot.total} disponibles
-                </Text>
+            <View key={level} className="flex-row items-center justify-between mb-2.5">
+              <Text className="text-xs font-bold w-10" style={{ color }}>
+                Nv {level}
+              </Text>
+
+              <View className="flex-row flex-1 justify-center">
+                {Array.from({ length: slot.total }).map((_, i) => {
+                  const isAvailable = i < available;
+                  return (
+                    <TouchableOpacity
+                      key={i}
+                      className="mx-0.5"
+                      onPress={() =>
+                        isAvailable ? handleUseSlot(level) : handleRestoreSlot(level)
+                      }
+                    >
+                      <Ionicons
+                        name={isAvailable ? "diamond" : "diamond-outline"}
+                        size={20}
+                        color={isAvailable ? color : withAlpha(colors.textMuted, 0.35)}
+                      />
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
 
-              <View className="flex-row items-center">
-                <View className="flex-row flex-1">
-                  {Array.from({ length: slot.total }).map((_, i) => {
-                    const isAvailable = i < available;
-                    return (
-                      <TouchableOpacity
-                        key={i}
-                        className="h-9 w-9 rounded-lg mx-0.5 items-center justify-center border"
-                        style={{
-                          backgroundColor: isAvailable ? `${color}20` : colors.bgPrimary,
-                          borderColor: isAvailable ? `${color}66` : colors.borderDefault,
-                        }}
-                        onPress={() =>
-                          isAvailable ? handleUseSlot(level) : handleRestoreSlot(level)
-                        }
-                      >
-                        <Ionicons
-                          name={isAvailable ? "ellipse" : "ellipse-outline"}
-                          size={14}
-                          color={isAvailable ? color : colors.borderDefault}
-                        />
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                <TouchableOpacity
-                  className="ml-2 rounded-lg px-2.5 py-2 active:opacity-70"
-                  onPress={() => handleUseSlot(level)}
-                  disabled={available <= 0}
-                  style={{
-                    backgroundColor: colors.bgSecondary,
-                    opacity: available > 0 ? 1 : 0.4,
-                  }}
-                >
-                  <Ionicons name="remove" size={16} color={color} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className="ml-1 rounded-lg px-2.5 py-2 active:opacity-70"
-                  onPress={() => handleRestoreSlot(level)}
-                  disabled={slot.used <= 0}
-                  style={{
-                    backgroundColor: colors.bgSecondary,
-                    opacity: slot.used > 0 ? 1 : 0.4,
-                  }}
-                >
-                  <Ionicons name="add" size={16} color={color} />
-                </TouchableOpacity>
-              </View>
+              <Text className="text-xs w-10 text-right" style={{ color: colors.textMuted }}>
+                {available}/{slot.total}
+              </Text>
             </View>
           );
         })}
 
         {/* Pact Magic Slots (Warlock) */}
         {magicState.pactMagicSlots && (
-          <View className="mt-2 pt-3 border-t" style={{ borderColor: colors.borderDefault }}>
-            <View className="flex-row items-center justify-between mb-1.5">
+          <View className="mt-1 pt-3 border-t" style={{ borderColor: colors.borderDefault }}>
+            <View className="flex-row items-center justify-between mb-2">
               <View className="flex-row items-center">
-                <Ionicons name="bonfire-outline" size={16} color={colors.accentPurple} />
-                <Text
-                  className="text-sm font-medium ml-1.5"
-                  style={{ color: colors.accentPurple }}
-                >
+                <Ionicons name="bonfire-outline" size={16} color={colors.accentRed} />
+                <Text className="text-xs font-bold ml-1.5" style={{ color: colors.accentRed }}>
                   Magia de Pacto (Nv. {magicState.pactMagicSlots.slotLevel})
                 </Text>
               </View>
               <Text className="text-xs" style={{ color: colors.textMuted }}>
                 {magicState.pactMagicSlots.total - magicState.pactMagicSlots.used}/
-                {magicState.pactMagicSlots.total} disponibles
+                {magicState.pactMagicSlots.total}
               </Text>
             </View>
 
-            <View className="flex-row items-center">
-              <View className="flex-row flex-1">
-                {Array.from({ length: magicState.pactMagicSlots.total }).map((_, i) => {
-                  const isAvailable =
-                    i < magicState.pactMagicSlots!.total - magicState.pactMagicSlots!.used;
-                  return (
-                    <TouchableOpacity
-                      key={i}
-                      className="h-9 w-9 rounded-lg mx-0.5 items-center justify-center border"
-                      style={{
-                        backgroundColor: isAvailable
-                          ? `${colors.accentPurple}20`
-                          : colors.bgPrimary,
-                        borderColor: isAvailable
-                          ? `${colors.accentPurple}66`
-                          : colors.borderDefault,
-                      }}
-                      onPress={isAvailable ? handleUsePactSlot : undefined}
-                    >
-                      <Ionicons
-                        name={isAvailable ? "bonfire" : "bonfire-outline"}
-                        size={14}
-                        color={isAvailable ? colors.accentPurple : colors.borderDefault}
-                      />
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-              <TouchableOpacity
-                className="ml-2 rounded-lg px-2.5 py-2 active:opacity-70"
-                onPress={handleUsePactSlot}
-                disabled={
-                  (magicState.pactMagicSlots?.used ?? 0) >=
-                  (magicState.pactMagicSlots?.total ?? 0)
-                }
-                style={{
-                  backgroundColor: colors.bgSecondary,
-                  opacity:
-                    (magicState.pactMagicSlots?.used ?? 0) <
-                    (magicState.pactMagicSlots?.total ?? 0)
-                      ? 1
-                      : 0.4,
-                }}
-              >
-                <Ionicons name="remove" size={16} color={colors.accentPurple} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="ml-1 rounded-lg px-2.5 py-2 active:opacity-70"
-                onPress={async () => {
-                  await restoreAllPactSlots();
-                  showToast("Espacios de pacto restaurados");
-                }}
-                disabled={(magicState.pactMagicSlots?.used ?? 0) <= 0}
-                style={{
-                  backgroundColor: colors.bgSecondary,
-                  opacity: (magicState.pactMagicSlots?.used ?? 0) > 0 ? 1 : 0.4,
-                }}
-              >
-                <Ionicons name="add" size={16} color={colors.accentPurple} />
-              </TouchableOpacity>
+            <View className="flex-row items-center justify-center mb-1">
+              {Array.from({ length: magicState.pactMagicSlots.total }).map((_, i) => {
+                const isAvailable =
+                  i < magicState.pactMagicSlots!.total - magicState.pactMagicSlots!.used;
+                return (
+                  <TouchableOpacity
+                    key={i}
+                    className="mx-1"
+                    onPress={
+                      isAvailable
+                        ? handleUsePactSlot
+                        : async () => {
+                            await restoreAllPactSlots();
+                            showToast("Espacios de pacto restaurados");
+                          }
+                    }
+                  >
+                    <Ionicons
+                      name={isAvailable ? "bonfire" : "bonfire-outline"}
+                      size={22}
+                      color={isAvailable ? colors.accentRed : withAlpha(colors.textMuted, 0.35)}
+                    />
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
-            <Text className="text-[10px] mt-1.5" style={{ color: colors.textMuted }}>
+            <Text className="text-[10px] text-center" style={{ color: colors.textMuted }}>
               Se recuperan en descanso corto
             </Text>
           </View>
@@ -520,34 +449,28 @@ export function SpellCombatSection() {
     const { max, current } = magicState.sorceryPoints;
 
     return (
-      <View
-        className="rounded-card border p-4 mb-4"
-        style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
-      >
+      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center">
-            <Ionicons name="sparkles" size={20} color="#ec4899" />
-            <Text
-              className="text-xs font-semibold uppercase tracking-wider ml-2"
-              style={{ color: colors.textSecondary }}
-            >
+            <Ionicons name="sparkles" size={20} color={classColor} />
+            <Text className="text-sm font-bold ml-2" style={{ color: colors.textPrimary }}>
               Puntos de Hechicería
             </Text>
           </View>
-          <Text className="text-lg font-bold" style={{ color: "#ec4899" }}>
+          <Text className="text-lg font-bold" style={{ color: classColor }}>
             {current}/{max}
           </Text>
         </View>
 
         <View
-          className="h-3 rounded-full overflow-hidden"
+          className="h-2.5 rounded-full overflow-hidden"
           style={{ backgroundColor: colors.bgSecondary }}
         >
           <View
             className="h-full rounded-full"
             style={{
               width: `${max > 0 ? (current / max) * 100 : 0}%`,
-              backgroundColor: "#ec4899",
+              backgroundColor: classColor,
             }}
           />
         </View>
@@ -567,16 +490,10 @@ export function SpellCombatSection() {
     if (chosen.length === 0) return null;
 
     return (
-      <View
-        className="rounded-card border p-4 mb-4"
-        style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
-      >
+      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
         <View className="flex-row items-center mb-3">
-          <Ionicons name="flash" size={20} color={colors.accentPurple} />
-          <Text
-            className="text-xs font-semibold uppercase tracking-wider ml-2"
-            style={{ color: colors.textSecondary }}
-          >
+          <Ionicons name="color-wand" size={20} color={colors.accentRed} />
+          <Text className="text-sm font-bold ml-2" style={{ color: colors.textPrimary }}>
             Metamagia
           </Text>
         </View>
@@ -590,64 +507,29 @@ export function SpellCombatSection() {
             return (
               <View
                 key={id}
+                className="rounded-xl border p-3"
                 style={{
-                  backgroundColor: isDark
-                    ? "rgba(168, 85, 247, 0.08)"
-                    : "rgba(168, 85, 247, 0.05)",
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: isDark
-                    ? "rgba(168, 85, 247, 0.2)"
-                    : "rgba(168, 85, 247, 0.15)",
-                  padding: 12,
+                  backgroundColor: withAlpha(colors.accentRed, isDark ? 0.08 : 0.05),
+                  borderColor: withAlpha(colors.accentRed, isDark ? 0.2 : 0.15),
                 }}
               >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 4,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: colors.accentPurple,
-                      fontSize: 14,
-                      fontWeight: "700",
-                    }}
-                  >
+                <View className="flex-row items-center justify-between mb-1">
+                  <Text className="text-sm font-bold" style={{ color: colors.accentRed }}>
                     {name}
                   </Text>
                   {cost !== undefined && (
                     <View
-                      style={{
-                        backgroundColor: "rgba(168, 85, 247, 0.15)",
-                        paddingHorizontal: 8,
-                        paddingVertical: 2,
-                        borderRadius: 8,
-                      }}
+                      className="rounded-lg px-2 py-0.5"
+                      style={{ backgroundColor: withAlpha(colors.accentRed, 0.15) }}
                     >
-                      <Text
-                        style={{
-                          color: colors.accentPurple,
-                          fontSize: 11,
-                          fontWeight: "700",
-                        }}
-                      >
+                      <Text className="text-[11px] font-bold" style={{ color: colors.accentRed }}>
                         {cost} PH
                       </Text>
                     </View>
                   )}
                 </View>
                 {desc && (
-                  <Text
-                    style={{
-                      color: colors.textMuted,
-                      fontSize: 12,
-                      lineHeight: 17,
-                    }}
-                  >
+                  <Text className="text-xs leading-[17px]" style={{ color: colors.textMuted }}>
                     {desc}
                   </Text>
                 )}
@@ -664,17 +546,12 @@ export function SpellCombatSection() {
   const renderCastableSpells = () => {
     if (levelSpells.length === 0) return null;
 
-    const levelLabel = (lvl: number) => `Nivel ${lvl}`;
-
     return (
-      <View
-        className="rounded-card border p-4 mb-4"
-        style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
-      >
-        <View className="flex-row items-center justify-between mb-3">
+      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+        <View className="flex-row items-center justify-between mb-1">
           <View className="flex-row items-center">
             <Ionicons name="flash-outline" size={20} color={colors.accentRed} />
-            <Text className="text-sm font-semibold ml-2" style={{ color: colors.textPrimary }}>
+            <Text className="text-sm font-bold ml-2" style={{ color: colors.textPrimary }}>
               Lanzar Conjuros
             </Text>
           </View>
@@ -691,9 +568,14 @@ export function SpellCombatSection() {
           )}
         </View>
 
+        <Text className="text-[10px] mb-3" style={{ color: colors.textMuted }}>
+          Toca un conjuro para lanzarlo y gastar un espacio
+        </Text>
+
         {sortedSpellLevels.map((lvl) => {
           const spellsAtLevel = spellsByLevel[lvl];
-          const lvlColor = SPELL_LEVEL_COLORS[lvl] ?? colors.accentBlue;
+          const lvlColor = colors.accentRed;
+
           return (
             <View
               key={lvl}
@@ -703,41 +585,19 @@ export function SpellCombatSection() {
               }}
             >
               {/* Level sub-header */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginBottom: 4,
-                  gap: 6,
-                }}
-              >
+              <View className="flex-row items-center mb-1" style={{ gap: 6 }}>
                 <View
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 11,
-                    backgroundColor: `${lvlColor}20`,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
+                  className="w-[22px] h-[22px] rounded-full items-center justify-center"
+                  style={{ backgroundColor: `${lvlColor}20` }}
                 >
-                  <Text style={{ color: lvlColor, fontSize: 10, fontWeight: "700" }}>
+                  <Text className="text-[10px] font-bold" style={{ color: lvlColor }}>
                     {lvl}
                   </Text>
                 </View>
-                <Text
-                  style={{ color: colors.textSecondary, fontSize: 11, fontWeight: "600" }}
-                >
-                  {levelLabel(lvl)}
+                <Text className="text-[11px] font-semibold" style={{ color: colors.textSecondary }}>
+                  Nivel {lvl}
                 </Text>
-                <View
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    backgroundColor: colors.borderSubtle,
-                    marginLeft: 4,
-                  }}
-                />
+                <View className="flex-1 h-px ml-1" style={{ backgroundColor: colors.borderSubtle }} />
               </View>
 
               {(showAllSpells || levelSpells.length <= 6
@@ -764,7 +624,7 @@ export function SpellCombatSection() {
 
   return (
     <>
-      {renderSpellcastingInfo()}
+      {renderSpellcastingHeader()}
       {renderSpellSlots()}
       {renderSorceryPoints()}
       {renderMetamagicSection()}

@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     height: 88,
     borderRadius: 44,
     borderWidth: 1,
-    borderColor: "rgba(178,172,136,0.15)",
+    borderColor: "rgba(0,229,255,0.15)",
   },
   errorIconBg: {
     width: 68,

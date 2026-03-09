@@ -1139,22 +1139,22 @@ export function generateRandomPersonality(backgroundId: BackgroundId): {
  * Iconos de trasfondos indexados por ID.
  */
 export const BACKGROUND_ICONS: Record<BackgroundId, string> = {
-  acolito: "⛪",
-  charlatan: "🎭",
-  criminal: "🗡️",
-  artista: "🎶",
-  heroe_del_pueblo: "🦸",
-  artesano_gremial: "🔨",
-  ermitano: "🏔️",
-  noble: "👑",
-  forastero: "🌲",
-  sabio: "📚",
-  marinero: "⚓",
-  soldado: "⚔️",
-  huerfano: "🏚️",
-  peon_brujaluz: "🎪",
-  extraviado_feerico: "🦋",
-  personalizada: "✏️",
+  acolito: "library-outline",
+  charlatan: "eye-off-outline",
+  criminal: "lock-closed-outline",
+  artista: "musical-notes-outline",
+  heroe_del_pueblo: "people-outline",
+  artesano_gremial: "build-outline",
+  ermitano: "trail-sign-outline",
+  noble: "trophy-outline",
+  forastero: "compass-outline",
+  sabio: "school-outline",
+  marinero: "boat-outline",
+  soldado: "shield-outline",
+  huerfano: "home-outline",
+  peon_brujaluz: "bonfire-outline",
+  extraviado_feerico: "planet-outline",
+  personalizada: "create-outline",
 };
 
 /**

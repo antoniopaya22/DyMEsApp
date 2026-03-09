@@ -1,7 +1,7 @@
 /**
  * Script para generar el registro estático de avatares de personaje.
  *
- * Escanea assets/images/personajes/{clase}/{Raza}_{Male|Female}.png
+ * Escanea assets/images/personajes/{clase}/{Raza}_{Male|Female}.(png|jpg|webp)
  * y genera src/constants/avatarRegistry.ts con los require() estáticos.
  *
  * Uso: node scripts/generate-avatar-registry.js
@@ -57,11 +57,11 @@ function generate() {
     const classPath = path.join(IMAGES_DIR, classDir);
     const files = fs
       .readdirSync(classPath)
-      .filter((f) => f.endsWith(".png") || f.endsWith(".jpg"));
+      .filter((f) => f.endsWith(".png") || f.endsWith(".jpg") || f.endsWith(".webp"));
 
     for (const file of files) {
       // Parse: {Race}_{Gender}.png
-      const match = file.match(/^(.+)_(Male|Female)\.(png|jpg)$/);
+      const match = file.match(/^(.+)_(Male|Female)\.(png|jpg|webp)$/);
       if (!match) {
         console.warn(`  ⚠️  Archivo ignorado (nombre no válido): ${classDir}/${file}`);
         continue;
@@ -106,13 +106,13 @@ function generate() {
     " * Ejecutar: node scripts/generate-avatar-registry.js",
     " */",
     "",
-    'import type { ImageSourcePropType } from "react-native";',
+    'import type { ImageSource } from "expo-image";',
     'import type { ClassId, RaceId, Sexo } from "@/types/character";',
     "",
     "// Clave: `${classId}_${raceId}_${sexo}`",
     "type AvatarKey = `${ClassId}_${RaceId}_${Sexo}`;",
     "",
-    "export const AVATAR_REGISTRY: Partial<Record<AvatarKey, ImageSourcePropType>> = {",
+    "export const AVATAR_REGISTRY: Partial<Record<AvatarKey, ImageSource>> = {",
   ];
 
   for (const e of entries) {

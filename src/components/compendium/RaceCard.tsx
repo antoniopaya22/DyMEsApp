@@ -25,7 +25,7 @@ interface RaceCardProps {
 
 export function RaceCard({ data, isExpanded, onToggle }: RaceCardProps) {
   const { colors } = useTheme();
-  const icon = RACE_ICONS[data.id as keyof typeof RACE_ICONS] || "🧝";
+  const iconName = RACE_ICONS[data.id as keyof typeof RACE_ICONS] || "person-outline";
   const bonusStr = formatAbilityBonuses(data.abilityBonuses || {});
   const traits = getAllRaceTraits(data.id as RaceId, null);
 
@@ -47,7 +47,7 @@ export function RaceCard({ data, isExpanded, onToggle }: RaceCardProps) {
             { backgroundColor: `#f59e0b${colors.iconBgAlpha}` },
           ]}
         >
-          <Text style={{ fontSize: 22 }}>{icon}</Text>
+          <Ionicons name={iconName as any} size={22} color={colors.textSecondary} />
         </View>
         <View style={styles.cardInfo}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>

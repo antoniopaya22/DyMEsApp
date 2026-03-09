@@ -3,17 +3,16 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ConfirmDialog } from "@/components/ui";
+import { WizardStepLayout } from "@/components/creation";
 import { useTheme, useDialog, useScrollToTop } from "@/hooks";
 import {
   useCreationStore,
-  TOTAL_STEPS,
   STEP_NAMES,
   calcTotalScoresPreview,
 } from "@/stores/creationStore";
@@ -148,19 +147,32 @@ export default function SummaryStep() {
 
           const { setItem } = await import("@/utils/storage");
           const { STORAGE_KEYS } = await import("@/utils/storage");
-          const { createDefaultInventory } = await import("@/types/item");
+          const { buildStartingInventory } = await import("@/utils/inventory");
+          const { getClassData: getClass, getBackgroundData: getBg } = await import("@/data/srd");
+          const { buildBackgroundDataFromCustom } = await import("@/data/srd/backgrounds");
 
           await setItem(STORAGE_KEYS.CHARACTER(character.id), character);
           console.log("[SummaryStep] Personaje guardado en storage");
 
           if (!isRecreation) {
-            // Only create a new inventory for brand new characters
-            const inventory = createDefaultInventory(
-              character.inventoryId,
-              character.id,
-            );
+            // Build starting inventory from class + background equipment
+            const currentDraft = useCreationStore.getState().draft;
+            const cls = currentDraft?.clase ? getClass(currentDraft.clase) : null;
+            const bg = currentDraft?.trasfondo === "personalizada" && currentDraft?.customBackgroundData
+              ? buildBackgroundDataFromCustom(currentDraft.customBackgroundData)
+              : currentDraft?.trasfondo ? getBg(currentDraft.trasfondo) : null;
+
+            const inventory = buildStartingInventory({
+              inventoryId: character.inventoryId,
+              characterId: character.id,
+              classEquipmentChoices: cls?.equipmentChoices ?? [],
+              selectedChoices: currentDraft?.equipmentChoices ?? {},
+              classDefaultEquipment: cls?.defaultEquipment ?? [],
+              backgroundEquipment: bg?.equipment ?? [],
+              backgroundStartingGold: bg?.startingGold ?? 0,
+            });
             await setItem(STORAGE_KEYS.INVENTORY(character.id), inventory);
-            console.log("[SummaryStep] Inventario creado");
+            console.log("[SummaryStep] Inventario creado con", inventory.items.length, "objetos y", inventory.coins.mo, "mo");
           }
 
           await addCharacter(character);
@@ -231,13 +243,11 @@ export default function SummaryStep() {
     }
   };
 
-  const progressPercent = (CURRENT_STEP / TOTAL_STEPS) * 100;
-
   if (!initialized) {
     return (
-      <View style={[styles.container, themed.container, styles.centerContent]}>
+      <View style={{ flex: 1, backgroundColor: colors.bgPrimary, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator size="large" color={colors.accentRed} />
-        <Text style={[styles.loadingText, themed.loadingText]}>
+        <Text style={{ color: colors.textSecondary, fontSize: 16, marginTop: 16 }}>
           Cargando resumen...
         </Text>
       </View>
@@ -245,54 +255,22 @@ export default function SummaryStep() {
   }
 
   return (
-    <View style={[styles.container, themed.container]}>
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: 40 }}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <TouchableOpacity
-              style={[styles.backButton, themed.backButton]}
-              onPress={handleBack}
-            >
-              <Ionicons
-                name="arrow-back"
-                size={22}
-                color={colors.textPrimary}
-              />
-            </TouchableOpacity>
-            <Text style={[styles.stepText, themed.stepText]}>
-              Paso {CURRENT_STEP} de {TOTAL_STEPS}
-            </Text>
-            <View style={{ height: 40, width: 40 }} />
-          </View>
-          <View style={[styles.progressBar, themed.progressBar]}>
-            <View
-              style={[styles.progressFill, { width: `${progressPercent}%` }]}
-            />
-          </View>
-        </View>
-
-        {/* Title */}
-        <View style={styles.titleSection}>
-          <View style={styles.iconCircle}>
-            <Ionicons
-              name="checkmark-circle-outline"
-              size={44}
-              color={colors.accentRed}
-            />
-          </View>
-          <Text style={[styles.title, themed.title]}>
-            Resumen del Personaje
-          </Text>
-          <Text style={[styles.subtitle, themed.subtitle]}>
-            Revisa todos los datos de tu personaje antes de crearlo. Pulsa en
-            cualquier sección para editarla.
-          </Text>
-        </View>
+    <>
+    <WizardStepLayout
+      currentStep={CURRENT_STEP}
+      title="Resumen del Personaje"
+      subtitle="Revisa todos los datos de tu personaje antes de crearlo. Pulsa en cualquier sección para editarla."
+      iconName="checkmark-circle-outline"
+      nextLabel="¡Crear Personaje!"
+      nextIconName="sparkles"
+      nextIconPosition="left"
+      canProceed={allRequiredComplete && !creating}
+      isLoading={creating}
+      loadingLabel="Creando personaje..."
+      onNext={handleCreate}
+      onBack={handleBack}
+      scrollRef={scrollRef}
+    >
 
         {/* Steps completion checklist */}
         <View style={styles.section}>
@@ -853,120 +831,15 @@ export default function SummaryStep() {
             </View>
           </View>
         )}
-      </ScrollView>
 
-      {/* Footer */}
-      <View style={[styles.footer, themed.footer]}>
-        <TouchableOpacity
-          style={[
-            styles.createButton,
-            (!allRequiredComplete || creating) && [
-              styles.createButtonDisabled,
-              themed.nextButtonDisabled,
-            ],
-          ]}
-          onPress={handleCreate}
-          disabled={!allRequiredComplete || creating}
-        >
-          {creating ? (
-            <>
-              <ActivityIndicator size="small" color="white" />
-              <Text style={styles.createButtonText}>Creando personaje...</Text>
-            </>
-          ) : (
-            <>
-              <Ionicons name="sparkles" size={22} color="white" />
-              <Text style={styles.createButtonText}>¡Crear Personaje!</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+    </WizardStepLayout>
       {/* Custom dialog (replaces Alert.alert) */}
       <ConfirmDialog {...dialogProps} />
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#272519", // overridden by themed.container
-  },
-  centerContent: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  scroll: {
-    flex: 1,
-  },
-  loadingText: {
-    color: "#AAA37B", // overridden by themed.loadingText
-    fontSize: 16,
-    marginTop: 16,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 64,
-    paddingBottom: 16,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  backButton: {
-    height: 40,
-    width: 40,
-    borderRadius: 20,
-    backgroundColor: "#2E2C1E", // overridden by themed.backButton
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepText: {
-    color: "#AAA37B", // overridden by themed.stepText
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: "#2E2C1E", // overridden by themed.progressBar
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#8f3d38",
-    borderRadius: 3,
-  },
-  titleSection: {
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  iconCircle: {
-    height: 80,
-    width: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(143,61,56,0.15)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  title: {
-    color: "#ffffff", // overridden by themed.title
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: "#AAA37B", // overridden by themed.subtitle
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 22,
-    paddingHorizontal: 16,
-  },
   section: {
     paddingHorizontal: 20,
     marginBottom: 20,
@@ -980,10 +853,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   checklistCard: {
-    backgroundColor: "#323021", // overridden by themed.card
+    backgroundColor: "#101B2E", // overridden by themed.card
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#514D35", // overridden by themed.card
+    borderColor: "#1E2D42", // overridden by themed.card
     overflow: "hidden",
   },
   checklistRow: {
@@ -992,11 +865,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#423E2B", // overridden inline
+    borderBottomColor: "#182338", // overridden inline
   },
   checklistText: {
     flex: 1,
-    color: "#AAA37B", // overridden inline
+    color: "#8899AA", // overridden inline
     fontSize: 15,
     marginLeft: 12,
   },
@@ -1005,10 +878,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   summaryCard: {
-    backgroundColor: "#323021", // overridden by themed.card
+    backgroundColor: "#101B2E", // overridden by themed.card
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#514D35", // overridden by themed.card
+    borderColor: "#1E2D42", // overridden by themed.card
     padding: 14,
   },
   summaryRow: {
@@ -1017,10 +890,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#423E2B", // overridden inline
+    borderBottomColor: "#182338", // overridden inline
   },
   summaryLabel: {
-    color: "#AAA37B", // overridden by themed.textSecondary
+    color: "#8899AA", // overridden by themed.textSecondary
     fontSize: 14,
     fontWeight: "600",
   },
@@ -1040,16 +913,16 @@ const styles = StyleSheet.create({
   },
   scoreCard: {
     width: "30%",
-    backgroundColor: "#323021", // overridden by themed.card
+    backgroundColor: "#101B2E", // overridden by themed.card
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#514D35", // overridden by themed.card
+    borderColor: "#1E2D42", // overridden by themed.card
     padding: 12,
     alignItems: "center",
     marginBottom: 10,
   },
   scoreAbbr: {
-    color: "#CDC9B2", // overridden inline
+    color: "#00E5FF", // overridden inline
     fontSize: 12,
     fontWeight: "bold",
     marginBottom: 4,
@@ -1060,7 +933,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   scoreMod: {
-    color: "#AAA37B", // overridden by themed.textSecondary
+    color: "#8899AA", // overridden by themed.textSecondary
     fontSize: 14,
     fontWeight: "600",
     marginTop: 2,
@@ -1068,10 +941,10 @@ const styles = StyleSheet.create({
   hpPreview: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#323021", // overridden by themed.card
+    backgroundColor: "#101B2E", // overridden by themed.card
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#514D35", // overridden by themed.card
+    borderColor: "#1E2D42", // overridden by themed.card
     padding: 14,
   },
   hpIcon: {
@@ -1087,7 +960,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   hpLabel: {
-    color: "#AAA37B", // overridden by themed.textSecondary
+    color: "#8899AA", // overridden by themed.textSecondary
     fontSize: 13,
   },
   hpValue: {
@@ -1096,13 +969,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   hitDieBadge: {
-    backgroundColor: "#423E2B", // overridden inline
+    backgroundColor: "#182338", // overridden inline
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   hitDieText: {
-    color: "#D4D1BD", // overridden by themed.textSecondary
+    color: "#CBD5E1", // overridden by themed.textSecondary
     fontSize: 13,
     fontWeight: "600",
   },
@@ -1114,7 +987,7 @@ const styles = StyleSheet.create({
   skillBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#323021", // overridden inline
+    backgroundColor: "#101B2E", // overridden inline
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -1130,10 +1003,10 @@ const styles = StyleSheet.create({
   personalityRow: {
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#423E2B", // overridden inline
+    borderBottomColor: "#182338", // overridden inline
   },
   personalityLabel: {
-    color: "#CDC9B2", // overridden inline
+    color: "#00E5FF", // overridden inline
     fontSize: 13,
     fontWeight: "700",
     marginBottom: 4,
@@ -1172,30 +1045,5 @@ const styles = StyleSheet.create({
     color: "#d9d9e6", // overridden by themed.textPrimary
     fontSize: 13,
     lineHeight: 18,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#514D35", // overridden by themed.footer
-  },
-  createButton: {
-    backgroundColor: "#8f3d38",
-    borderRadius: 12,
-    paddingVertical: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  createButtonDisabled: {
-    backgroundColor: "#423E2B", // overridden by themed.nextButtonDisabled
-    opacity: 0.5,
-  },
-  createButtonText: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginLeft: 10,
   },
 });

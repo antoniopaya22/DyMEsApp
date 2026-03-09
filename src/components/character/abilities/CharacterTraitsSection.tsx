@@ -39,9 +39,9 @@ export default function CharacterTraitsSection({
   if (filtered.length === 0) return null;
 
   return (
-    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
+    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
       <View className="flex-row items-center mb-3">
-        <Ionicons name="ribbon" size={20} color={colors.accentPurple} />
+        <Ionicons name="ribbon" size={20} color={colors.accentRed} />
         <Text className="text-xs font-semibold uppercase tracking-wider ml-2" style={{ color: colors.textSecondary }}>
           Rasgos y Capacidades
         </Text>

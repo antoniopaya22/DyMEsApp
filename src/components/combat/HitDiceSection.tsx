@@ -33,10 +33,10 @@ export function HitDiceSection({ onShowToast }: HitDiceSectionProps) {
   };
 
   return (
-    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
+    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
       <View className="flex-row items-center justify-between mb-3">
         <View className="flex-row items-center">
-          <Ionicons name="dice-outline" size={20} color={colors.accentPurple} />
+          <Ionicons name="dice-outline" size={20} color={colors.accentRed} />
           <Text className="text-xs font-semibold uppercase tracking-wider ml-2" style={{ color: colors.textSecondary }}>
             Dados de Golpe
           </Text>
@@ -55,11 +55,11 @@ export function HitDiceSection({ onShowToast }: HitDiceSectionProps) {
               style={{
                 backgroundColor:
                   i < hitDice.remaining
-                    ? `${colors.accentPurple}20`
+                    ? `${colors.accentRed}20`
                     : colors.bgPrimary,
                 borderColor:
                   i < hitDice.remaining
-                    ? `${colors.accentPurple}66`
+                    ? `${colors.accentRed}66`
                     : colors.borderDefault,
               }}
             >
@@ -68,7 +68,7 @@ export function HitDiceSection({ onShowToast }: HitDiceSectionProps) {
                 size={16}
                 color={
                   i < hitDice.remaining
-                    ? colors.accentPurple
+                    ? colors.accentRed
                     : colors.borderDefault
                 }
               />
@@ -85,8 +85,8 @@ export function HitDiceSection({ onShowToast }: HitDiceSectionProps) {
           style={{
             backgroundColor:
               hitDice.remaining > 0 && hp.current < hp.max
-                ? withAlpha(colors.accentPurple, 0.8)
-                : colors.bgSecondary,
+                ? withAlpha(colors.accentRed, 0.8)
+                : colors.bgCard,
           }}
           onPress={handleUseHitDie}
           disabled={hitDice.remaining <= 0 || hp.current >= hp.max}

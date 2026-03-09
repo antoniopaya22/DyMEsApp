@@ -15,7 +15,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useTheme, useEntranceAnimation } from "@/hooks";
-import { View, Text, ScrollView, StyleSheet, Animated } from "react-native";
+import { View, Text, FlatList, StyleSheet, Animated } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -119,81 +119,56 @@ export default function CompendiumScreen() {
   }, []);
 
   // ── Render: Tab Content ──
-  const renderContent = () => {
+  const currentData = useMemo(() => {
     switch (activeTab) {
       case "razas":
-        return (
-          <>
-            <Text style={[styles.countText, { color: colors.textMuted }]}>
-              {filteredRaces.length} raza{filteredRaces.length !== 1 ? "s" : ""}
-            </Text>
-            {filteredRaces.length === 0 ? (
-              <EmptyState
-                icon="search"
-                title={`No se encontraron razas con "${searchQuery}"`}
-              />
-            ) : (
-              filteredRaces.map((r) => (
-                <RaceCard
-                  key={r.id}
-                  data={r}
-                  isExpanded={expandedId === `race_${r.id}`}
-                  onToggle={() => toggleExpand(`race_${r.id}`)}
-                />
-              ))
-            )}
-          </>
-        );
+        return filteredRaces.map((r) => ({ ...r, _type: "race" as const, _expandKey: `race_${r.id}` }));
       case "clases":
-        return (
-          <>
-            <Text style={[styles.countText, { color: colors.textMuted }]}>
-              {filteredClasses.length} clase
-              {filteredClasses.length !== 1 ? "s" : ""}
-            </Text>
-            {filteredClasses.length === 0 ? (
-              <EmptyState
-                icon="search"
-                title={`No se encontraron clases con "${searchQuery}"`}
-              />
-            ) : (
-              filteredClasses.map((c) => (
-                <ClassCard
-                  key={c.id}
-                  data={c}
-                  isExpanded={expandedId === `class_${c.id}`}
-                  onToggle={() => toggleExpand(`class_${c.id}`)}
-                />
-              ))
-            )}
-          </>
-        );
+        return filteredClasses.map((c) => ({ ...c, _type: "class" as const, _expandKey: `class_${c.id}` }));
       case "trasfondos":
-        return (
-          <>
-            <Text style={[styles.countText, { color: colors.textMuted }]}>
-              {filteredBackgrounds.length} trasfondo
-              {filteredBackgrounds.length !== 1 ? "s" : ""}
-            </Text>
-            {filteredBackgrounds.length === 0 ? (
-              <EmptyState
-                icon="search"
-                title={`No se encontraron trasfondos con "${searchQuery}"`}
-              />
-            ) : (
-              filteredBackgrounds.map((b) => (
-                <BackgroundCard
-                  key={b.id}
-                  data={b}
-                  isExpanded={expandedId === `bg_${b.id}`}
-                  onToggle={() => toggleExpand(`bg_${b.id}`)}
-                />
-              ))
-            )}
-          </>
-        );
+        return filteredBackgrounds.map((b) => ({ ...b, _type: "bg" as const, _expandKey: `bg_${b.id}` }));
     }
-  };
+  }, [activeTab, filteredRaces, filteredClasses, filteredBackgrounds]);
+
+  const countLabel = useMemo(() => {
+    switch (activeTab) {
+      case "razas":
+        return `${filteredRaces.length} raza${filteredRaces.length !== 1 ? "s" : ""}`;
+      case "clases":
+        return `${filteredClasses.length} clase${filteredClasses.length !== 1 ? "s" : ""}`;
+      case "trasfondos":
+        return `${filteredBackgrounds.length} trasfondo${filteredBackgrounds.length !== 1 ? "s" : ""}`;
+    }
+  }, [activeTab, filteredRaces.length, filteredClasses.length, filteredBackgrounds.length]);
+
+  const renderItem = useCallback(({ item }: { item: (typeof currentData)[number] }) => {
+    const isExpanded = expandedId === item._expandKey;
+    const onToggle = () => toggleExpand(item._expandKey);
+
+    switch (item._type) {
+      case "race":
+        return <RaceCard data={item} isExpanded={isExpanded} onToggle={onToggle} />;
+      case "class":
+        return <ClassCard data={item} isExpanded={isExpanded} onToggle={onToggle} />;
+      case "bg":
+        return <BackgroundCard data={item} isExpanded={isExpanded} onToggle={onToggle} />;
+    }
+  }, [expandedId, toggleExpand]);
+
+  const keyExtractor = useCallback((item: (typeof currentData)[number]) => item._expandKey, []);
+
+  const ListHeaderComponent = useMemo(() => (
+    <Text style={[styles.countText, { color: colors.textMuted }]}>
+      {countLabel}
+    </Text>
+  ), [countLabel, colors.textMuted]);
+
+  const ListEmptyComponent = useMemo(() => (
+    <EmptyState
+      icon="search"
+      title={`No se encontraron resultados con "${searchQuery}"`}
+    />
+  ), [searchQuery]);
 
   // ── Entrance animation ──
   const { opacity: contentFade } = useEntranceAnimation({ delay: 120 });
@@ -243,14 +218,17 @@ export default function CompendiumScreen() {
 
       {/* Content */}
       <Animated.View style={{ flex: 1, opacity: contentFade }}>
-        <ScrollView
-          style={{ flex: 1 }}
+        <FlatList
+          data={currentData}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          ListHeaderComponent={ListHeaderComponent}
+          ListEmptyComponent={ListEmptyComponent}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-        >
-          {renderContent()}
-        </ScrollView>
+          removeClippedSubviews
+        />
       </Animated.View>
     </ScreenContainer>
   );

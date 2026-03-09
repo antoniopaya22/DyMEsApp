@@ -215,7 +215,7 @@ export default function SearchBar({
         ]}
         placeholder={placeholder}
         placeholderTextColor={colors.searchPlaceholder}
-        value={value}
+        defaultValue={value}
         onChangeText={onChangeText}
         onFocus={handleFocus}
         onBlur={handleBlur}

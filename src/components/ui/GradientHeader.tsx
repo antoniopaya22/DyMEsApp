@@ -320,7 +320,7 @@ export default function GradientHeader({
                   <View
                     style={[styles.badge, { borderColor: colors.bgPrimary }]}
                   >
-                    <Text style={styles.badgeText}>
+                    <Text style={[styles.badgeText, { color: colors.textInverted }]}>
                       {action.badge > 99 ? "99+" : action.badge}
                     </Text>
                   </View>
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -4,
     right: -4,
-    backgroundColor: "#8f3d38", // badge bg — overridden inline via colors.accentRed
+    backgroundColor: "#00BCD4", // badge bg — overridden inline via colors.accentRed
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   badgeText: {
-    color: "#ffffff", // badge text — overridden inline via colors.textInverted
+    color: "#0B1221",
     fontSize: 9,
     fontWeight: "800",
   },

@@ -25,12 +25,14 @@
  * />
  */
 
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
+  Animated,
+  Easing,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -62,57 +64,126 @@ export default function EmptyState({
   onCtaPress,
   ctaColors,
 }: EmptyStateProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
-  const defaultCtaColors = ["#d32f2f", colors.accentRed, "#a51c1c"] as const;
+  // Entrance animations
+  const iconScale = useRef(new Animated.Value(0.3)).current;
+  const iconOpacity = useRef(new Animated.Value(0)).current;
+  const titleOpacity = useRef(new Animated.Value(0)).current;
+  const titleTranslateY = useRef(new Animated.Value(12)).current;
+  const subtitleOpacity = useRef(new Animated.Value(0)).current;
+  const subtitleTranslateY = useRef(new Animated.Value(12)).current;
+  const ctaOpacity = useRef(new Animated.Value(0)).current;
+  const ctaTranslateY = useRef(new Animated.Value(16)).current;
+  // Idle bounce loop
+  const idleBounce = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const stagger = Animated.stagger(120, [
+      // Icon: scale-up bounce
+      Animated.parallel([
+        Animated.spring(iconScale, { toValue: 1, friction: 5, tension: 120, useNativeDriver: true }),
+        Animated.timing(iconOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+      ]),
+      // Title: fade + slide
+      Animated.parallel([
+        Animated.timing(titleOpacity, { toValue: 1, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(titleTranslateY, { toValue: 0, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+      // Subtitle: fade + slide
+      Animated.parallel([
+        Animated.timing(subtitleOpacity, { toValue: 1, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(subtitleTranslateY, { toValue: 0, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+      // CTA: fade + slide
+      Animated.parallel([
+        Animated.timing(ctaOpacity, { toValue: 1, duration: 400, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(ctaTranslateY, { toValue: 0, duration: 400, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+    ]);
+    stagger.start();
+
+    // Subtle idle bounce on the icon
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(idleBounce, { toValue: -4, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(idleBounce, { toValue: 0, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ]),
+    );
+    // Start idle bounce after entrance (delayed)
+    const timer = setTimeout(() => loop.start(), 800);
+
+    return () => {
+      stagger.stop();
+      loop.stop();
+      clearTimeout(timer);
+    };
+  }, []);
+
+  const defaultCtaColors = isDark
+    ? ["#33EBFF", colors.accentRed, "#00BCD4"] as const
+    : ["#0E8BA5", colors.accentRed, "#0B5E73"] as const;
   const resolvedCtaColors = ctaColors ?? defaultCtaColors;
 
   return (
     <View style={styles.container}>
       {/* Icon */}
-      {customIcon ?? (
-        <Ionicons
-          name={icon}
-          size={40}
-          color={colors.textMuted}
-          style={styles.icon}
-        />
-      )}
+      <Animated.View style={{ opacity: iconOpacity, transform: [{ scale: iconScale }, { translateY: idleBounce }] }}>
+        {customIcon ?? (
+          <View style={[
+            styles.iconContainer,
+            { backgroundColor: `${colors.textMuted}12`, borderColor: `${colors.textMuted}20` },
+          ]}>
+            <Ionicons
+              name={icon}
+              size={36}
+              color={colors.textMuted}
+            />
+          </View>
+        )}
+      </Animated.View>
 
       {/* Title */}
-      <Text style={[styles.title, { color: colors.emptyTitle ?? colors.textPrimary }]}>
+      <Animated.Text
+        style={[
+          styles.title,
+          { color: colors.emptyTitle ?? colors.textPrimary, opacity: titleOpacity, transform: [{ translateY: titleTranslateY }] },
+        ]}
+      >
         {title}
-      </Text>
+      </Animated.Text>
 
       {/* Subtitle */}
       {subtitle ? (
-        <Text
+        <Animated.Text
           style={[
             styles.subtitle,
-            { color: colors.emptySubtitle ?? colors.textSecondary },
+            { color: colors.emptySubtitle ?? colors.textSecondary, opacity: subtitleOpacity, transform: [{ translateY: subtitleTranslateY }] },
           ]}
         >
           {subtitle}
-        </Text>
+        </Animated.Text>
       ) : null}
 
       {/* Optional CTA */}
       {ctaLabel && onCtaPress ? (
-        <TouchableOpacity
-          style={styles.ctaButton}
-          onPress={onCtaPress}
-          activeOpacity={0.85}
-        >
-          <LinearGradient
-            colors={resolvedCtaColors}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.ctaGradient}
+        <Animated.View style={{ opacity: ctaOpacity, transform: [{ translateY: ctaTranslateY }] }}>
+          <TouchableOpacity
+            style={styles.ctaButton}
+            onPress={onCtaPress}
+            activeOpacity={0.85}
           >
-            <Ionicons name="add" size={22} color="white" />
-            <Text style={styles.ctaText}>{ctaLabel}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+            <LinearGradient
+              colors={resolvedCtaColors}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.ctaGradient}
+            >
+              <Ionicons name="add" size={22} color={colors.textInverted} />
+              <Text style={[styles.ctaText, { color: colors.textInverted }]}>{ctaLabel}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
       ) : null}
     </View>
   );
@@ -124,8 +195,14 @@ const styles = StyleSheet.create({
     paddingVertical: 48,
     paddingHorizontal: 28,
   },
-  icon: {
-    marginBottom: 16,
+  iconContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
   },
   title: {
     fontSize: 22,
@@ -143,7 +220,7 @@ const styles = StyleSheet.create({
   ctaButton: {
     borderRadius: 14,
     overflow: "hidden",
-    shadowColor: "#8f3d38",
+    shadowColor: "#00BCD4",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -158,7 +235,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   ctaText: {
-    color: "#ffffff",
     fontWeight: "800",
     fontSize: 16,
     marginLeft: 8,

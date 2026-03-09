@@ -16,8 +16,8 @@ import {
   Easing,
   ActivityIndicator,
   TextInput,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -221,8 +221,8 @@ export default function MasterCampaignLobby() {
         style={[
           styles.playerCard,
           {
-            backgroundColor: colors.bgCard,
-            borderColor: colors.borderSubtle,
+            backgroundColor: colors.bgElevated,
+            borderColor: colors.borderDefault,
           },
         ]}
         onPress={handlePressPlayer}
@@ -235,11 +235,17 @@ export default function MasterCampaignLobby() {
             <Image
               source={{ uri: charData.appearance.avatarUri }}
               style={styles.playerAvatarImg}
+              contentFit="cover"
+              contentPosition="top"
+              transition={200}
             />
           ) : portraitSource ? (
             <Image
               source={portraitSource}
               style={styles.playerAvatarImg}
+              contentFit="cover"
+              contentPosition="top"
+              transition={200}
             />
           ) : (
             <View
@@ -249,9 +255,11 @@ export default function MasterCampaignLobby() {
               ]}
             >
               {hasCharacter ? (
-                <Text style={styles.avatarEmoji}>
-                  {RACE_ICONS[charData!.raza as RaceId] ?? "🧝"}
-                </Text>
+                <Ionicons
+                  name={(RACE_ICONS[charData!.raza as RaceId] ?? "person-outline") as any}
+                  size={20}
+                  color={colors.accentGold}
+                />
               ) : (
                 <Ionicons
                   name="person"
@@ -495,8 +503,8 @@ export default function MasterCampaignLobby() {
         onPress={() => setShowAddPlayer(true)}
         activeOpacity={0.85}
       >
-        <Ionicons name="person-add" size={20} color="#FFF" />
-        <Text style={styles.addPlayerBtnText}>Añadir jugador</Text>
+        <Ionicons name="person-add" size={20} color={colors.textInverted} />
+        <Text style={[styles.addPlayerBtnText, { color: colors.textInverted }]}>Añadir jugador</Text>
       </TouchableOpacity>
 
       {/* Add Player Modal */}
@@ -512,7 +520,7 @@ export default function MasterCampaignLobby() {
               styles.modalContent,
               {
                 backgroundColor: colors.bgElevated,
-                borderColor: colors.borderSubtle,
+                borderColor: colors.borderDefault,
               },
             ]}
           >
@@ -577,9 +585,9 @@ export default function MasterCampaignLobby() {
                 disabled={characterCode.trim().length !== 8 || addingPlayer}
               >
                 {addingPlayer ? (
-                  <ActivityIndicator size="small" color="#FFF" />
+                  <ActivityIndicator size="small" color={colors.textInverted} />
                 ) : (
-                  <Text style={[styles.modalBtnText, { color: "#FFF" }]}>
+                  <Text style={[styles.modalBtnText, { color: colors.textInverted }]}>
                     Buscar y añadir
                   </Text>
                 )}
@@ -809,7 +817,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   addPlayerBtnText: {
-    color: "#FFF",
     fontSize: 15,
     fontWeight: "700",
   },
