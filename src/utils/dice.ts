@@ -8,7 +8,15 @@ import { random, now } from "./providers";
 // ─── Tipos ───────────────────────────────────────────────────────────
 
 /** Tipos de dados estándar de D&D */
-export type DieType = "d3" | "d4" | "d6" | "d8" | "d10" | "d12" | "d20" | "d100";
+export type DieType =
+  | "d3"
+  | "d4"
+  | "d6"
+  | "d8"
+  | "d10"
+  | "d12"
+  | "d20"
+  | "d100";
 
 /** Resultado de una tirada individual */
 export interface DieRollResult {
@@ -137,8 +145,14 @@ export function rollDieRaw(sides: number): number {
  */
 export function parseDieType(sides: number): DieType {
   const map: Record<number, DieType> = {
-    3: "d3", 4: "d4", 6: "d6", 8: "d8", 10: "d10",
-    12: "d12", 20: "d20", 100: "d100",
+    3: "d3",
+    4: "d4",
+    6: "d6",
+    8: "d8",
+    10: "d10",
+    12: "d12",
+    20: "d20",
+    100: "d100",
   };
   return map[sides] || "d20";
 }
@@ -167,7 +181,7 @@ export function rollDice(count: number, die: DieType): number[] {
 export function roll(
   count: number,
   die: DieType,
-  modifier: number = 0
+  modifier: number = 0,
 ): RollResult {
   const rolls: DieRollResult[] = [];
 
@@ -185,11 +199,7 @@ export function roll(
   const isFumble = isSingleD20 && rolls[0].value === 1;
 
   const modStr =
-    modifier > 0
-      ? `+${modifier}`
-      : modifier < 0
-        ? `${modifier}`
-        : "";
+    modifier > 0 ? `+${modifier}` : modifier < 0 ? `${modifier}` : "";
   const expression = `${count}${die}${modStr}`;
 
   return {
@@ -232,18 +242,16 @@ function rollWithAdvantageMode(
   const roll2 = rollDie("d20");
 
   const isAdvantage = mode === "advantage";
-  const chosenRoll = isAdvantage ? Math.max(roll1, roll2) : Math.min(roll1, roll2);
+  const chosenRoll = isAdvantage
+    ? Math.max(roll1, roll2)
+    : Math.min(roll1, roll2);
   const total = chosenRoll + modifier;
 
   const isCritical = chosenRoll === 20;
   const isFumble = chosenRoll === 1;
 
   const modStr =
-    modifier > 0
-      ? `+${modifier}`
-      : modifier < 0
-        ? `${modifier}`
-        : "";
+    modifier > 0 ? `+${modifier}` : modifier < 0 ? `${modifier}` : "";
 
   const notation = isAdvantage ? "kh1" : "kl1";
   const label = isAdvantage ? "ventaja" : "desventaja";
@@ -316,7 +324,7 @@ export function rollAbilityScoreSet(): AbilityRollResult[] {
  */
 export function rollInitiative(
   dexModifier: number,
-  bonusModifier: number = 0
+  bonusModifier: number = 0,
 ): RollResult {
   return rollD20(dexModifier + bonusModifier);
 }
@@ -335,7 +343,7 @@ export function rollAttack(
   damageDice: string,
   damageModifier: number = 0,
   damageType: string = "",
-  rollDamage: boolean = true
+  rollDamage: boolean = true,
 ): AttackRollResult {
   const d20Value = rollDie("d20");
   const isCritical = d20Value === 20;
@@ -392,7 +400,7 @@ export function rollDeathSave(): DeathSaveRollResult {
  */
 export function rollHitDie(
   die: DieType,
-  conModifier: number
+  conModifier: number,
 ): { roll: number; modifier: number; total: number } {
   const rollValue = rollDie(die);
   const total = Math.max(0, rollValue + conModifier);
@@ -426,7 +434,7 @@ export interface ParsedDiceExpression {
  * @returns La expresión parseada, o null si no es válida
  */
 export function parseDiceExpression(
-  expression: string
+  expression: string,
 ): ParsedDiceExpression | null {
   const cleaned = expression.trim().toLowerCase().replace(/\s/g, "");
 
@@ -733,14 +741,6 @@ export function formatDeathSaveResult(result: DeathSaveRollResult): string {
     return `✅ Éxito (${result.roll}) — Tirada de salvación contra muerte superada.`;
   }
   return `❌ Fracaso (${result.roll}) — Tirada de salvación contra muerte fallida.`;
-}
-
-/**
- * Formatea un modificador con signo.
- * Ejemplo: formatModifier(3) → "+3", formatModifier(-1) → "-1"
- */
-export function formatModifier(modifier: number): string {
-  return modifier >= 0 ? `+${modifier}` : `${modifier}`;
 }
 
 // ─── Constantes útiles ───────────────────────────────────────────────

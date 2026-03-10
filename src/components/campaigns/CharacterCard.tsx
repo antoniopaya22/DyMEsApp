@@ -70,7 +70,9 @@ export function CharacterCard({
 
   const accentColor = colors.accentGold;
   const avatarSource = getCharacterAvatar(item.clase, item.raza, item.sexo);
-  const classIcon = (classTheme?.iconName as keyof typeof Ionicons.glyphMap) ?? "shield-half-sharp";
+  const classIcon =
+    (classTheme?.iconName as keyof typeof Ionicons.glyphMap) ??
+    "shield-half-sharp";
 
   return (
     <Animated.View
@@ -79,7 +81,7 @@ export function CharacterCard({
         {
           opacity: entranceAnim,
           transform: [{ scale: scaleAnim }, { translateY }],
-          shadowColor: isDark ? accentColor : "#000",
+          shadowColor: isDark ? accentColor : colors.shadowColor,
         },
       ]}
     >
@@ -108,8 +110,17 @@ export function CharacterCard({
               transition={200}
             />
           ) : (
-            <View style={[styles.heroPlaceholder, { backgroundColor: `${classTheme?.color ?? accentColor}18` }]}>
-              <Ionicons name={classIcon} size={56} color={`${classTheme?.color ?? accentColor}55`} />
+            <View
+              style={[
+                styles.heroPlaceholder,
+                { backgroundColor: `${classTheme?.color ?? accentColor}18` },
+              ]}
+            >
+              <Ionicons
+                name={classIcon}
+                size={56}
+                color={`${classTheme?.color ?? accentColor}55`}
+              />
             </View>
           )}
 
@@ -136,19 +147,35 @@ export function CharacterCard({
               },
             ]}
           >
-            <Text style={[styles.levelText, { color: colors.textInverted }]}>NV {item.nivel}</Text>
+            <Text style={[styles.levelText, { color: colors.textInverted }]}>
+              NV {item.nivel}
+            </Text>
           </View>
 
           {/* Accent top bar */}
-          <View style={[styles.accentBar, { backgroundColor: classTheme?.color ?? accentColor }]} />
+          <View
+            style={[
+              styles.accentBar,
+              { backgroundColor: classTheme?.color ?? accentColor },
+            ]}
+          />
         </View>
 
         {/* ── Info Footer ── */}
         <View style={styles.infoSection}>
           <View style={styles.infoRow}>
             {/* Class icon */}
-            <View style={[styles.classIconCircle, { backgroundColor: `${classTheme?.color ?? accentColor}1A` }]}>
-              <Ionicons name={classIcon} size={18} color={classTheme?.color ?? accentColor} />
+            <View
+              style={[
+                styles.classIconCircle,
+                { backgroundColor: `${classTheme?.color ?? accentColor}1A` },
+              ]}
+            >
+              <Ionicons
+                name={classIcon}
+                size={18}
+                color={classTheme?.color ?? accentColor}
+              />
             </View>
 
             {/* Race · Class */}
@@ -175,8 +202,17 @@ export function CharacterCard({
                   month: "short",
                 })}
               </Text>
-              <View style={[styles.chevronCircle, { backgroundColor: colors.cardChevronBg }]}>
-                <Ionicons name="chevron-forward" size={16} color={colors.chevronColor} />
+              <View
+                style={[
+                  styles.chevronCircle,
+                  { backgroundColor: colors.cardChevronBg },
+                ]}
+              >
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={colors.chevronColor}
+                />
               </View>
             </View>
           </View>

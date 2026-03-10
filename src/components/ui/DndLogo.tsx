@@ -24,7 +24,7 @@ import {
   StyleSheet,
   ViewStyle,
 } from "react-native";
-import { useTheme } from "@/hooks";
+import { useTheme, usePulseAnimation } from "@/hooks";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   getD20Geometry,
@@ -108,7 +108,8 @@ const SIZE_PRESETS = {
 
 // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Rune characters (Elder Futhark) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
-const RUNES = "Ã¡Å¡Â Ã¡Å¡Â¢Ã¡Å¡Â¦Ã¡Å¡Â¨Ã¡Å¡Â±Ã¡Å¡Â²Ã¡Å¡Â·Ã¡Å¡Â¹Ã¡Å¡ÂºÃ¡Å¡Â¾Ã¡â€ºÂÃ¡â€ºÆ’";
+const RUNES =
+  "Ã¡Å¡Â Ã¡Å¡Â¢Ã¡Å¡Â¦Ã¡Å¡Â¨Ã¡Å¡Â±Ã¡Å¡Â²Ã¡Å¡Â·Ã¡Å¡Â¹Ã¡Å¡ÂºÃ¡Å¡Â¾Ã¡â€ºÂÃ¡â€ºÆ’";
 
 // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ D20 Geometry Ã¢â‚¬â€ DndLogo shade configuration Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
@@ -408,6 +409,7 @@ export default function DndLogo({
   showDragonAccents = true,
   style,
 }: DndLogoProps) {
+  const { colors } = useTheme();
   const preset = SIZE_PRESETS[size];
 
   // Animations
@@ -491,7 +493,7 @@ export default function DndLogo({
             height: preset.outerRing,
             borderRadius: preset.outerRing / 2,
             opacity: glowAnim,
-            shadowColor: "#00BCD4",
+            shadowColor: colors.accentShadow,
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: 0.7,
             shadowRadius: preset.glowRadius,
@@ -703,31 +705,11 @@ export function MinimalD20Logo({
   showRunicRing = false,
   style,
 }: MinimalLogoProps) {
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (!animated) return;
-
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.04,
-          duration: 2000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 2000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-
-    pulse.start();
-    return () => pulse.stop();
-  }, [animated, pulseAnim]);
+  const { scale: pulseAnim } = usePulseAnimation({
+    active: animated,
+    maxScale: 1.04,
+    duration: 4000,
+  });
 
   return (
     <Animated.View
@@ -797,7 +779,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   inlineDieContainer: {
-    shadowColor: "#00BCD4",
+    shadowColor: "#00BCD4", // static: theme-independent
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
     shadowRadius: 8,

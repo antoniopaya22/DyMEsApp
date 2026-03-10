@@ -14,8 +14,11 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks";
 import { withAlpha } from "@/utils/theme";
+import { useUnidadesActuales } from "@/stores/settingsStore";
+import { formatDistancia, etiquetaDistancia } from "@/utils/units";
 import type { AbilityKey, SkillKey, DamageType, Size } from "@/types/character";
 import { ABILITY_NAMES, SKILLS } from "@/types/character";
+import { ABILITY_KEYS } from "@/constants/abilities";
 import type {
   CustomRaceConfig,
   CustomRaceTrait,
@@ -51,8 +54,6 @@ const SKILL_OPTIONS: { value: SkillKey; label: string }[] = (
   Object.entries(SKILLS) as [SkillKey, { nombre: string }][]
 ).map(([key, def]) => ({ value: key, label: def.nombre }));
 
-const ABILITY_KEYS: AbilityKey[] = ["fue", "des", "con", "int", "sab", "car"];
-
 const DEFAULT_CONFIG: CustomRaceConfig = {
   nombre: "",
   descripcion: "",
@@ -76,6 +77,7 @@ export default function CustomRaceEditor({
   onChange,
 }: CustomRaceEditorProps) {
   const { colors } = useTheme();
+  const unidades = useUnidadesActuales();
   const [data, setData] = useState<CustomRaceConfig>(
     initialData ?? { ...DEFAULT_CONFIG },
   );
@@ -159,10 +161,7 @@ export default function CustomRaceEditor({
   const [newToolProf, setNewToolProf] = useState("");
 
   const addToList = (
-    field:
-      | "weaponProficiencies"
-      | "armorProficiencies"
-      | "toolProficiencies",
+    field: "weaponProficiencies" | "armorProficiencies" | "toolProficiencies",
     value: string,
     setter: (v: string) => void,
   ) => {
@@ -175,10 +174,7 @@ export default function CustomRaceEditor({
   };
 
   const removeFromList = (
-    field:
-      | "weaponProficiencies"
-      | "armorProficiencies"
-      | "toolProficiencies",
+    field: "weaponProficiencies" | "armorProficiencies" | "toolProficiencies",
     value: string,
   ) => {
     update({ [field]: (data[field] ?? []).filter((v) => v !== value) });
@@ -215,17 +211,11 @@ export default function CustomRaceEditor({
   const addSpell = () => {
     const spells = data.racialSpells ?? [];
     update({
-      racialSpells: [
-        ...spells,
-        { nombre: "", minLevel: 1, isCantrip: false },
-      ],
+      racialSpells: [...spells, { nombre: "", minLevel: 1, isCantrip: false }],
     });
   };
 
-  const updateSpell = (
-    index: number,
-    partial: Partial<CustomRacialSpell>,
-  ) => {
+  const updateSpell = (index: number, partial: Partial<CustomRacialSpell>) => {
     const spells = [...(data.racialSpells ?? [])];
     spells[index] = { ...spells[index], ...partial };
     update({ racialSpells: spells });
@@ -262,12 +252,21 @@ export default function CustomRaceEditor({
           color={colors.accentRed}
           style={{ marginRight: 8 }}
         />
-        <Text className="text-base font-bold" style={{ color: colors.textPrimary }}>
+        <Text
+          className="text-base font-bold"
+          style={{ color: colors.textPrimary }}
+        >
           {title}
         </Text>
         {count !== undefined && count > 0 && (
-          <View className="rounded-full px-2 py-0.5 ml-2" style={{ backgroundColor: withAlpha(colors.accentRed, 0.2) }}>
-            <Text className="text-xs font-semibold" style={{ color: colors.accentRed }}>
+          <View
+            className="rounded-full px-2 py-0.5 ml-2"
+            style={{ backgroundColor: withAlpha(colors.accentRed, 0.2) }}
+          >
+            <Text
+              className="text-xs font-semibold"
+              style={{ color: colors.accentRed }}
+            >
               {count}
             </Text>
           </View>
@@ -294,7 +293,10 @@ export default function CustomRaceEditor({
           key={item}
           className="flex-row items-center border rounded-full px-3 py-1.5 mr-2 mb-2 active:opacity-70"
           onPress={() => onRemove(item)}
-          style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
+          style={{
+            backgroundColor: colors.bgCard,
+            borderColor: colors.borderDefault,
+          }}
         >
           <Text className="text-sm mr-1" style={{ color: colors.textPrimary }}>
             {item}
@@ -319,7 +321,11 @@ export default function CustomRaceEditor({
     <View className="flex-row items-center mt-1 mb-2">
       <TextInput
         className="flex-1 border rounded-xl px-3 py-2.5 text-sm mr-2"
-        style={{ backgroundColor: colors.bgInput, borderColor: colors.borderDefault, color: colors.textPrimary }}
+        style={{
+          backgroundColor: colors.bgInput,
+          borderColor: colors.borderDefault,
+          color: colors.textPrimary,
+        }}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
@@ -344,16 +350,27 @@ export default function CustomRaceEditor({
   return (
     <View>
       {/* ── Básico ── */}
-      <SectionHeader sectionKey="basic" title="Datos Básicos" icon="create-outline" />
+      <SectionHeader
+        sectionKey="basic"
+        title="Datos Básicos"
+        icon="create-outline"
+      />
       {expandedSections.basic && (
         <View className="mb-4">
           {/* Nombre */}
-          <Text className="text-xs font-semibold mb-1 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-xs font-semibold mb-1 uppercase tracking-wider"
+            style={{ color: colors.textSecondary }}
+          >
             Nombre de la raza <Text style={{ color: colors.accentRed }}>*</Text>
           </Text>
           <TextInput
             className="border rounded-xl px-4 py-3 text-base mb-3"
-            style={{ backgroundColor: colors.bgInput, borderColor: colors.borderDefault, color: colors.textPrimary }}
+            style={{
+              backgroundColor: colors.bgInput,
+              borderColor: colors.borderDefault,
+              color: colors.textPrimary,
+            }}
             value={data.nombre}
             onChangeText={(t) => update({ nombre: t })}
             placeholder="Ej: Aarakocra, Aasimar..."
@@ -361,12 +378,20 @@ export default function CustomRaceEditor({
           />
 
           {/* Descripcion */}
-          <Text className="text-xs font-semibold mb-1 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-xs font-semibold mb-1 uppercase tracking-wider"
+            style={{ color: colors.textSecondary }}
+          >
             Descripción
           </Text>
           <TextInput
             className="border rounded-xl px-4 py-3 text-sm mb-3"
-            style={{ minHeight: 70, backgroundColor: colors.bgInput, borderColor: colors.borderDefault, color: colors.textPrimary }}
+            style={{
+              minHeight: 70,
+              backgroundColor: colors.bgInput,
+              borderColor: colors.borderDefault,
+              color: colors.textPrimary,
+            }}
             value={data.descripcion}
             onChangeText={(t) => update({ descripcion: t })}
             placeholder="Breve descripción de la raza..."
@@ -377,7 +402,10 @@ export default function CustomRaceEditor({
           />
 
           {/* Size */}
-          <Text className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-xs font-semibold mb-2 uppercase tracking-wider"
+            style={{ color: colors.textSecondary }}
+          >
             Tamaño
           </Text>
           <View className="flex-row mb-3">
@@ -387,13 +415,24 @@ export default function CustomRaceEditor({
                 className="flex-1 rounded-xl py-2.5 items-center mr-2 border"
                 onPress={() => update({ size: opt.value })}
                 style={{
-                  backgroundColor: data.size === opt.value ? withAlpha(colors.accentRed, 0.15) : colors.bgCard,
-                  borderColor: data.size === opt.value ? withAlpha(colors.accentRed, 0.5) : colors.borderDefault,
+                  backgroundColor:
+                    data.size === opt.value
+                      ? withAlpha(colors.accentRed, 0.15)
+                      : colors.bgCard,
+                  borderColor:
+                    data.size === opt.value
+                      ? withAlpha(colors.accentRed, 0.5)
+                      : colors.borderDefault,
                 }}
               >
                 <Text
                   className="text-sm font-semibold"
-                  style={{ color: data.size === opt.value ? colors.accentRed : colors.textSecondary }}
+                  style={{
+                    color:
+                      data.size === opt.value
+                        ? colors.accentRed
+                        : colors.textSecondary,
+                  }}
                 >
                   {opt.label}
                 </Text>
@@ -402,8 +441,11 @@ export default function CustomRaceEditor({
           </View>
 
           {/* Speed */}
-          <Text className="text-xs font-semibold mb-1 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
-            Velocidad base (pies)
+          <Text
+            className="text-xs font-semibold mb-1 uppercase tracking-wider"
+            style={{ color: colors.textSecondary }}
+          >
+            {`Velocidad base (${etiquetaDistancia(unidades)})`}
           </Text>
           <View className="flex-row items-center mb-3">
             <TouchableOpacity
@@ -413,7 +455,10 @@ export default function CustomRaceEditor({
             >
               <Ionicons name="remove" size={20} color={colors.textPrimary} />
             </TouchableOpacity>
-            <Text className="text-lg font-bold mx-4 min-w-[50px] text-center" style={{ color: colors.textPrimary }}>
+            <Text
+              className="text-lg font-bold mx-4 min-w-[50px] text-center"
+              style={{ color: colors.textPrimary }}
+            >
               {data.speed}
             </Text>
             <TouchableOpacity
@@ -424,7 +469,7 @@ export default function CustomRaceEditor({
               <Ionicons name="add" size={20} color={colors.textPrimary} />
             </TouchableOpacity>
             <Text className="text-sm ml-3" style={{ color: colors.textMuted }}>
-              ({(data.speed * 0.3).toFixed(0)} m)
+              ({formatDistancia(data.speed, unidades)})
             </Text>
           </View>
 
@@ -440,22 +485,30 @@ export default function CustomRaceEditor({
               <View key={key} className="mb-2">
                 <TouchableOpacity
                   className="flex-row items-center justify-between border rounded-xl px-4 py-2.5"
-                  onPress={() =>
-                    update({ [key]: enabled ? undefined : 30 })
-                  }
-                  style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
+                  onPress={() => update({ [key]: enabled ? undefined : 30 })}
+                  style={{
+                    backgroundColor: colors.bgCard,
+                    borderColor: colors.borderDefault,
+                  }}
                 >
                   <View className="flex-row items-center">
                     <Text className="text-base mr-2">{icon}</Text>
-                    <Text className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
+                    <Text
+                      className="text-sm font-semibold"
+                      style={{ color: colors.textPrimary }}
+                    >
                       Velocidad de {label}
                     </Text>
                   </View>
                   <View
                     className="h-6 w-6 rounded-md border-2 items-center justify-center"
                     style={{
-                      backgroundColor: enabled ? colors.accentRed : 'transparent',
-                      borderColor: enabled ? colors.accentRed : colors.textMuted,
+                      backgroundColor: enabled
+                        ? colors.accentRed
+                        : "transparent",
+                      borderColor: enabled
+                        ? colors.accentRed
+                        : colors.textMuted,
                     }}
                   >
                     {enabled && (
@@ -467,23 +520,41 @@ export default function CustomRaceEditor({
                   <View className="flex-row items-center mt-1 ml-10">
                     <TouchableOpacity
                       className="h-8 w-8 rounded-lg items-center justify-center"
-                      onPress={() => update({ [key]: Math.max(5, (value ?? 30) - 5) })}
+                      onPress={() =>
+                        update({ [key]: Math.max(5, (value ?? 30) - 5) })
+                      }
                       style={{ backgroundColor: colors.bgSecondary }}
                     >
-                      <Ionicons name="remove" size={16} color={colors.textPrimary} />
+                      <Ionicons
+                        name="remove"
+                        size={16}
+                        color={colors.textPrimary}
+                      />
                     </TouchableOpacity>
-                    <Text className="text-sm font-bold mx-3 min-w-[40px] text-center" style={{ color: colors.textPrimary }}>
+                    <Text
+                      className="text-sm font-bold mx-3 min-w-[40px] text-center"
+                      style={{ color: colors.textPrimary }}
+                    >
                       {value}
                     </Text>
                     <TouchableOpacity
                       className="h-8 w-8 rounded-lg items-center justify-center"
-                      onPress={() => update({ [key]: Math.min(120, (value ?? 30) + 5) })}
+                      onPress={() =>
+                        update({ [key]: Math.min(120, (value ?? 30) + 5) })
+                      }
                       style={{ backgroundColor: colors.bgSecondary }}
                     >
-                      <Ionicons name="add" size={16} color={colors.textPrimary} />
+                      <Ionicons
+                        name="add"
+                        size={16}
+                        color={colors.textPrimary}
+                      />
                     </TouchableOpacity>
-                    <Text className="text-xs ml-2" style={{ color: colors.textMuted }}>
-                      ({((value ?? 30) * 0.3).toFixed(0)} m)
+                    <Text
+                      className="text-xs ml-2"
+                      style={{ color: colors.textMuted }}
+                    >
+                      ({formatDistancia(value ?? 30, unidades)})
                     </Text>
                   </View>
                 )}
@@ -501,19 +572,29 @@ export default function CustomRaceEditor({
                 darkvisionRange: !data.darkvision ? 60 : undefined,
               })
             }
-            style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
+            style={{
+              backgroundColor: colors.bgCard,
+              borderColor: colors.borderDefault,
+            }}
           >
             <View className="flex-row items-center">
               <Text className="text-lg mr-2">👁️</Text>
-              <Text className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
+              <Text
+                className="text-sm font-semibold"
+                style={{ color: colors.textPrimary }}
+              >
                 Visión en la Oscuridad
               </Text>
             </View>
             <View
               className="h-6 w-6 rounded-md border-2 items-center justify-center"
               style={{
-                backgroundColor: data.darkvision ? colors.accentRed : 'transparent',
-                borderColor: data.darkvision ? colors.accentRed : colors.textMuted,
+                backgroundColor: data.darkvision
+                  ? colors.accentRed
+                  : "transparent",
+                borderColor: data.darkvision
+                  ? colors.accentRed
+                  : colors.textMuted,
               }}
             >
               {data.darkvision && (
@@ -524,7 +605,10 @@ export default function CustomRaceEditor({
 
           {data.darkvision && (
             <View className="flex-row items-center mb-3 pl-4">
-              <Text className="text-sm mr-3" style={{ color: colors.textSecondary }}>
+              <Text
+                className="text-sm mr-3"
+                style={{ color: colors.textSecondary }}
+              >
                 Alcance:
               </Text>
               <TouchableOpacity
@@ -539,14 +623,13 @@ export default function CustomRaceEditor({
                 }
                 style={{ backgroundColor: colors.bgSecondary }}
               >
-                <Ionicons
-                  name="remove"
-                  size={16}
-                  color={colors.textPrimary}
-                />
+                <Ionicons name="remove" size={16} color={colors.textPrimary} />
               </TouchableOpacity>
-              <Text className="text-sm font-bold mx-3" style={{ color: colors.textPrimary }}>
-                {data.darkvisionRange ?? 60} pies
+              <Text
+                className="text-sm font-bold mx-3"
+                style={{ color: colors.textPrimary }}
+              >
+                {formatDistancia(data.darkvisionRange ?? 60, unidades)}
               </Text>
               <TouchableOpacity
                 className="h-8 w-8 rounded-lg items-center justify-center"
@@ -576,17 +659,25 @@ export default function CustomRaceEditor({
       />
       {expandedSections.abilities && (
         <View className="mb-4">
-          <Text className="text-xs mb-3" style={{ color: colors.textMuted }}>
-          </Text>
+          <Text
+            className="text-xs mb-3"
+            style={{ color: colors.textMuted }}
+          ></Text>
           {ABILITY_KEYS.map((key) => {
             const val = data.abilityBonuses[key] ?? 0;
             return (
               <View
                 key={key}
                 className="flex-row items-center justify-between border rounded-xl px-4 py-2.5 mb-2"
-                style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
+                style={{
+                  backgroundColor: colors.bgCard,
+                  borderColor: colors.borderDefault,
+                }}
               >
-                <Text className="text-sm font-semibold w-28" style={{ color: colors.textPrimary }}>
+                <Text
+                  className="text-sm font-semibold w-28"
+                  style={{ color: colors.textPrimary }}
+                >
                   {ABILITY_NAMES[key]}
                 </Text>
                 <View className="flex-row items-center">
@@ -596,7 +687,10 @@ export default function CustomRaceEditor({
                     }`}
                     onPress={() => setAbilityBonus(key, -1)}
                     disabled={val <= -2}
-                    style={{ backgroundColor: val <= -2 ? colors.bgInput : colors.bgSecondary }}
+                    style={{
+                      backgroundColor:
+                        val <= -2 ? colors.bgInput : colors.bgSecondary,
+                    }}
                   >
                     <Ionicons
                       name="remove"
@@ -622,13 +716,12 @@ export default function CustomRaceEditor({
                     }`}
                     onPress={() => setAbilityBonus(key, 1)}
                     disabled={val >= 3}
-                    style={{ backgroundColor: val >= 3 ? colors.bgInput : colors.bgSecondary }}
+                    style={{
+                      backgroundColor:
+                        val >= 3 ? colors.bgInput : colors.bgSecondary,
+                    }}
                   >
-                    <Ionicons
-                      name="add"
-                      size={16}
-                      color={colors.textPrimary}
-                    />
+                    <Ionicons name="add" size={16} color={colors.textPrimary} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -650,10 +743,16 @@ export default function CustomRaceEditor({
             <View
               key={idx}
               className="border rounded-xl p-3 mb-2"
-              style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
+              style={{
+                backgroundColor: colors.bgCard,
+                borderColor: colors.borderDefault,
+              }}
             >
               <View className="flex-row items-center justify-between mb-2">
-                <Text className="text-xs font-semibold" style={{ color: colors.textMuted }}>
+                <Text
+                  className="text-xs font-semibold"
+                  style={{ color: colors.textMuted }}
+                >
                   Rasgo #{idx + 1}
                 </Text>
                 <TouchableOpacity
@@ -669,7 +768,11 @@ export default function CustomRaceEditor({
               </View>
               <TextInput
                 className="border rounded-lg px-3 py-2 text-sm mb-2"
-                style={{ backgroundColor: colors.bgInput, borderColor: colors.borderDefault, color: colors.textPrimary }}
+                style={{
+                  backgroundColor: colors.bgInput,
+                  borderColor: colors.borderDefault,
+                  color: colors.textPrimary,
+                }}
                 value={trait.nombre}
                 onChangeText={(t) => updateTrait(idx, "nombre", t)}
                 placeholder="Nombre del rasgo"
@@ -677,7 +780,12 @@ export default function CustomRaceEditor({
               />
               <TextInput
                 className="border rounded-lg px-3 py-2 text-sm"
-                style={{ minHeight: 50, backgroundColor: colors.bgInput, borderColor: colors.borderDefault, color: colors.textPrimary }}
+                style={{
+                  minHeight: 50,
+                  backgroundColor: colors.bgInput,
+                  borderColor: colors.borderDefault,
+                  color: colors.textPrimary,
+                }}
                 value={trait.descripcion}
                 onChangeText={(t) => updateTrait(idx, "descripcion", t)}
                 placeholder="Descripción del rasgo..."
@@ -694,7 +802,10 @@ export default function CustomRaceEditor({
             style={{ borderColor: colors.borderDefault }}
           >
             <Ionicons name="add" size={18} color={colors.accentRed} />
-            <Text className="text-sm font-semibold ml-1" style={{ color: colors.accentRed }}>
+            <Text
+              className="text-sm font-semibold ml-1"
+              style={{ color: colors.accentRed }}
+            >
               Añadir rasgo
             </Text>
           </TouchableOpacity>
@@ -706,13 +817,14 @@ export default function CustomRaceEditor({
         sectionKey="languages"
         title="Idiomas y Resistencias"
         icon="language-outline"
-        count={
-          data.languages.length + (data.damageResistances?.length ?? 0)
-        }
+        count={data.languages.length + (data.damageResistances?.length ?? 0)}
       />
       {expandedSections.languages && (
         <View className="mb-4">
-          <Text className="text-xs font-semibold mb-1 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-xs font-semibold mb-1 uppercase tracking-wider"
+            style={{ color: colors.textSecondary }}
+          >
             Idiomas
           </Text>
           <ChipList items={data.languages} onRemove={removeLanguage} />
@@ -724,27 +836,34 @@ export default function CustomRaceEditor({
           />
 
           {/* Damage Resistances */}
-          <Text className="text-xs font-semibold mb-2 mt-2 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-xs font-semibold mb-2 mt-2 uppercase tracking-wider"
+            style={{ color: colors.textSecondary }}
+          >
             Resistencias a daño
           </Text>
           <View className="flex-row flex-wrap">
             {DAMAGE_TYPE_OPTIONS.map((opt) => {
-              const active = (data.damageResistances ?? []).includes(
-                opt.value,
-              );
+              const active = (data.damageResistances ?? []).includes(opt.value);
               return (
                 <TouchableOpacity
                   key={opt.value}
                   className="rounded-full px-3 py-1.5 mr-2 mb-2 border"
                   onPress={() => toggleResistance(opt.value)}
                   style={{
-                    backgroundColor: active ? withAlpha(colors.accentRed, 0.15) : colors.bgCard,
-                    borderColor: active ? withAlpha(colors.accentRed, 0.5) : colors.borderDefault,
+                    backgroundColor: active
+                      ? withAlpha(colors.accentRed, 0.15)
+                      : colors.bgCard,
+                    borderColor: active
+                      ? withAlpha(colors.accentRed, 0.5)
+                      : colors.borderDefault,
                   }}
                 >
                   <Text
                     className="text-xs font-semibold"
-                    style={{ color: active ? colors.accentRed : colors.textSecondary }}
+                    style={{
+                      color: active ? colors.accentRed : colors.textSecondary,
+                    }}
                   >
                     {opt.label}
                   </Text>
@@ -770,7 +889,10 @@ export default function CustomRaceEditor({
       {expandedSections.proficiencies && (
         <View className="mb-4">
           {/* Weapon Proficiencies */}
-          <Text className="text-xs font-semibold mb-1 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-xs font-semibold mb-1 uppercase tracking-wider"
+            style={{ color: colors.textSecondary }}
+          >
             Armas
           </Text>
           <ChipList
@@ -781,17 +903,16 @@ export default function CustomRaceEditor({
             value={newWeaponProf}
             onChangeText={setNewWeaponProf}
             onAdd={() =>
-              addToList(
-                "weaponProficiencies",
-                newWeaponProf,
-                setNewWeaponProf,
-              )
+              addToList("weaponProficiencies", newWeaponProf, setNewWeaponProf)
             }
             placeholder="Ej: Espada larga, Arco largo..."
           />
 
           {/* Armor Proficiencies */}
-          <Text className="text-xs font-semibold mb-1 mt-1 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-xs font-semibold mb-1 mt-1 uppercase tracking-wider"
+            style={{ color: colors.textSecondary }}
+          >
             Armaduras
           </Text>
           <ChipList
@@ -802,17 +923,16 @@ export default function CustomRaceEditor({
             value={newArmorProf}
             onChangeText={setNewArmorProf}
             onAdd={() =>
-              addToList(
-                "armorProficiencies",
-                newArmorProf,
-                setNewArmorProf,
-              )
+              addToList("armorProficiencies", newArmorProf, setNewArmorProf)
             }
             placeholder="Ej: Ligera, Media..."
           />
 
           {/* Tool Proficiencies */}
-          <Text className="text-xs font-semibold mb-1 mt-1 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-xs font-semibold mb-1 mt-1 uppercase tracking-wider"
+            style={{ color: colors.textSecondary }}
+          >
             Herramientas
           </Text>
           <ChipList
@@ -823,17 +943,16 @@ export default function CustomRaceEditor({
             value={newToolProf}
             onChangeText={setNewToolProf}
             onAdd={() =>
-              addToList(
-                "toolProficiencies",
-                newToolProf,
-                setNewToolProf,
-              )
+              addToList("toolProficiencies", newToolProf, setNewToolProf)
             }
             placeholder="Ej: Herramientas de herrero..."
           />
 
           {/* Skill Proficiencies */}
-          <Text className="text-xs font-semibold mb-2 mt-2 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-xs font-semibold mb-2 mt-2 uppercase tracking-wider"
+            style={{ color: colors.textSecondary }}
+          >
             Habilidades
           </Text>
           <View className="flex-row flex-wrap">
@@ -845,18 +964,25 @@ export default function CustomRaceEditor({
                 <TouchableOpacity
                   key={opt.value}
                   className={`rounded-full px-3 py-1.5 mr-2 mb-2 border ${
-                    active
-                      ? "bg-hp-full/10 border-hp-full/30"
-                      : ""
+                    active ? "bg-hp-full/10 border-hp-full/30" : ""
                   }`}
                   onPress={() => toggleSkill(opt.value)}
-                  style={!active ? { backgroundColor: colors.bgCard, borderColor: colors.borderDefault } : undefined}
+                  style={
+                    !active
+                      ? {
+                          backgroundColor: colors.bgCard,
+                          borderColor: colors.borderDefault,
+                        }
+                      : undefined
+                  }
                 >
                   <Text
                     className={`text-xs font-semibold ${
                       active ? "text-hp-full" : ""
                     }`}
-                    style={!active ? { color: colors.textSecondary } : undefined}
+                    style={
+                      !active ? { color: colors.textSecondary } : undefined
+                    }
                   >
                     {opt.label}
                   </Text>
@@ -884,10 +1010,16 @@ export default function CustomRaceEditor({
             <View
               key={idx}
               className="border rounded-xl p-3 mb-2"
-              style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
+              style={{
+                backgroundColor: colors.bgCard,
+                borderColor: colors.borderDefault,
+              }}
             >
               <View className="flex-row items-center justify-between mb-2">
-                <Text className="text-xs font-semibold" style={{ color: colors.textMuted }}>
+                <Text
+                  className="text-xs font-semibold"
+                  style={{ color: colors.textMuted }}
+                >
                   Conjuro #{idx + 1}
                 </Text>
                 <TouchableOpacity
@@ -903,7 +1035,11 @@ export default function CustomRaceEditor({
               </View>
               <TextInput
                 className="border rounded-lg px-3 py-2 text-sm mb-2"
-                style={{ backgroundColor: colors.bgInput, borderColor: colors.borderDefault, color: colors.textPrimary }}
+                style={{
+                  backgroundColor: colors.bgInput,
+                  borderColor: colors.borderDefault,
+                  color: colors.textPrimary,
+                }}
                 value={spell.nombre}
                 onChangeText={(t) => updateSpell(idx, { nombre: t })}
                 placeholder="Nombre del conjuro"
@@ -914,8 +1050,12 @@ export default function CustomRaceEditor({
                 <TouchableOpacity
                   className="flex-row items-center rounded-full px-3 py-1.5 mr-3 border"
                   style={{
-                    backgroundColor: spell.isCantrip ? withAlpha(colors.accentGold, 0.15) : colors.bgCard,
-                    borderColor: spell.isCantrip ? withAlpha(colors.accentGold, 0.5) : colors.borderDefault,
+                    backgroundColor: spell.isCantrip
+                      ? withAlpha(colors.accentGold, 0.15)
+                      : colors.bgCard,
+                    borderColor: spell.isCantrip
+                      ? withAlpha(colors.accentGold, 0.5)
+                      : colors.borderDefault,
                   }}
                   onPress={() =>
                     updateSpell(idx, {
@@ -926,7 +1066,11 @@ export default function CustomRaceEditor({
                 >
                   <Text
                     className="text-xs font-semibold"
-                    style={{ color: spell.isCantrip ? colors.accentGold : colors.textSecondary }}
+                    style={{
+                      color: spell.isCantrip
+                        ? colors.accentGold
+                        : colors.textSecondary,
+                    }}
                   >
                     Truco
                   </Text>
@@ -935,7 +1079,10 @@ export default function CustomRaceEditor({
                 {/* Min level (only if not cantrip) */}
                 {!spell.isCantrip && (
                   <View className="flex-row items-center">
-                    <Text className="text-xs mr-2" style={{ color: colors.textSecondary }}>
+                    <Text
+                      className="text-xs mr-2"
+                      style={{ color: colors.textSecondary }}
+                    >
                       Nivel mín:
                     </Text>
                     <TouchableOpacity
@@ -953,7 +1100,10 @@ export default function CustomRaceEditor({
                         color={colors.textPrimary}
                       />
                     </TouchableOpacity>
-                    <Text className="text-sm font-bold mx-2" style={{ color: colors.textPrimary }}>
+                    <Text
+                      className="text-sm font-bold mx-2"
+                      style={{ color: colors.textPrimary }}
+                    >
                       {spell.minLevel}
                     </Text>
                     <TouchableOpacity
@@ -982,7 +1132,10 @@ export default function CustomRaceEditor({
             style={{ borderColor: colors.borderDefault }}
           >
             <Ionicons name="add" size={18} color={colors.accentRed} />
-            <Text className="text-sm font-semibold ml-1" style={{ color: colors.accentRed }}>
+            <Text
+              className="text-sm font-semibold ml-1"
+              style={{ color: colors.accentRed }}
+            >
               Añadir conjuro innato
             </Text>
           </TouchableOpacity>

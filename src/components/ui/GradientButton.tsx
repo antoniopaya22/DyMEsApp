@@ -60,11 +60,13 @@ export default function GradientButton({
   loading = false,
   style,
 }: GradientButtonProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
-  const enabledColors = gradientColors ?? (isDark
-    ? ["#33EBFF", colors.accentRed, "#00BCD4"]
-    : ["#0E8BA5", colors.accentRed, "#0B5E73"]);
+  const enabledColors = gradientColors ?? [
+    colors.gradientButtonStart,
+    colors.gradientButtonMid,
+    colors.gradientButtonEnd,
+  ];
 
   const disabledColors: readonly [string, string, ...string[]] = [
     colors.bgElevated,
@@ -97,33 +99,43 @@ export default function GradientButton({
   return (
     <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
       <TouchableOpacity
-        style={[styles.button, isDisabled && styles.buttonDisabled]}
+        style={[
+          styles.button,
+          { shadowColor: colors.accentShadow },
+          isDisabled && styles.buttonDisabled,
+        ]}
         onPress={onPress}
         onPressIn={!isDisabled ? handlePressIn : undefined}
         onPressOut={!isDisabled ? handlePressOut : undefined}
         disabled={isDisabled}
         activeOpacity={1}
       >
-      <LinearGradient
-        colors={isDisabled ? disabledColors : enabledColors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      >
-        {loading && loadingLabel ? (
-          <Text style={styles.label}>{loadingLabel}</Text>
-        ) : (
-          <>
-            {icon && (
-              <Ionicons name={icon} size={22} color={colors.textInverted} />
-            )}
-            <Text style={[styles.label, { color: colors.textInverted }, icon ? { marginLeft: 8 } : undefined]}>
-              {label}
-            </Text>
-          </>
-        )}
-      </LinearGradient>
-    </TouchableOpacity>
+        <LinearGradient
+          colors={isDisabled ? disabledColors : enabledColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
+        >
+          {loading && loadingLabel ? (
+            <Text style={styles.label}>{loadingLabel}</Text>
+          ) : (
+            <>
+              {icon && (
+                <Ionicons name={icon} size={22} color={colors.textInverted} />
+              )}
+              <Text
+                style={[
+                  styles.label,
+                  { color: colors.textInverted },
+                  icon ? { marginLeft: 8 } : undefined,
+                ]}
+              >
+                {label}
+              </Text>
+            </>
+          )}
+        </LinearGradient>
+      </TouchableOpacity>
     </Animated.View>
   );
 }
@@ -132,7 +144,7 @@ const styles = StyleSheet.create({
   button: {
     borderRadius: 14,
     overflow: "hidden",
-    shadowColor: "#00BCD4",
+    shadowColor: "#000", // static: theme-independent
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,

@@ -19,7 +19,14 @@ export {
   getRacialSpellsUnlockedAtLevel,
 } from "./races";
 
-export type { RaceData, SubraceData, RaceTrait, DragonLineage, RacialSpellcasting, RacialSpellEntry } from "./races";
+export type {
+  RaceData,
+  SubraceData,
+  RaceTrait,
+  DragonLineage,
+  RacialSpellcasting,
+  RacialSpellEntry,
+} from "./races";
 
 // ─── Clases ──────────────────────────────────────────────────────────
 export {
@@ -85,7 +92,11 @@ export {
   getMaxSpellLevelForClass,
 } from "./leveling";
 
-export type { LevelFeature, LevelUpSummary, SpellLearningInfo } from "./leveling";
+export type {
+  LevelFeature,
+  LevelUpSummary,
+  SpellLearningInfo,
+} from "./leveling";
 
 // ─── Subclases ───────────────────────────────────────────────────────
 export {
@@ -131,3 +142,13 @@ export type {
   SubclassLevelBlock,
   SubclassFeatureData,
 } from "./subclassFeatures";
+
+// ─── Dotes (feats) ──────────────────────────────────────────────────
+export {
+  ALL_FEATS,
+  getFeatById,
+  getFeatsByCategory,
+  getOriginFeats,
+} from "./feats";
+
+export type { Feat, FeatEffect, FeatCategory, FeatSource } from "./feats";

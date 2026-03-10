@@ -30,6 +30,7 @@ export {
   calcCarryingCapacity,
   isEncumbered,
   calcEncumbrancePercentage,
+  calcDetailedEncumbrance,
   calcTotalGoldValue,
   countActiveAttunements,
   canAttune,
@@ -45,6 +46,8 @@ export {
   createEmptyItem,
   buildStartingInventory,
 } from "@/utils/inventory";
+
+export type { EncumbranceTier, DetailedEncumbrance } from "@/utils/inventory";
 
 // ─── Categorías de objetos ───────────────────────────────────────────
 
@@ -62,7 +65,11 @@ export type ItemCategory =
 
 // ─── Armas ───────────────────────────────────────────────────────────
 
-export type WeaponType = "sencilla_cuerpo" | "sencilla_distancia" | "marcial_cuerpo" | "marcial_distancia";
+export type WeaponType =
+  | "sencilla_cuerpo"
+  | "sencilla_distancia"
+  | "marcial_cuerpo"
+  | "marcial_distancia";
 
 export type WeaponProperty =
   | "ligera"

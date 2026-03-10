@@ -24,6 +24,7 @@ import {
 import { CampaignImagePicker } from "@/components/campaigns";
 import { type CampaignImageId } from "@/constants/campaignImages";
 import { useEntranceAnimation, useTheme, useDialog, useToast } from "@/hooks";
+import { withAlpha } from "@/utils/theme";
 
 export default function NewCampaignScreen() {
   const router = useRouter();
@@ -31,7 +32,9 @@ export default function NewCampaignScreen() {
   const { createCampaign } = useCampaignStore();
 
   const [nombre, setNombre] = useState("");
-  const [selectedImage, setSelectedImage] = useState<CampaignImageId | null>("campana1");
+  const [selectedImage, setSelectedImage] = useState<CampaignImageId | null>(
+    "campana1",
+  );
   const [saving, setSaving] = useState(false);
 
   const { dialogProps, showDestructive } = useDialog();
@@ -70,9 +73,20 @@ export default function NewCampaignScreen() {
   };
 
   // ── Entrance animations ──
-  const { containerStyle: formStyle } = useEntranceAnimation({ slide: true, distance: 20, duration: 400, slideDuration: 450 });
-  const { opacity: infoFade } = useEntranceAnimation({ delay: 120, duration: 350 });
-  const { opacity: buttonFade } = useEntranceAnimation({ delay: 240, duration: 350 });
+  const { containerStyle: formStyle } = useEntranceAnimation({
+    slide: true,
+    distance: 20,
+    duration: 400,
+    slideDuration: 450,
+  });
+  const { opacity: infoFade } = useEntranceAnimation({
+    delay: 120,
+    duration: 350,
+  });
+  const { opacity: buttonFade } = useEntranceAnimation({
+    delay: 240,
+    duration: 350,
+  });
 
   return (
     <KeyboardAvoidingView
@@ -153,7 +167,10 @@ export default function NewCampaignScreen() {
                 <View
                   style={[
                     styles.fieldCounterBar,
-                    { width: `${(nombre.length / 100) * 100}%` },
+                    {
+                      width: `${(nombre.length / 100) * 100}%`,
+                      backgroundColor: withAlpha(colors.accentShadow, 0.5),
+                    },
                   ]}
                 />
               </View>
@@ -179,7 +196,10 @@ export default function NewCampaignScreen() {
               ]}
             >
               <LinearGradient
-                colors={["rgba(0,229,255,0.04)", "rgba(0,229,255,0)"]}
+                colors={[
+                  withAlpha(colors.accentRed, 0.04),
+                  withAlpha(colors.accentRed, 0),
+                ]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFill}
@@ -203,7 +223,7 @@ export default function NewCampaignScreen() {
                   <View
                     style={[
                       styles.infoCardIconBg,
-                      { backgroundColor: colors.accentGoldGlow },
+                      { backgroundColor: withAlpha(colors.accentRed, 0.1) },
                     ]}
                   >
                     <Ionicons
@@ -222,10 +242,7 @@ export default function NewCampaignScreen() {
                   </Text>
                 </View>
                 <Text
-                  style={[
-                    styles.infoCardText,
-                    { color: colors.textSecondary },
-                  ]}
+                  style={[styles.infoCardText, { color: colors.textSecondary }]}
                 >
                   Una vez creada la partida, podrás añadir imagen, descripción y
                   crear un personaje de D&D 5e paso a paso: elegir raza, clase,
@@ -301,7 +318,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   fieldLabelRequired: {
-    color: "#00BCD4",
     fontWeight: "800",
   },
   inputContainer: {
@@ -327,7 +343,6 @@ const styles = StyleSheet.create({
   },
   fieldCounterBar: {
     height: "100%",
-    backgroundColor: "rgba(0,188,212,0.5)",
     borderRadius: 1,
   },
   fieldCounterText: {
@@ -369,7 +384,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: "rgba(0,229,255,0.1)",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 8,

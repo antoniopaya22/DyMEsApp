@@ -18,7 +18,7 @@ import {
   Text,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "@/hooks";
+import { useTheme, useEntranceAnimation } from "@/hooks";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -94,8 +94,8 @@ export default function GlowCard({
   const resolvedGlowColor = glowColor ?? colors.accentRed;
   const resolvedAccentColors: [string, string, ...string[]] = accentColors ?? [
     colors.accentRed,
-    "#00BCD4",
-    "#33EBFF",
+    colors.gradientButtonEnd,
+    colors.gradientButtonStart,
   ];
   const resolvedBg = backgroundColor ?? colors.bgCard;
   const resolvedBorder = borderColor ?? colors.borderDefault;
@@ -106,33 +106,13 @@ export default function GlowCard({
   // Animations
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0.3)).current;
-  const entranceAnim = useRef(new Animated.Value(fadeIn ? 0 : 1)).current;
-  const translateY = useRef(new Animated.Value(fadeIn ? 16 : 0)).current;
-
-  // Entrance animation
-  useEffect(() => {
-    if (fadeIn) {
-      const delay = fadeInDelay || 0;
-      const anim = Animated.parallel([
-        Animated.timing(entranceAnim, {
-          toValue: 1,
-          duration: 400,
-          delay,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 450,
-          delay,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]);
-      anim.start();
-      return () => anim.stop();
-    }
-  }, [fadeIn, fadeInDelay, entranceAnim, translateY]);
+  const { opacity: entranceAnim, translateY } = useEntranceAnimation({
+    active: fadeIn,
+    delay: fadeInDelay,
+    slide: true,
+    distance: 16,
+    slideDuration: 450,
+  });
 
   // Glow pulse animation
   useEffect(() => {

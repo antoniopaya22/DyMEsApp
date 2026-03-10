@@ -6,20 +6,18 @@
  * Features smooth fade + scale animation and tap-to-dismiss.
  */
 
-import { useEffect, useRef } from "react";
 import {
   View,
   TouchableWithoutFeedback,
   Modal,
   Animated,
-  Easing,
   StyleSheet,
   Dimensions,
 } from "react-native";
 import { Image } from "expo-image";
 import type { ImageSource } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/hooks";
+import { useTheme, useModalAnimation } from "@/hooks";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const IMAGE_SIZE = Math.min(SCREEN_WIDTH - 64, SCREEN_HEIGHT * 0.45, 360);
@@ -43,57 +41,15 @@ export default function AvatarPreviewModal({
 }: AvatarPreviewModalProps) {
   const { colors, isDark } = useTheme();
 
-  const backdropAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.7)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const { backdropAnim, scaleAnim, fadeAnim, dismiss } = useModalAnimation({
+    visible,
+    onDismiss: onClose,
+    initialScale: 0.7,
+    dismissScale: 0.7,
+    springFriction: 7,
+  });
 
-  useEffect(() => {
-    if (visible) {
-      Animated.parallel([
-        Animated.timing(backdropAnim, {
-          toValue: 1,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 7,
-          tension: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 200,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      backdropAnim.setValue(0);
-      scaleAnim.setValue(0.7);
-      fadeAnim.setValue(0);
-    }
-  }, [visible, backdropAnim, scaleAnim, fadeAnim]);
-
-  const handleClose = () => {
-    Animated.parallel([
-      Animated.timing(backdropAnim, {
-        toValue: 0,
-        duration: 180,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 0.7,
-        duration: 180,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start(() => onClose());
-  };
+  const handleClose = () => dismiss();
 
   if (!source) return null;
 
@@ -147,7 +103,11 @@ export default function AvatarPreviewModal({
                 <View
                   style={[
                     styles.nameBg,
-                    { backgroundColor: isDark ? "rgba(0,0,0,0.65)" : "rgba(0,0,0,0.50)" },
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(0,0,0,0.65)"
+                        : "rgba(0,0,0,0.50)",
+                    },
                   ]}
                 >
                   <Animated.Text
@@ -165,7 +125,11 @@ export default function AvatarPreviewModal({
               <View
                 style={[
                   styles.closeHintBg,
-                  { backgroundColor: isDark ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.40)" },
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(0,0,0,0.55)"
+                      : "rgba(0,0,0,0.40)",
+                  },
                 ]}
               >
                 <Ionicons name="close" size={18} color="#fff" />
@@ -191,7 +155,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     overflow: "hidden",
     elevation: 20,
-    shadowColor: "#000",
+    shadowColor: "#000", // static: theme-independent
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.4,
     shadowRadius: 20,

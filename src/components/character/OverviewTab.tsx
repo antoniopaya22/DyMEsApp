@@ -38,6 +38,8 @@ import LevelUpModal from "./LevelUpModal";
 import PersonalityAppearanceEditor from "./PersonalityAppearanceEditor";
 import { useTheme, useDialog } from "@/hooks";
 import { withAlpha } from "@/utils/theme";
+import { useUnidadesActuales } from "@/stores/settingsStore";
+import { formatDistancia } from "@/utils/units";
 import { CollapsibleSection, InfoBadge, ConfirmDialog } from "@/components/ui";
 import { TraitCard } from "./TraitCard";
 import { ABILITY_KEYS } from "@/constants/abilities";
@@ -56,16 +58,30 @@ const ABILITY_ORDER: AbilityKey[] = ABILITY_KEYS;
 
 export default function OverviewTab() {
   const { isDark, colors } = useTheme();
+  const unidades = useUnidadesActuales();
   const { onScroll } = useHeaderScroll();
   const router = useRouter();
-  const { character, saveCharacter, resetToLevel1, getSavingThrowBonus, getSkillBonus, updatePersonality, updateAppearance, updateAlignment, updateName } = useCharacterStore();
+  const {
+    character,
+    saveCharacter,
+    resetToLevel1,
+    getSavingThrowBonus,
+    getSkillBonus,
+    getEffectiveSpeed,
+    updatePersonality,
+    updateAppearance,
+    updateAlignment,
+    updateName,
+  } = useCharacterStore();
   const { startRecreation } = useCreationStore();
   const [expandedSection, setExpandedSection] = useState<string | null>(
     "abilities",
   );
   const [showLevelUpModal, setShowLevelUpModal] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
-  const [editorTab, setEditorTab] = useState<"personality" | "appearance">("personality");
+  const [editorTab, setEditorTab] = useState<"personality" | "appearance">(
+    "personality",
+  );
   const { dialogProps, showDialog } = useDialog();
 
   const handleRollD20 = useCallback(
@@ -83,9 +99,10 @@ export default function OverviewTab() {
       const extraModParts = (modifiers?.passiveBonuses ?? [])
         .filter((pb) => !pb.includedInBase)
         .map((pb) => `+${pb.bonus}`);
-      const fullModStr = extraModParts.length > 0
-        ? `${modStr} ${extraModParts.join(" ")}`
-        : modStr;
+      const fullModStr =
+        extraModParts.length > 0
+          ? `${modStr} ${extraModParts.join(" ")}`
+          : modStr;
 
       // Construir notas de rasgos activos para el diálogo de confirmación
       const notes: string[] = [];
@@ -136,12 +153,9 @@ export default function OverviewTab() {
               const dieMinimum = modifiers?.minimum ?? null;
               const minApplied =
                 dieMinimum != null && rawDie < dieMinimum.minDieValue;
-              const effectiveDie = minApplied
-                ? dieMinimum.minDieValue
-                : rawDie;
-              const finalTotal = (minApplied
-                ? effectiveDie + mod
-                : result.total) + extraPassive;
+              const effectiveDie = minApplied ? dieMinimum.minDieValue : rawDie;
+              const finalTotal =
+                (minApplied ? effectiveDie + mod : result.total) + extraPassive;
 
               let emoji = "";
               if (result.isCritical) {
@@ -220,7 +234,11 @@ export default function OverviewTab() {
       if (!character) return;
       const abilityName = ABILITY_NAMES[key];
       const bonus = getSavingThrowBonus(key);
-      handleRollD20(`Salvación de ${abilityName}`, `Salvación ${abilityName}`, bonus);
+      handleRollD20(
+        `Salvación de ${abilityName}`,
+        `Salvación ${abilityName}`,
+        bonus,
+      );
     },
     [character, getSavingThrowBonus, handleRollD20],
   );
@@ -235,12 +253,7 @@ export default function OverviewTab() {
       const modifiers = getSkillRollModifiers(character, key);
 
       // Pasar solo el mod base; handleRollD20 suma y muestra los extras aparte
-      handleRollD20(
-        `Tirada de ${skillName}`,
-        skillName,
-        baseBonus,
-        modifiers,
-      );
+      handleRollD20(`Tirada de ${skillName}`, skillName, baseBonus, modifiers);
     },
     [character, getSkillBonus, handleRollD20],
   );
@@ -301,7 +314,9 @@ export default function OverviewTab() {
   const raceData = getRaceData(character.raza);
   const classData = getClassData(character.clase);
   const backgroundData = getBackgroundData(character.trasfondo);
-  const backgroundDisplayName = character.customBackgroundName ?? backgroundData.nombre;
+  const backgroundDisplayName =
+    character.customBackgroundName ?? backgroundData.nombre;
+  const effectiveSpeed = getEffectiveSpeed();
 
   const toggleSection = (section: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -312,51 +327,54 @@ export default function OverviewTab() {
 
   const renderBasicInfo = () => {
     return (
-    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
-      <View className="flex-row flex-wrap">
-        <InfoBadge
-          icon="book-outline"
-          label={backgroundDisplayName}
-        />
-        {character.alineamiento && (
+      <View
+        className="rounded-card border p-4 mb-4"
+        style={{
+          backgroundColor: colors.bgElevated,
+          borderColor: colors.borderDefault,
+        }}
+      >
+        <View className="flex-row flex-wrap">
+          <InfoBadge icon="book-outline" label={backgroundDisplayName} />
+          {character.alineamiento && (
+            <InfoBadge
+              icon="compass-outline"
+              label={ALIGNMENT_NAMES[character.alineamiento]}
+            />
+          )}
           <InfoBadge
-            icon="compass-outline"
-            label={ALIGNMENT_NAMES[character.alineamiento]}
+            icon="star-outline"
+            label={`XP: ${character.experiencia}`}
           />
-        )}
-        <InfoBadge
-          icon="star-outline"
-          label={`XP: ${character.experiencia}`}
-        />
-        <InfoBadge
-          icon="ribbon-outline"
-          label={`Competencia: +${character.proficiencyBonus}`}
-        />
-        <InfoBadge
-          icon="walk-outline"
-          label={`${character.speed.walk} pies`}
-        />
-        {character.speed.swim ? (
           <InfoBadge
-            icon="water-outline"
-            label={`Nadar: ${character.speed.swim} pies`}
+            icon="ribbon-outline"
+            label={`Competencia: +${character.proficiencyBonus}`}
           />
-        ) : null}
-        {character.speed.climb ? (
           <InfoBadge
-            icon="trending-up-outline"
-            label={`Trepar: ${character.speed.climb} pies`}
+            icon="walk-outline"
+            label={formatDistancia(effectiveSpeed.walk, unidades)}
           />
-        ) : null}
-        {character.speed.fly ? (
-          <InfoBadge
-            icon="airplane-outline"
-            label={`Volar: ${character.speed.fly} pies`}
-          />
-        ) : null}
+          {effectiveSpeed.swim ? (
+            <InfoBadge
+              icon="water-outline"
+              label={`Nadar: ${formatDistancia(effectiveSpeed.swim!, unidades)}`}
+            />
+          ) : null}
+          {effectiveSpeed.climb ? (
+            <InfoBadge
+              icon="trending-up-outline"
+              label={`Trepar: ${formatDistancia(effectiveSpeed.climb!, unidades)}`}
+            />
+          ) : null}
+          {effectiveSpeed.fly ? (
+            <InfoBadge
+              icon="airplane-outline"
+              label={`Volar: ${formatDistancia(effectiveSpeed.fly!, unidades)}`}
+            />
+          ) : null}
+        </View>
       </View>
-    </View>
-  );
+    );
   };
 
   const renderAbilityScores = () => (
@@ -375,7 +393,10 @@ export default function OverviewTab() {
               activeOpacity={0.7}
               onPress={() => handleAbilityRoll(key)}
               className="w-[31%] rounded-xl p-3 mb-3 items-center border"
-              style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
+              style={{
+                backgroundColor: colors.bgCard,
+                borderColor: colors.borderDefault,
+              }}
             >
               <Text
                 className="text-xs font-bold uppercase tracking-wider mb-1"
@@ -383,19 +404,28 @@ export default function OverviewTab() {
               >
                 {ABILITY_ABBR[key]}
               </Text>
-              <Text className="text-3xl font-bold" style={{ color: colors.textPrimary }}>
+              <Text
+                className="text-3xl font-bold"
+                style={{ color: colors.textPrimary }}
+              >
                 {score.total}
               </Text>
               <View
                 className="rounded-full px-3 py-1 mt-1"
                 style={{ backgroundColor: withAlpha(colors.accentRed, 0.13) }}
               >
-                <Text className="text-sm font-bold" style={{ color: colors.accentRed }}>
+                <Text
+                  className="text-sm font-bold"
+                  style={{ color: colors.accentRed }}
+                >
                   {formatModifier(score.modifier)}
                 </Text>
               </View>
               {score.racial > 0 && (
-                <Text className="text-[10px] mt-1" style={{ color: colors.textMuted }}>
+                <Text
+                  className="text-[10px] mt-1"
+                  style={{ color: colors.textMuted }}
+                >
                   Base {score.base} + Racial {score.racial}
                 </Text>
               )}
@@ -453,13 +483,22 @@ export default function OverviewTab() {
                       />
                     )}
                   </View>
-                  <Text className="text-xs font-bold flex-1" style={{ color: save.proficient ? colors.accentRed : colors.textMuted }}>
+                  <Text
+                    className="text-xs font-bold flex-1"
+                    style={{
+                      color: save.proficient
+                        ? colors.accentRed
+                        : colors.textMuted,
+                    }}
+                  >
                     {ABILITY_ABBR[key]}
                   </Text>
                   <Text
                     className="text-sm font-bold"
                     style={{
-                      color: save.proficient ? colors.accentRed : colors.textMuted,
+                      color: save.proficient
+                        ? colors.accentRed
+                        : colors.textMuted,
                     }}
                   >
                     {formatModifier(bonus)}
@@ -505,14 +544,18 @@ export default function OverviewTab() {
               activeOpacity={0.7}
               onPress={() => handleSkillRoll(key)}
               className="flex-row items-center py-2 border-b"
-              style={{ borderBottomColor: withAlpha(colors.borderDefault, 0.5) }}
+              style={{
+                borderBottomColor: withAlpha(colors.borderDefault, 0.5),
+              }}
             >
               {/* Proficiency indicator */}
               <View className="h-5 w-5 rounded-full items-center justify-center mr-2">
                 {isExpertise ? (
                   <View
                     className="h-5 w-5 rounded-full items-center justify-center"
-                    style={{ backgroundColor: withAlpha(colors.accentRed, 0.2) }}
+                    style={{
+                      backgroundColor: withAlpha(colors.accentRed, 0.2),
+                    }}
                   >
                     <Ionicons name="star" size={12} color={colors.accentRed} />
                   </View>
@@ -522,7 +565,10 @@ export default function OverviewTab() {
                     style={{ backgroundColor: colors.accentRed }}
                   />
                 ) : (
-                  <View className="h-4 w-4 rounded-full border-2" style={{ borderColor: colors.textMuted }} />
+                  <View
+                    className="h-4 w-4 rounded-full border-2"
+                    style={{ borderColor: colors.textMuted }}
+                  />
                 )}
               </View>
 
@@ -540,7 +586,10 @@ export default function OverviewTab() {
                 >
                   {skill.nombre}
                 </Text>
-                <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+                <Text
+                  className="text-[10px]"
+                  style={{ color: colors.textMuted }}
+                >
                   {ABILITY_ABBR[skill.habilidad]}
                 </Text>
               </View>
@@ -639,7 +688,10 @@ export default function OverviewTab() {
     >
       {character.personality.traits.length > 0 && (
         <View className="mb-3">
-          <Text className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: colors.accentGold }}>
+          <Text
+            className="text-xs font-semibold uppercase tracking-wider mb-1"
+            style={{ color: colors.accentGold }}
+          >
             Rasgos de Personalidad
           </Text>
           {character.personality.traits.map((trait, idx) => (
@@ -655,40 +707,64 @@ export default function OverviewTab() {
       )}
       {character.personality.ideals ? (
         <View className="mb-3">
-          <Text className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: colors.accentGold }}>
+          <Text
+            className="text-xs font-semibold uppercase tracking-wider mb-1"
+            style={{ color: colors.accentGold }}
+          >
             Ideales
           </Text>
-          <Text className="text-sm leading-5" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-sm leading-5"
+            style={{ color: colors.textSecondary }}
+          >
             {character.personality.ideals}
           </Text>
         </View>
       ) : null}
       {character.personality.bonds ? (
         <View className="mb-3">
-          <Text className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: colors.accentGold }}>
+          <Text
+            className="text-xs font-semibold uppercase tracking-wider mb-1"
+            style={{ color: colors.accentGold }}
+          >
             Vínculos
           </Text>
-          <Text className="text-sm leading-5" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-sm leading-5"
+            style={{ color: colors.textSecondary }}
+          >
             {character.personality.bonds}
           </Text>
         </View>
       ) : null}
       {character.personality.flaws ? (
         <View className="mb-3">
-          <Text className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: colors.accentGold }}>
+          <Text
+            className="text-xs font-semibold uppercase tracking-wider mb-1"
+            style={{ color: colors.accentGold }}
+          >
             Defectos
           </Text>
-          <Text className="text-sm leading-5" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-sm leading-5"
+            style={{ color: colors.textSecondary }}
+          >
             {character.personality.flaws}
           </Text>
         </View>
       ) : null}
       {character.personality.backstory ? (
         <View>
-          <Text className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: colors.accentGold }}>
+          <Text
+            className="text-xs font-semibold uppercase tracking-wider mb-1"
+            style={{ color: colors.accentGold }}
+          >
             Trasfondo
           </Text>
-          <Text className="text-sm leading-5" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-sm leading-5"
+            style={{ color: colors.textSecondary }}
+          >
             {character.personality.backstory}
           </Text>
         </View>
@@ -706,7 +782,14 @@ export default function OverviewTab() {
 
   const renderAppearance = () => {
     const a = character.appearance;
-    const hasData = a.age || a.height || a.weight || a.eyeColor || a.hairColor || a.skinColor || a.description;
+    const hasData =
+      a.age ||
+      a.height ||
+      a.weight ||
+      a.eyeColor ||
+      a.hairColor ||
+      a.skinColor ||
+      a.description;
     return (
       <CollapsibleSection
         title="Apariencia"
@@ -719,7 +802,11 @@ export default function OverviewTab() {
             hitSlop={8}
             style={{ marginRight: 4 }}
           >
-            <Ionicons name="pencil-outline" size={18} color={colors.accentGold} />
+            <Ionicons
+              name="pencil-outline"
+              size={18}
+              color={colors.accentGold}
+            />
           </TouchableOpacity>
         }
       >
@@ -744,15 +831,24 @@ export default function OverviewTab() {
                   <InfoBadge icon="eye-outline" label={`Ojos: ${a.eyeColor}`} />
                 ) : null}
                 {a.hairColor ? (
-                  <InfoBadge icon="cut-outline" label={`Pelo: ${a.hairColor}`} />
+                  <InfoBadge
+                    icon="cut-outline"
+                    label={`Pelo: ${a.hairColor}`}
+                  />
                 ) : null}
                 {a.skinColor ? (
-                  <InfoBadge icon="hand-left-outline" label={`Piel: ${a.skinColor}`} />
+                  <InfoBadge
+                    icon="hand-left-outline"
+                    label={`Piel: ${a.skinColor}`}
+                  />
                 ) : null}
               </View>
             )}
             {a.description ? (
-              <Text className="text-sm leading-5" style={{ color: colors.textSecondary }}>
+              <Text
+                className="text-sm leading-5"
+                style={{ color: colors.textSecondary }}
+              >
                 {a.description}
               </Text>
             ) : null}
@@ -847,7 +943,6 @@ export default function OverviewTab() {
           initialTab={editorTab}
         />
       )}
-
     </>
   );
 }
@@ -865,11 +960,25 @@ function SpeedBadge({
 }) {
   const { colors: sbColors } = useTheme();
   return (
-    <View className="flex-row items-center rounded-lg px-3 py-2 mr-2 mb-2 border" style={{ backgroundColor: sbColors.bgCard, borderColor: sbColors.borderDefault }}>
+    <View
+      className="flex-row items-center rounded-lg px-3 py-2 mr-2 mb-2 border"
+      style={{
+        backgroundColor: sbColors.bgCard,
+        borderColor: sbColors.borderDefault,
+      }}
+    >
       <Ionicons name={icon} size={16} color={sbColors.accentGreen} />
       <View className="ml-2">
-        <Text className="text-[10px] uppercase" style={{ color: sbColors.textMuted }}>{label}</Text>
-        <Text className="text-sm font-bold" style={{ color: sbColors.textPrimary }}>
+        <Text
+          className="text-[10px] uppercase"
+          style={{ color: sbColors.textMuted }}
+        >
+          {label}
+        </Text>
+        <Text
+          className="text-sm font-bold"
+          style={{ color: sbColors.textPrimary }}
+        >
           {value}
         </Text>
       </View>
@@ -891,7 +1000,10 @@ function ProficiencyGroup({
     <View className="mb-3">
       <View className="flex-row items-center mb-2">
         <Ionicons name={icon} size={14} color={pgColors.textMuted} />
-        <Text className="text-xs font-semibold uppercase tracking-wider ml-1.5" style={{ color: pgColors.textSecondary }}>
+        <Text
+          className="text-xs font-semibold uppercase tracking-wider ml-1.5"
+          style={{ color: pgColors.textSecondary }}
+        >
           {title}
         </Text>
       </View>
@@ -900,7 +1012,10 @@ function ProficiencyGroup({
           <View
             key={idx}
             className="rounded-lg px-2.5 py-1.5 mr-1.5 mb-1.5 border"
-            style={{ backgroundColor: pgColors.chipBg, borderColor: pgColors.chipBorder }}
+            style={{
+              backgroundColor: pgColors.chipBg,
+              borderColor: pgColors.chipBorder,
+            }}
           >
             <Text className="text-xs" style={{ color: pgColors.textSecondary }}>
               {item}
@@ -911,5 +1026,3 @@ function ProficiencyGroup({
     </View>
   );
 }
-
-

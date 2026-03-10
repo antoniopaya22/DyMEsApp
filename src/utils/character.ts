@@ -2,7 +2,8 @@
  * Character utility functions — modifiers, proficiency, hit dice.
  * Extracted from types/character.ts for separation of concerns.
  */
-import type { HitDie } from "@/types/character";
+import type { HitDie, Trait } from "@/types/character";
+import type { LimitedUseEffect } from "@/types/traitEffects";
 
 // ─── Modifier calculations ───────────────────────────────────────────
 
@@ -39,4 +40,26 @@ export function hitDieFixedValue(die: HitDie): number {
 /** Formatea un modificador con signo (+/-) */
 export function formatModifier(mod: number): string {
   return mod >= 0 ? `+${mod}` : `${mod}`;
+}
+
+// ─── Trait Helpers ───────────────────────────────────────────────────
+
+/** Resolve limitedUse effects into maxUses/currentUses/recharge for a given level. */
+export function resolveLimitedUse(
+  efectos: Trait["efectos"],
+  level: number,
+): Pick<Trait, "maxUses" | "currentUses" | "recharge"> {
+  const limitedUse = efectos?.find((e) => e.kind === "limitedUse") as
+    | LimitedUseEffect
+    | undefined;
+  if (!limitedUse) return { maxUses: null, currentUses: null, recharge: null };
+  const resolved =
+    limitedUse.maxUses === "proficiencyBonus"
+      ? calcProficiencyBonus(level)
+      : limitedUse.maxUses;
+  return {
+    maxUses: resolved,
+    currentUses: resolved,
+    recharge: limitedUse.recharge,
+  };
 }

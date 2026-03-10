@@ -7,7 +7,13 @@
  *   HPTracker, DeathSavesTracker, HitDiceSection, ConditionsSection
  */
 
-import { View, Text, Animated, TouchableOpacity, TextInput } from "react-native";
+import {
+  View,
+  Text,
+  Animated,
+  TouchableOpacity,
+  TextInput,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useCharacterStore } from "@/stores/characterStore";
 import { useHeaderScroll } from "@/hooks";
@@ -15,6 +21,8 @@ import { ConfirmDialog, Toast } from "@/components/ui";
 import { useTheme, useDialog, useToast } from "@/hooks";
 import { withAlpha } from "@/utils/theme";
 import { formatModifier } from "@/types/character";
+import { useUnidadesActuales } from "@/stores/settingsStore";
+import { convertirDistancia, etiquetaDistancia } from "@/utils/units";
 
 // Extracted sub-components
 import {
@@ -30,6 +38,7 @@ import {
 
 export default function CombatTab() {
   const { colors } = useTheme();
+  const unidades = useUnidadesActuales();
   const { onScroll } = useHeaderScroll();
   const { dialogProps, showAlert, showConfirm } = useDialog();
   const {
@@ -44,6 +53,8 @@ export default function CombatTab() {
     longRest,
     clearConcentration,
     getArmorClass,
+    getInitiativeBonus,
+    getEffectiveSpeed,
   } = useCharacterStore();
 
   if (!character) {
@@ -56,8 +67,9 @@ export default function CombatTab() {
     );
   }
 
-  const { hp, hitDice, speed, concentration } = character;
+  const { hp, hitDice, concentration } = character;
   const ac = getArmorClass();
+  const effectiveSpeed = getEffectiveSpeed();
 
   // ── Actions ──
 
@@ -138,46 +150,91 @@ export default function CombatTab() {
   const renderStatsRow = () => (
     <View className="flex-row mb-4">
       {/* Armor Class */}
-      <View className="flex-1 rounded-card border p-4 mr-2" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+      <View
+        className="flex-1 rounded-card border p-4 mr-2"
+        style={{
+          backgroundColor: colors.bgElevated,
+          borderColor: colors.borderDefault,
+        }}
+      >
         <View className="items-center">
-          <View className="h-14 w-14 rounded-full items-center justify-center mb-1" style={{ backgroundColor: withAlpha(colors.accentRed, 0.15) }}>
+          <View
+            className="h-14 w-14 rounded-full items-center justify-center mb-1"
+            style={{ backgroundColor: withAlpha(colors.accentRed, 0.15) }}
+          >
             <Ionicons name="shield" size={28} color={colors.accentRed} />
           </View>
-          <Text className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+          <Text
+            className="text-2xl font-bold"
+            style={{ color: colors.textPrimary }}
+          >
             {ac}
           </Text>
-          <Text className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: colors.textMuted }}>
+          <Text
+            className="text-[10px] uppercase tracking-wider mt-0.5"
+            style={{ color: colors.textMuted }}
+          >
             Clase de Armadura
           </Text>
         </View>
       </View>
 
       {/* Initiative */}
-      <View className="flex-1 rounded-card border p-4 mx-1" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+      <View
+        className="flex-1 rounded-card border p-4 mx-1"
+        style={{
+          backgroundColor: colors.bgElevated,
+          borderColor: colors.borderDefault,
+        }}
+      >
         <View className="items-center">
-          <View className="h-14 w-14 rounded-full items-center justify-center mb-1" style={{ backgroundColor: withAlpha(colors.accentRed, 0.15) }}>
+          <View
+            className="h-14 w-14 rounded-full items-center justify-center mb-1"
+            style={{ backgroundColor: withAlpha(colors.accentRed, 0.15) }}
+          >
             <Ionicons name="flash" size={28} color={colors.accentRed} />
           </View>
-          <Text className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
-            {formatModifier(character.abilityScores.des.modifier)}
+          <Text
+            className="text-2xl font-bold"
+            style={{ color: colors.textPrimary }}
+          >
+            {formatModifier(getInitiativeBonus())}
           </Text>
-          <Text className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: colors.textMuted }}>
+          <Text
+            className="text-[10px] uppercase tracking-wider mt-0.5"
+            style={{ color: colors.textMuted }}
+          >
             Iniciativa
           </Text>
         </View>
       </View>
 
       {/* Speed */}
-      <View className="flex-1 rounded-card border p-4 ml-2" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+      <View
+        className="flex-1 rounded-card border p-4 ml-2"
+        style={{
+          backgroundColor: colors.bgElevated,
+          borderColor: colors.borderDefault,
+        }}
+      >
         <View className="items-center">
-          <View className="h-14 w-14 rounded-full items-center justify-center mb-1" style={{ backgroundColor: withAlpha(colors.accentRed, 0.15) }}>
+          <View
+            className="h-14 w-14 rounded-full items-center justify-center mb-1"
+            style={{ backgroundColor: withAlpha(colors.accentRed, 0.15) }}
+          >
             <Ionicons name="footsteps" size={28} color={colors.accentRed} />
           </View>
-          <Text className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
-            {speed.walk}
+          <Text
+            className="text-2xl font-bold"
+            style={{ color: colors.textPrimary }}
+          >
+            {convertirDistancia(effectiveSpeed.walk, unidades).valor}
           </Text>
-          <Text className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: colors.textMuted }}>
-            Velocidad (pies)
+          <Text
+            className="text-[10px] uppercase tracking-wider mt-0.5"
+            style={{ color: colors.textMuted }}
+          >
+            {`Velocidad (${etiquetaDistancia(unidades)})`}
           </Text>
         </View>
       </View>
@@ -188,15 +245,27 @@ export default function CombatTab() {
     if (!concentration) return null;
 
     return (
-      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: withAlpha(colors.accentRed, 0.3) }}>
+      <View
+        className="rounded-card border p-4 mb-4"
+        style={{
+          backgroundColor: colors.bgElevated,
+          borderColor: withAlpha(colors.accentRed, 0.3),
+        }}
+      >
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center flex-1">
             <Ionicons name="eye" size={20} color={colors.accentRed} />
             <View className="ml-3 flex-1">
-              <Text className="text-[10px] uppercase tracking-wider" style={{ color: colors.textMuted }}>
+              <Text
+                className="text-[10px] uppercase tracking-wider"
+                style={{ color: colors.textMuted }}
+              >
                 Concentración
               </Text>
-              <Text className="text-sm font-semibold" style={{ color: colors.accentRed }}>
+              <Text
+                className="text-sm font-semibold"
+                style={{ color: colors.accentRed }}
+              >
                 {concentration.spellName}
               </Text>
             </View>
@@ -217,8 +286,75 @@ export default function CombatTab() {
               );
             }}
           >
-            <Text className="text-xs font-semibold" style={{ color: colors.accentRed }}>Romper</Text>
+            <Text
+              className="text-xs font-semibold"
+              style={{ color: colors.accentRed }}
+            >
+              Romper
+            </Text>
           </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
+  const renderDamageModifiers = () => {
+    if (character.damageModifiers.length === 0) return null;
+
+    return (
+      <View
+        className="rounded-card border p-4 mb-4"
+        style={{
+          backgroundColor: colors.bgElevated,
+          borderColor: colors.borderDefault,
+        }}
+      >
+        <Text
+          className="text-xs font-semibold uppercase tracking-wider mb-2"
+          style={{ color: colors.textSecondary }}
+        >
+          Resistencias / Inmunidades
+        </Text>
+        <View className="flex-row flex-wrap" style={{ gap: 6 }}>
+          {character.damageModifiers.map((dm, i) => (
+            <View
+              key={`${dm.type}-${i}`}
+              className="rounded-lg px-2.5 py-1.5 border"
+              style={{
+                backgroundColor:
+                  dm.modifier === "immunity"
+                    ? withAlpha(colors.accentGold, 0.12)
+                    : dm.modifier === "vulnerability"
+                      ? withAlpha(colors.accentDanger, 0.12)
+                      : withAlpha(colors.accentBlue, 0.12),
+                borderColor:
+                  dm.modifier === "immunity"
+                    ? withAlpha(colors.accentGold, 0.3)
+                    : dm.modifier === "vulnerability"
+                      ? withAlpha(colors.accentDanger, 0.3)
+                      : withAlpha(colors.accentBlue, 0.3),
+              }}
+            >
+              <Text
+                className="text-xs font-medium"
+                style={{
+                  color:
+                    dm.modifier === "immunity"
+                      ? colors.accentGold
+                      : dm.modifier === "vulnerability"
+                        ? colors.accentDanger
+                        : colors.accentBlue,
+                }}
+              >
+                {dm.modifier === "resistance"
+                  ? "Res."
+                  : dm.modifier === "immunity"
+                    ? "Inmun."
+                    : "Vuln."}{" "}
+                {dm.type}
+              </Text>
+            </View>
+          ))}
         </View>
       </View>
     );
@@ -226,25 +362,55 @@ export default function CombatTab() {
 
   const renderRestButtons = () => (
     <View className="flex-row mb-4">
-      <TouchableOpacity onPress={handleShortRest} activeOpacity={0.7} className="flex-1 rounded-card border p-4 mr-2" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+      <TouchableOpacity
+        onPress={handleShortRest}
+        activeOpacity={0.7}
+        className="flex-1 rounded-card border p-4 mr-2"
+        style={{
+          backgroundColor: colors.bgElevated,
+          borderColor: colors.borderDefault,
+        }}
+      >
         <View className="items-center">
           <Ionicons name="cafe-outline" size={24} color={colors.accentRed} />
-          <Text className="text-sm font-semibold mt-1" style={{ color: colors.textPrimary }}>
+          <Text
+            className="text-sm font-semibold mt-1"
+            style={{ color: colors.textPrimary }}
+          >
             Descanso Corto
           </Text>
-          <Text className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>
+          <Text
+            className="text-[10px] mt-0.5"
+            style={{ color: colors.textMuted }}
+          >
             Usa dados de golpe
           </Text>
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={handleLongRest} activeOpacity={0.7} className="flex-1 rounded-card border p-4 ml-2" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+      <TouchableOpacity
+        onPress={handleLongRest}
+        activeOpacity={0.7}
+        className="flex-1 rounded-card border p-4 ml-2"
+        style={{
+          backgroundColor: colors.bgElevated,
+          borderColor: colors.borderDefault,
+        }}
+      >
         <View className="items-center">
           <Ionicons name="moon-outline" size={24} color={colors.accentRed} />
-          <Text className="text-sm font-semibold mt-1" style={{ color: colors.textPrimary }}>
+          <Text
+            className="text-sm font-semibold mt-1"
+            style={{ color: colors.textPrimary }}
+          >
             Descanso Largo
           </Text>
-          <Text className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>Recupera todo</Text>
+          <Text
+            className="text-[10px] mt-0.5"
+            style={{ color: colors.textMuted }}
+          >
+            Recupera todo
+          </Text>
         </View>
       </TouchableOpacity>
     </View>
@@ -262,6 +428,7 @@ export default function CombatTab() {
       >
         <HPTracker onShowToast={showToast} />
         {renderStatsRow()}
+        {renderDamageModifiers()}
         <WeaponAttacks />
         <DeathSavesTracker
           onShowAlert={showAlert}

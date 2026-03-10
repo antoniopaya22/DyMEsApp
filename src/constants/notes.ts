@@ -31,6 +31,11 @@ export const PREDEFINED_TAG_ICONS: Record<PredefinedTag, string> = {
   general: "document-text",
 };
 
+/**
+ * Static tag colors — dark-mode optimized (Tailwind 500 shades).
+ * These are domain-specific category colors, not theme tokens.
+ * They may need a light-mode variant if contrast becomes an issue.
+ */
 export const PREDEFINED_TAG_COLORS: Record<PredefinedTag, string> = {
   npc: "#f59e0b",
   lugar: "#22c55e",

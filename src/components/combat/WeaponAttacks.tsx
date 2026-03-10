@@ -19,13 +19,10 @@ import {
 import { WEAPON_PROPERTY_NAMES } from "@/constants/items";
 import { ConfirmDialog } from "@/components/ui";
 import { rollD20, parseFormula, executeFormula } from "@/utils/dice";
+import { formatModifier } from "@/utils/character";
 import type { InventoryItem, WeaponDetails } from "@/types/item";
 
 // ─── Helpers ─────────────────────────────────────────────────────────
-
-function formatModifier(mod: number): string {
-  return mod >= 0 ? `+${mod}` : `${mod}`;
-}
 
 /** Check if character is proficient with a weapon based on proficiencies list */
 function isWeaponProficient(
@@ -129,9 +126,9 @@ export function WeaponAttacks() {
                       fontSize: 28,
                       fontWeight: "bold" as const,
                       color: result.isCritical
-                        ? "#22c55e"
+                        ? colors.accentGreen
                         : result.isFumble
-                          ? "#ef4444"
+                          ? colors.accentDanger
                           : colors.textPrimary,
                     },
                   },
@@ -168,9 +165,12 @@ export function WeaponAttacks() {
             if (!mainParsed) return;
             const mainResult = executeFormula(mainParsed, "normal", damageMod);
             const mainDice = mainResult.rolls.map((r) => r.value).join(", ");
-            const mainModStr = damageMod !== 0
-              ? (damageMod > 0 ? ` +${damageMod}` : ` ${damageMod}`)
-              : "";
+            const mainModStr =
+              damageMod !== 0
+                ? damageMod > 0
+                  ? ` +${damageMod}`
+                  : ` ${damageMod}`
+                : "";
 
             let totalDamage = mainResult.total;
             let resultMsg = `🎲 ${wd.damage.dice}${mainModStr} → [${mainDice}]${mainModStr} = ${mainResult.total} ${wd.damage.damageType}`;
@@ -180,7 +180,9 @@ export function WeaponAttacks() {
               const bonusParsed = parseFormula(wd.bonusDamage.dice);
               if (bonusParsed) {
                 const bonusResult = executeFormula(bonusParsed, "normal", 0);
-                const bonusDice = bonusResult.rolls.map((r) => r.value).join(", ");
+                const bonusDice = bonusResult.rolls
+                  .map((r) => r.value)
+                  .join(", ");
                 totalDamage += bonusResult.total;
                 resultMsg += `\n🎲 +${wd.bonusDamage.dice} → [${bonusDice}] = ${bonusResult.total} ${wd.bonusDamage.damageType}`;
               }
@@ -213,11 +215,24 @@ export function WeaponAttacks() {
 
   return (
     <>
-      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+      <View
+        className="rounded-card border p-4 mb-4"
+        style={{
+          backgroundColor: colors.bgElevated,
+          borderColor: colors.borderDefault,
+        }}
+      >
         {/* Header */}
         <View className="flex-row items-center mb-3">
-          <Ionicons name="flash-outline" size={20} color={colors.accentDanger} />
-          <Text className="text-xs font-semibold uppercase tracking-wider ml-2" style={{ color: colors.textSecondary }}>
+          <Ionicons
+            name="flash-outline"
+            size={20}
+            color={colors.accentDanger}
+          />
+          <Text
+            className="text-xs font-semibold uppercase tracking-wider ml-2"
+            style={{ color: colors.textSecondary }}
+          >
             Ataques
           </Text>
         </View>
@@ -226,7 +241,11 @@ export function WeaponAttacks() {
         {equippedWeapons.map((weapon) => {
           if (!weapon.weaponDetails) return null;
           const wd = weapon.weaponDetails;
-          const isProficient = isWeaponProficient(wd, weapon.nombre, weaponProfs);
+          const isProficient = isWeaponProficient(
+            wd,
+            weapon.nombre,
+            weaponProfs,
+          );
           const attackBonus = calcWeaponAttackBonus(
             wd,
             strMod,
@@ -235,7 +254,11 @@ export function WeaponAttacks() {
             isProficient,
           );
           const damageMod = calcWeaponDamageModifier(wd, strMod, dexMod);
-          const damageStr = formatWeaponDamage(wd.damage, damageMod, wd.bonusDamage);
+          const damageStr = formatWeaponDamage(
+            wd.damage,
+            damageMod,
+            wd.bonusDamage,
+          );
 
           // Properties summary
           const props = wd.properties
@@ -257,7 +280,10 @@ export function WeaponAttacks() {
               {/* Weapon name row */}
               <View
                 className="flex-row items-center px-3 py-2"
-                style={{ borderBottomWidth: 1, borderBottomColor: colors.borderSubtle }}
+                style={{
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.borderSubtle,
+                }}
               >
                 <Ionicons
                   name={wd.melee ? "hand-left-outline" : "locate-outline"}

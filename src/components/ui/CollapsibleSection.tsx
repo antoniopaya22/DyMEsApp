@@ -10,6 +10,8 @@
  * - `CollapsibleSection` — uses NativeWind/className styling (for character tabs)
  * - `CollapsibleCard` — uses StyleSheet styling (for settings-type screens)
  *
+ * Both share animation logic via `useCollapseToggle`.
+ *
  * @example
  * // NativeWind variant
  * <CollapsibleSection
@@ -45,21 +47,57 @@ import {
   Platform,
   UIManager,
 } from "react-native";
+import type { LayoutAnimationConfig } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks";
 
 // Enable LayoutAnimation on Android
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
 /** Smooth expand/collapse spring config */
-const LAYOUT_ANIM_CONFIG: LayoutAnimation.Config = {
+const LAYOUT_ANIM_CONFIG: LayoutAnimationConfig = {
   duration: 280,
-  create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+  create: {
+    type: LayoutAnimation.Types.easeInEaseOut,
+    property: LayoutAnimation.Properties.opacity,
+  },
   update: { type: LayoutAnimation.Types.easeInEaseOut },
-  delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+  delete: {
+    type: LayoutAnimation.Types.easeInEaseOut,
+    property: LayoutAnimation.Properties.opacity,
+  },
 };
+
+/** Shared chevron-rotation + layout-animation logic for both variants */
+function useCollapseToggle(isExpanded: boolean, onToggle: () => void) {
+  const chevronAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.spring(chevronAnim, {
+      toValue: isExpanded ? 1 : 0,
+      friction: 8,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  }, [isExpanded, chevronAnim]);
+
+  const chevronRotation = chevronAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "180deg"],
+  });
+
+  const handleToggle = () => {
+    LayoutAnimation.configureNext(LAYOUT_ANIM_CONFIG);
+    onToggle();
+  };
+
+  return { chevronRotation, handleToggle };
+}
 
 // ─── NativeWind variant (character sheets) ───────────────────────────
 
@@ -82,51 +120,40 @@ export default function CollapsibleSection({
   rightElement,
 }: CollapsibleSectionProps) {
   const { colors } = useTheme();
-  const chevronAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
-
-  useEffect(() => {
-    Animated.spring(chevronAnim, {
-      toValue: isExpanded ? 1 : 0,
-      friction: 8,
-      tension: 100,
-      useNativeDriver: true,
-    }).start();
-  }, [isExpanded, chevronAnim]);
-
-  const chevronRotation = chevronAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "180deg"],
-  });
-
-  const handleToggle = () => {
-    LayoutAnimation.configureNext(LAYOUT_ANIM_CONFIG);
-    onToggle();
-  };
+  const { chevronRotation, handleToggle } = useCollapseToggle(
+    isExpanded,
+    onToggle,
+  );
 
   return (
     <View
       className="rounded-card border mb-4 overflow-hidden"
-      style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}
+      style={{
+        backgroundColor: colors.bgElevated,
+        borderColor: colors.borderDefault,
+      }}
     >
       <TouchableOpacity
         className="flex-row items-center p-4"
         onPress={handleToggle}
       >
         <Ionicons name={icon} size={20} color={colors.accentGold} />
-        <Text className="text-base font-semibold flex-1 ml-3" style={{ color: colors.textPrimary }}>
+        <Text
+          className="text-base font-semibold flex-1 ml-3"
+          style={{ color: colors.textPrimary }}
+        >
           {title}
         </Text>
         {rightElement}
         <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
-          <Ionicons
-            name="chevron-down"
-            size={20}
-            color={colors.textMuted}
-          />
+          <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
         </Animated.View>
       </TouchableOpacity>
       {isExpanded && (
-        <View className="px-4 pb-4 border-t pt-3" style={{ borderColor: colors.borderDefault }}>
+        <View
+          className="px-4 pb-4 border-t pt-3"
+          style={{ borderColor: colors.borderDefault }}
+        >
           {children}
         </View>
       )}
@@ -157,26 +184,10 @@ export function CollapsibleCard({
   children,
 }: CollapsibleCardProps) {
   const { colors } = useTheme();
-  const chevronAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
-
-  useEffect(() => {
-    Animated.spring(chevronAnim, {
-      toValue: isExpanded ? 1 : 0,
-      friction: 8,
-      tension: 100,
-      useNativeDriver: true,
-    }).start();
-  }, [isExpanded, chevronAnim]);
-
-  const chevronRotation = chevronAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "180deg"],
-  });
-
-  const handleToggle = () => {
-    LayoutAnimation.configureNext(LAYOUT_ANIM_CONFIG);
-    onToggle();
-  };
+  const { chevronRotation, handleToggle } = useCollapseToggle(
+    isExpanded,
+    onToggle,
+  );
 
   return (
     <View
@@ -210,11 +221,7 @@ export function CollapsibleCard({
           </Text>
         </View>
         <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
-          <Ionicons
-            name="chevron-down"
-            size={20}
-            color={colors.chevronColor}
-          />
+          <Ionicons name="chevron-down" size={20} color={colors.chevronColor} />
         </Animated.View>
       </TouchableOpacity>
 
@@ -240,7 +247,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     overflow: "hidden",
-    shadowColor: "#000000",
+    shadowColor: "#000000", // static: theme-independent
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 4,

@@ -13,6 +13,7 @@ import type {
   LevelUpRecord,
   Personality,
   Appearance,
+  SpeedInfo,
 } from "@/types/character";
 import type {
   Inventory,
@@ -27,10 +28,7 @@ import type {
   UpdateNoteInput,
   NoteTag,
 } from "@/types/notes";
-import type {
-  InternalMagicState,
-  ClassResourcesState,
-} from "./helpers";
+import type { InternalMagicState, ClassResourcesState } from "./helpers";
 import type { LevelUpSummary } from "@/data/srd/leveling";
 
 // ─── Level Up Options ────────────────────────────────────────────────
@@ -65,6 +63,10 @@ export interface LevelUpOptions {
   spellbookAdded?: string[];
   /** Opciones de Metamagia elegidas (solo hechicero) */
   metamagicChosen?: string[];
+  /** ID de la dote elegida en lugar del ASI (solo si dotesActivas está activa) */
+  featChosen?: string;
+  /** Distribución de ASI elegida para la dote (ej. { fue: 1 } o { fue: 1, des: 1 }) */
+  featAsiChoices?: Partial<AbilityScores>;
 }
 
 // ─── Character CRUD State ────────────────────────────────────────────
@@ -86,6 +88,8 @@ export interface CharacterCrudActions {
   getSavingThrowBonus: (ability: AbilityKey) => number;
   getProficiencyBonus: () => number;
   getArmorClass: () => number;
+  getInitiativeBonus: () => number;
+  getEffectiveSpeed: () => SpeedInfo;
   updatePersonality: (personality: Personality) => Promise<void>;
   updateAppearance: (appearance: Appearance) => Promise<void>;
   updateAlignment: (alignment: Character["alineamiento"]) => Promise<void>;
@@ -150,7 +154,10 @@ export interface ClassResourceSliceState {
 
 export interface ClassResourceActions {
   useClassResource: (resourceId: string) => Promise<boolean>;
-  useClassResourceAmount: (resourceId: string, amount: number) => Promise<boolean>;
+  useClassResourceAmount: (
+    resourceId: string,
+    amount: number,
+  ) => Promise<boolean>;
   restoreClassResource: (resourceId: string) => Promise<void>;
   restoreAllClassResources: () => Promise<void>;
   getClassResources: () => ClassResourcesState | null;
@@ -165,11 +172,16 @@ export interface InventorySliceState {
 export interface InventoryActions {
   loadInventory: (characterId: string) => Promise<void>;
   addItem: (item: Omit<InventoryItem, "id">) => Promise<void>;
-  updateItem: (itemId: string, updates: Partial<InventoryItem>) => Promise<void>;
+  updateItem: (
+    itemId: string,
+    updates: Partial<InventoryItem>,
+  ) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   toggleEquipItem: (itemId: string) => Promise<void>;
   updateCoins: (coins: Partial<Coins>) => Promise<void>;
-  addCoinTransaction: (transaction: Omit<CoinTransaction, "id" | "timestamp">) => Promise<void>;
+  addCoinTransaction: (
+    transaction: Omit<CoinTransaction, "id" | "timestamp">,
+  ) => Promise<void>;
 }
 
 // ─── Notes State ─────────────────────────────────────────────────────
@@ -191,14 +203,15 @@ export interface NotesActions {
 // ─── Rest State ──────────────────────────────────────────────────────
 
 export interface RestActions {
-  shortRest: (hitDiceToUse: number) => Promise<{ hpRestored: number; diceUsed: number }>;
+  shortRest: (
+    hitDiceToUse: number,
+  ) => Promise<{ hpRestored: number; diceUsed: number }>;
   longRest: () => Promise<void>;
 }
 
 // ─── Combined Store Type ─────────────────────────────────────────────
 
-export type CharacterStore =
-  CharacterCrudState &
+export type CharacterStore = CharacterCrudState &
   CharacterCrudActions &
   CombatActions &
   ProgressionActions &

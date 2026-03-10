@@ -18,8 +18,11 @@ import {
 } from "@/data/srd/spells";
 import { getSpellDescription } from "@/data/srd/spellDescriptions";
 import { SPELL_LEVEL_NAMES, type SpellLevel } from "@/types/spell";
-import { type Character } from "@/types/character";
+import { type Character, type ClassId } from "@/types/character";
+import { SPELLS_KNOWN } from "@/constants/spells";
 import type { LevelUpSummary } from "@/data/srd/leveling";
+import { useUnidadesActuales } from "@/stores/settingsStore";
+import { formatAlcanceRaw } from "@/utils/spells";
 
 interface SpellsStepProps {
   summary: LevelUpSummary;
@@ -75,6 +78,7 @@ export default function SpellsStep({
   getMagicState,
 }: SpellsStepProps) {
   const { colors } = useTheme();
+  const unidades = useUnidadesActuales();
 
   if (!summary?.spellLearning || !character) return null;
   const sl = summary.spellLearning;
@@ -84,6 +88,11 @@ export default function SpellsStep({
     ...(magicState?.knownSpellIds ?? []),
     ...(magicState?.spellbookIds ?? []),
   ]);
+
+  // Prepared casters (Clérigo, Druida, Paladín) don't learn spells here — they prepare from class list
+  const isPreparedCaster =
+    sl.preparationType === "prepared" &&
+    !SPELLS_KNOWN[character.clase as ClassId];
 
   const prepLabel: Record<string, string> = {
     known: "Aprendes hechizos automáticamente",
@@ -151,7 +160,9 @@ export default function SpellsStep({
     onPress: () => void,
     disabled: boolean,
   ) => {
-    const bgColor = selected ? withAlpha(colors.accentRed, 0.12) : colors.bgCard;
+    const bgColor = selected
+      ? withAlpha(colors.accentRed, 0.12)
+      : colors.bgCard;
     const cardBorderColor = selected ? colors.accentRed : colors.borderDefault;
     const isExpanded = expandedSpellIds.has(spell.id);
     const desc = getSpellDescription(spell.id);
@@ -203,7 +214,11 @@ export default function SpellsStep({
             }}
           >
             {selected && (
-              <Ionicons name="checkmark" size={14} color={colors.textInverted} />
+              <Ionicons
+                name="checkmark"
+                size={14}
+                color={colors.textInverted}
+              />
             )}
           </View>
           {/* Spell info */}
@@ -271,7 +286,7 @@ export default function SpellsStep({
             >
               {desc.alcance ? (
                 <Text style={{ color: colors.textMuted, fontSize: 11 }}>
-                  📏 {desc.alcance}
+                  📏 {formatAlcanceRaw(desc.alcance, unidades)}
                 </Text>
               ) : null}
               {desc.duracion ? (
@@ -327,9 +342,19 @@ export default function SpellsStep({
     accentColor: string;
     excludeIds?: Set<string>;
   }) => {
-    const { title, subtitle, spells, selected, setSelected, max, accentColor, excludeIds } = opts;
+    const {
+      title,
+      subtitle,
+      spells,
+      selected,
+      setSelected,
+      max,
+      accentColor,
+      excludeIds,
+    } = opts;
     const filteredSpells = spells.filter(
-      (s) => matchesSearch(s) && !alreadyKnown.has(s.id) && !(excludeIds?.has(s.id)),
+      (s) =>
+        matchesSearch(s) && !alreadyKnown.has(s.id) && !excludeIds?.has(s.id),
     );
 
     // Group by level for non-cantrip sections
@@ -382,9 +407,7 @@ export default function SpellsStep({
             <Text
               style={{
                 color:
-                  selected.length === max
-                    ? colors.accentRed
-                    : colors.accentRed,
+                  selected.length === max ? colors.accentRed : colors.accentRed,
                 fontSize: 12,
                 fontWeight: "700",
               }}
@@ -563,6 +586,35 @@ export default function SpellsStep({
         </Text>
       </View>
 
+      {/* Prepared caster info: spells are managed from Abilities tab */}
+      {isPreparedCaster && (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: withAlpha(colors.accentRed, 0.08),
+            borderRadius: 10,
+            padding: 10,
+            marginBottom: 16,
+            gap: 8,
+          }}
+        >
+          <Ionicons name="book-outline" size={16} color={colors.accentRed} />
+          <Text
+            style={{
+              color: colors.textSecondary,
+              fontSize: 13,
+              fontWeight: "500",
+              flex: 1,
+              lineHeight: 18,
+            }}
+          >
+            Puedes preparar conjuros de tu lista de clase desde la pestaña
+            Habilidades. Aquí solo seleccionas trucos nuevos.
+          </Text>
+        </View>
+      )}
+
       {/* Search filter */}
       <View
         style={{
@@ -580,11 +632,7 @@ export default function SpellsStep({
           gap: 8,
         }}
       >
-        <Ionicons
-          name="search-outline"
-          size={16}
-          color={colors.textMuted}
-        />
+        <Ionicons name="search-outline" size={16} color={colors.textMuted} />
         <TextInput
           value={spellSearch}
           onChangeText={setSpellSearch}
@@ -601,11 +649,7 @@ export default function SpellsStep({
         />
         {spellSearch.length > 0 && (
           <TouchableOpacity onPress={() => setSpellSearch("")}>
-            <Ionicons
-              name="close-circle"
-              size={18}
-              color={colors.textMuted}
-            />
+            <Ionicons name="close-circle" size={18} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -629,7 +673,9 @@ export default function SpellsStep({
           {newCantrips
             .filter((id) => id.startsWith("custom:"))
             .map((id) => {
-              const name = id.replace(/^custom:truco:/, "").replace(/^custom:/, "");
+              const name = id
+                .replace(/^custom:truco:/, "")
+                .replace(/^custom:/, "");
               return (
                 <View
                   key={id}
@@ -655,21 +701,44 @@ export default function SpellsStep({
                       justifyContent: "center",
                     }}
                   >
-                    <Ionicons name="checkmark" size={14} color={colors.textInverted} />
+                    <Ionicons
+                      name="checkmark"
+                      size={14}
+                      color={colors.textInverted}
+                    />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.accentRed, fontSize: 14, fontWeight: "700" }}>
+                    <Text
+                      style={{
+                        color: colors.accentRed,
+                        fontSize: 14,
+                        fontWeight: "700",
+                      }}
+                    >
                       {name}
                     </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: "500", marginTop: 2 }}>
+                    <Text
+                      style={{
+                        color: colors.textMuted,
+                        fontSize: 12,
+                        fontWeight: "500",
+                        marginTop: 2,
+                      }}
+                    >
                       Personalizado — Truco
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => setNewCantrips((prev) => prev.filter((s) => s !== id))}
+                    onPress={() =>
+                      setNewCantrips((prev) => prev.filter((s) => s !== id))
+                    }
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+                    <Ionicons
+                      name="close-circle"
+                      size={20}
+                      color={colors.textMuted}
+                    />
                   </TouchableOpacity>
                 </View>
               );
@@ -722,7 +791,13 @@ export default function SpellsStep({
                 paddingVertical: 6,
               }}
             >
-              <Text style={{ color: colors.accentRed, fontSize: 13, fontWeight: "700" }}>
+              <Text
+                style={{
+                  color: colors.accentRed,
+                  fontSize: 13,
+                  fontWeight: "700",
+                }}
+              >
                 Añadir
               </Text>
             </TouchableOpacity>
@@ -775,21 +850,44 @@ export default function SpellsStep({
                       justifyContent: "center",
                     }}
                   >
-                    <Ionicons name="checkmark" size={14} color={colors.textInverted} />
+                    <Ionicons
+                      name="checkmark"
+                      size={14}
+                      color={colors.textInverted}
+                    />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.accentRed, fontSize: 14, fontWeight: "700" }}>
+                    <Text
+                      style={{
+                        color: colors.accentRed,
+                        fontSize: 14,
+                        fontWeight: "700",
+                      }}
+                    >
                       {name}
                     </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: "500", marginTop: 2 }}>
+                    <Text
+                      style={{
+                        color: colors.textMuted,
+                        fontSize: 12,
+                        fontWeight: "500",
+                        marginTop: 2,
+                      }}
+                    >
                       Personalizado
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => setNewSpells((prev) => prev.filter((s) => s !== id))}
+                    onPress={() =>
+                      setNewSpells((prev) => prev.filter((s) => s !== id))
+                    }
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+                    <Ionicons
+                      name="close-circle"
+                      size={20}
+                      color={colors.textMuted}
+                    />
                   </TouchableOpacity>
                 </View>
               );
@@ -842,7 +940,13 @@ export default function SpellsStep({
                 paddingVertical: 6,
               }}
             >
-              <Text style={{ color: colors.accentRed, fontSize: 13, fontWeight: "700" }}>
+              <Text
+                style={{
+                  color: colors.accentRed,
+                  fontSize: 13,
+                  fontWeight: "700",
+                }}
+              >
                 Añadir
               </Text>
             </TouchableOpacity>
@@ -924,15 +1028,17 @@ export default function SpellsStep({
                 borderColor: wantsToSwap
                   ? colors.accentRed
                   : withAlpha(colors.textMuted, 0.27),
-                backgroundColor: wantsToSwap
-                  ? colors.accentRed
-                  : "transparent",
+                backgroundColor: wantsToSwap ? colors.accentRed : "transparent",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
               {wantsToSwap && (
-                <Ionicons name="checkmark" size={14} color={colors.textInverted} />
+                <Ionicons
+                  name="checkmark"
+                  size={14}
+                  color={colors.textInverted}
+                />
               )}
             </View>
           </TouchableOpacity>
@@ -952,7 +1058,7 @@ export default function SpellsStep({
               >
                 Hechizo a olvidar
               </Text>
-              {(magicState?.knownSpellIds ?? [] as string[])
+              {(magicState?.knownSpellIds ?? ([] as string[]))
                 .filter((id: string) => {
                   // Only show non-cantrip spells that can be swapped
                   const sp = getSpellById(id);
@@ -998,7 +1104,11 @@ export default function SpellsStep({
                         }}
                       >
                         {isSelected && (
-                          <Ionicons name="close" size={12} color={colors.textInverted} />
+                          <Ionicons
+                            name="close"
+                            size={12}
+                            color={colors.textInverted}
+                          />
                         )}
                       </View>
                       <Text
@@ -1020,17 +1130,20 @@ export default function SpellsStep({
                             fontWeight: "500",
                           }}
                         >
-                          {sp.escuela} — {SPELL_LEVEL_NAMES[sp.nivel as SpellLevel]}
+                          {sp.escuela} —{" "}
+                          {SPELL_LEVEL_NAMES[sp.nivel as SpellLevel]}
                         </Text>
                       )}
                     </TouchableOpacity>
                   );
                 })}
 
-              {(magicState?.knownSpellIds ?? [] as string[]).filter((id: string) => {
-                const sp = getSpellById(id);
-                return sp ? sp.nivel > 0 : true;
-              }).length === 0 && (
+              {(magicState?.knownSpellIds ?? ([] as string[])).filter(
+                (id: string) => {
+                  const sp = getSpellById(id);
+                  return sp ? sp.nivel > 0 : true;
+                },
+              ).length === 0 && (
                 <Text
                   style={{
                     color: colors.textMuted,

@@ -2,14 +2,13 @@
  * Spell utility functions — slot calculations, formatting helpers.
  * Extracted from types/spell.ts for separation of concerns.
  */
-import type {
-  ClassId,
-} from "@/types/character";
+import type { ClassId } from "@/types/character";
 import type {
   SpellComponents,
   SpellDuration,
   CastingTime,
   SpellRange,
+  AreaShape,
   PactMagicSlots,
 } from "@/types/spell";
 import {
@@ -18,6 +17,8 @@ import {
   HALF_CASTER_SLOTS,
   WARLOCK_PACT_SLOTS,
 } from "@/constants/spells";
+import type { UnitSystem } from "@/stores/settingsStore";
+import { formatDistancia } from "@/utils/units";
 
 // ─── Cálculos ────────────────────────────────────────────────────────
 
@@ -27,7 +28,7 @@ import {
 export function calcPreparedSpells(
   classId: ClassId,
   classLevel: number,
-  abilityModifier: number
+  abilityModifier: number,
 ): number {
   switch (classId) {
     case "bardo":
@@ -50,7 +51,7 @@ export function calcPreparedSpells(
  */
 export function calcSpellSaveDC(
   proficiencyBonus: number,
-  abilityModifier: number
+  abilityModifier: number,
 ): number {
   return 8 + proficiencyBonus + abilityModifier;
 }
@@ -60,7 +61,7 @@ export function calcSpellSaveDC(
  */
 export function calcSpellAttackBonus(
   proficiencyBonus: number,
-  abilityModifier: number
+  abilityModifier: number,
 ): number {
   return proficiencyBonus + abilityModifier;
 }
@@ -70,7 +71,7 @@ export function calcSpellAttackBonus(
  */
 export function getSpellSlots(
   classId: ClassId,
-  classLevel: number
+  classLevel: number,
 ): Record<number, number> {
   const casterType = CLASS_CASTER_TYPE[classId];
   const slots: Record<number, number> = {};
@@ -103,9 +104,7 @@ export function getSpellSlots(
 /**
  * Obtiene los espacios de pacto del Brujo para un nivel dado.
  */
-export function getPactMagicSlots(
-  classLevel: number
-): PactMagicSlots | null {
+export function getPactMagicSlots(classLevel: number): PactMagicSlots | null {
   const data = WARLOCK_PACT_SLOTS[classLevel];
   if (!data) return null;
 
@@ -199,19 +198,28 @@ export function formatCastingTime(castingTime: CastingTime): string {
 }
 
 /**
- * Formatea el alcance del hechizo.
+ * Formatea el alcance del hechizo (structurado SpellRange).
+ * Si se pasa unidades, convierte la distancia; si no, muestra en pies.
  */
-export function formatSpellRange(range: SpellRange): string {
+export function formatSpellRange(
+  range: SpellRange,
+  unidades?: UnitSystem,
+): string {
+  const fmt = (pies: number) =>
+    unidades ? formatDistancia(pies, unidades) : `${pies} pies`;
+
   switch (range.type) {
     case "personal":
       if (range.area) {
-        return `Personal (${range.area.shape} de ${range.area.size} pies)`;
+        const shapeName =
+          AREA_SHAPE_NAMES[range.area.shape] ?? range.area.shape;
+        return `Personal (${shapeName} de ${fmt(range.area.size)})`;
       }
       return "Personal";
     case "toque":
       return "Toque";
     case "distancia":
-      return `${range.distance} pies`;
+      return range.distance ? fmt(range.distance) : "Distancia";
     case "vision":
       return "Visión";
     case "ilimitado":
@@ -221,4 +229,190 @@ export function formatSpellRange(range: SpellRange): string {
     default:
       return String(range.type);
   }
+}
+
+/** Spanish names for area shapes used in formatted output */
+const AREA_SHAPE_NAMES: Record<string, string> = {
+  esfera: "esfera",
+  cubo: "cubo",
+  cono: "cono",
+  cilindro: "cilindro",
+  linea: "línea",
+  hemisferio: "semiesfera",
+};
+
+// ─── Parsing de alcance desde cadenas de texto ───────────────────────
+
+/**
+ * Mapa de metros → pies para los valores que aparecen en spellDescriptions.
+ * D&D standard: 1.5 m = 5 ft, so feet = meters / 1.5 * 5 = meters * (10/3)
+ */
+function metrosAPies(metros: number): number {
+  return Math.round((metros / 1.5) * 5);
+}
+
+/**
+ * Parsea la cadena de alcance cruda de spellDescriptions.ts a una SpellRange.
+ *
+ * Handles all 30 known patterns:
+ * - "Toque" → toque
+ * - "Lanzador" → personal (no area)
+ * - "Vista" → vision
+ * - "Ilimitado" → ilimitado
+ * - "Especial" → especial
+ * - "18 m", "9 m", etc. → distancia (meters → feet)
+ * - "1,5 km", "750 km" → distancia (km → feet)
+ * - "18 metros (60 pies)" → distancia (feet from parenthetical)
+ * - "Lanzador (radio de X m)" → personal + area (esfera)
+ * - "Lanzador (cono de X m)" → personal + area (cono)
+ * - "Lanzador (línea de X m)" → personal + area (linea)
+ * - "Lanzador (cubo de X m)" → personal + area (cubo)
+ * - "Lanzador (esfera de X m de radio)" → personal + area (esfera)
+ * - "Lanzador (semiesfera de X m de radio)" → personal + area (hemisferio)
+ */
+export function parseAlcance(alcance: string): SpellRange {
+  const trimmed = alcance.trim();
+
+  // Exact matches
+  if (trimmed === "Toque") return { type: "toque" };
+  if (trimmed === "Lanzador") return { type: "personal" };
+  if (trimmed === "Vista") return { type: "vision" };
+  if (trimmed === "Ilimitado") return { type: "ilimitado" };
+  if (trimmed === "Especial") return { type: "especial" };
+
+  // "Lanzador (...)" → personal with area
+  const lanzadorMatch = trimmed.match(/^Lanzador\s*\((.+)\)$/);
+  if (lanzadorMatch) {
+    const areaStr = lanzadorMatch[1];
+    const area = parseAreaString(areaStr);
+    return area ? { type: "personal", area } : { type: "personal" };
+  }
+
+  // "X metros (Y pies)" — use the pies value directly
+  const metrosPiesMatch = trimmed.match(
+    /^[\d,.]+\s*metros?\s*\((\d+)\s*pies\)$/i,
+  );
+  if (metrosPiesMatch) {
+    return { type: "distancia", distance: parseInt(metrosPiesMatch[1], 10) };
+  }
+
+  // "X,Y km" or "X km"
+  const kmMatch = trimmed.match(/^([\d,.]+)\s*km$/);
+  if (kmMatch) {
+    const km = parseSpanishNumber(kmMatch[1]);
+    // 1 km = 1000m, convert to feet
+    return { type: "distancia", distance: metrosAPies(km * 1000) };
+  }
+
+  // "X m" or "X,Y m"
+  const mMatch = trimmed.match(/^([\d,.]+)\s*m$/);
+  if (mMatch) {
+    const metros = parseSpanishNumber(mMatch[1]);
+    return { type: "distancia", distance: metrosAPies(metros) };
+  }
+
+  // Fallback: treat as especial
+  return { type: "especial" };
+}
+
+/**
+ * Parses area descriptions inside "Lanzador (...)" patterns.
+ * Examples:
+ *   "radio de 3 m" → esfera, 3m
+ *   "cono de 18 m" → cono, 18m
+ *   "línea de 30 m" → linea, 30m
+ *   "cubo de 4,5 m" → cubo, 4.5m
+ *   "esfera de 3 m de radio" → esfera, 3m
+ *   "semiesfera de 3 m de radio" → hemisferio, 3m
+ */
+function parseAreaString(
+  areaStr: string,
+): { shape: AreaShape; size: number } | null {
+  // "radio de X km" → esfera (kilometers)
+  const radioKmMatch = areaStr.match(/^radio\s+de\s+([\d,.]+)\s*km/);
+  if (radioKmMatch) {
+    return {
+      shape: "esfera",
+      size: metrosAPies(parseSpanishNumber(radioKmMatch[1]) * 1000),
+    };
+  }
+
+  // "radio de X m" → esfera
+  const radioMatch = areaStr.match(/^radio\s+de\s+([\d,.]+)\s*m/);
+  if (radioMatch) {
+    return {
+      shape: "esfera",
+      size: metrosAPies(parseSpanishNumber(radioMatch[1])),
+    };
+  }
+
+  // "esfera de X m de radio"
+  const esferaMatch = areaStr.match(/^esfera\s+de\s+([\d,.]+)\s*m/);
+  if (esferaMatch) {
+    return {
+      shape: "esfera",
+      size: metrosAPies(parseSpanishNumber(esferaMatch[1])),
+    };
+  }
+
+  // "semiesfera de X m de radio"
+  const semiMatch = areaStr.match(/^semiesfera\s+de\s+([\d,.]+)\s*m/);
+  if (semiMatch) {
+    return {
+      shape: "hemisferio",
+      size: metrosAPies(parseSpanishNumber(semiMatch[1])),
+    };
+  }
+
+  // "cono de X m"
+  const conoMatch = areaStr.match(/^cono\s+de\s+([\d,.]+)\s*m/);
+  if (conoMatch) {
+    return {
+      shape: "cono",
+      size: metrosAPies(parseSpanishNumber(conoMatch[1])),
+    };
+  }
+
+  // "línea de X m"
+  const lineaMatch = areaStr.match(/^l[ií]nea\s+de\s+([\d,.]+)\s*m/);
+  if (lineaMatch) {
+    return {
+      shape: "linea",
+      size: metrosAPies(parseSpanishNumber(lineaMatch[1])),
+    };
+  }
+
+  // "cubo de X m"
+  const cuboMatch = areaStr.match(/^cubo\s+de\s+([\d,.]+)\s*m/);
+  if (cuboMatch) {
+    return {
+      shape: "cubo",
+      size: metrosAPies(parseSpanishNumber(cuboMatch[1])),
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Parses a Spanish-locale number string: "1,5" → 1.5, "750" → 750
+ */
+function parseSpanishNumber(str: string): number {
+  return parseFloat(str.replace(",", "."));
+}
+
+/**
+ * Convenience function: takes a raw alcance string from spellDescriptions.ts
+ * and returns a unit-aware formatted string.
+ *
+ * This is the main entry point for components displaying spell range.
+ * It parses the string to structured SpellRange, then formats it with the
+ * configured unit system.
+ */
+export function formatAlcanceRaw(
+  alcance: string,
+  unidades: UnitSystem,
+): string {
+  const range = parseAlcance(alcance);
+  return formatSpellRange(range, unidades);
 }

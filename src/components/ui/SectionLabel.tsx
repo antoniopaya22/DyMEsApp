@@ -10,11 +10,11 @@
  * <SectionLabel label="Acceso rápido" icon="flash" color={colors.accentGold} />
  */
 
-import React, { useRef, useEffect } from "react";
-import { View, Text, Animated, Easing, StyleSheet } from "react-native";
+import React from "react";
+import { View, Text, Animated, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "@/hooks";
+import { useTheme, useEntranceAnimation } from "@/hooks";
 
 export interface SectionLabelProps {
   /** Section title text */
@@ -35,20 +35,10 @@ export default function SectionLabel({
 }: SectionLabelProps) {
   const { colors } = useTheme();
   const resolvedColor = color ?? colors.accentGold;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 350,
-      delay,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  }, [delay, fadeAnim]);
+  const { opacity } = useEntranceAnimation({ delay, duration: 350 });
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <Animated.View style={[styles.container, { opacity }]}>
       <View style={styles.row}>
         {icon && (
           <Ionicons

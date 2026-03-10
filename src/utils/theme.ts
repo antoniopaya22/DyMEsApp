@@ -186,6 +186,16 @@ export interface ThemeColors {
   // ── Overlays ──
   /** Semi-transparent backdrop for modals, pickers, etc. */
   backdrop: string;
+
+  // ── Gradient button ──
+  /** Gradient start color for primary action buttons */
+  gradientButtonStart: string;
+  /** Gradient middle color for primary action buttons (same as accentRed) */
+  gradientButtonMid: string;
+  /** Gradient end color for primary action buttons */
+  gradientButtonEnd: string;
+  /** Shadow color for primary action buttons (accent glow) */
+  accentShadow: string;
 }
 
 // ─── Dark Palette ────────────────────────────────────────────────────
@@ -317,6 +327,12 @@ export const DARK_THEME: ThemeColors = {
 
   // Overlays
   backdrop: "rgba(0,0,0,0.5)",
+
+  // Gradient button — neon turquoise
+  gradientButtonStart: "#33EBFF",
+  gradientButtonMid: "#00E5FF",
+  gradientButtonEnd: "#00BCD4",
+  accentShadow: "#00BCD4",
 };
 
 // ─── Light Palette ───────────────────────────────────────────────────
@@ -448,6 +464,12 @@ export const LIGHT_THEME: ThemeColors = {
 
   // Overlays
   backdrop: "rgba(0,0,0,0.35)",
+
+  // Gradient button — teal
+  gradientButtonStart: "#0E8BA5",
+  gradientButtonMid: "#0E7490",
+  gradientButtonEnd: "#0B5E73",
+  accentShadow: "#0E7490",
 };
 
 // ─── Helper ──────────────────────────────────────────────────────────
@@ -463,9 +485,7 @@ export const LIGHT_THEME: ThemeColors = {
  */
 export function withAlpha(color: string, opacity: number): string {
   // Already rgba — replace the alpha component
-  const rgbaMatch = color.match(
-    /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/,
-  );
+  const rgbaMatch = color.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
   if (rgbaMatch) {
     return `rgba(${rgbaMatch[1]},${rgbaMatch[2]},${rgbaMatch[3]},${opacity})`;
   }

@@ -92,26 +92,126 @@ export const GUERRERO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
                 tipo: "multi",
                 cantidad: 3,
                 opciones: [
-                  { id: "maniobra_emboscada", nombre: "Emboscada", descripcion: "Suma un dado de superioridad a una prueba de DES (Sigilo) o tirada de Iniciativa." },
-                  { id: "maniobra_cebo", nombre: "Cebo y Cambio", descripcion: "A 1,5 m de una criatura voluntaria, intercambia posiciones gastando 1,5 m. Tú o ella ganáis +dado a CA hasta el inicio de tu siguiente turno." },
-                  { id: "maniobra_mando", nombre: "Orden de Ataque", descripcion: "Reemplaza un ataque para que un aliado ataque con su reacción, sumando el dado al daño." },
-                  { id: "maniobra_presencia", nombre: "Presencia Imponente", descripcion: "Suma un dado de superioridad a una prueba de CAR (Intimidación, Interpretación o Persuasión)." },
-                  { id: "maniobra_desarmar", nombre: "Ataque de Desarme", descripcion: "Al impactar, suma el dado al daño. El objetivo debe superar FUE o soltar un objeto." },
-                  { id: "maniobra_distraer", nombre: "Golpe Distractor", descripcion: "Al impactar, suma el dado al daño. El siguiente ataque de otro aliado contra ese objetivo tiene ventaja." },
-                  { id: "maniobra_evasion", nombre: "Evasión Táctica", descripcion: "Como acción adicional, toma la acción de Desengancharse y suma el dado a tu CA hasta el inicio de tu siguiente turno." },
-                  { id: "maniobra_fintar", nombre: "Finta", descripcion: "Como acción adicional, elige una criatura a 1,5 m. Tienes ventaja en tu siguiente ataque contra ella; si impactas, suma el dado al daño." },
-                  { id: "maniobra_provocar", nombre: "Ataque Provocador", descripcion: "Al impactar, suma el dado al daño. El objetivo debe superar SAB o tener desventaja en ataques contra otros hasta el final de tu siguiente turno." },
-                  { id: "maniobra_embestida", nombre: "Embestida", descripcion: "Como acción adicional, toma la acción de Carrera. Si te mueves 1,5 m en línea recta antes de impactar cuerpo a cuerpo, suma el dado al daño." },
-                  { id: "maniobra_maniobrar", nombre: "Ataque de Maniobra", descripcion: "Al impactar, suma el dado al daño. Un aliado puede usar su reacción para moverse la mitad de su velocidad sin provocar ataques de oportunidad del objetivo." },
-                  { id: "maniobra_amenazar", nombre: "Ataque Amenazante", descripcion: "Al impactar, suma el dado al daño. El objetivo debe superar SAB o quedar Asustado hasta el final de tu siguiente turno." },
-                  { id: "maniobra_parada", nombre: "Parada", descripcion: "Cuando recibes daño cuerpo a cuerpo, usa tu reacción para reducir el daño en dado + mod. FUE o DES." },
-                  { id: "maniobra_precision", nombre: "Ataque de Precisión", descripcion: "Cuando fallas un ataque, suma el dado de superioridad a la tirada, pudiendo convertirlo en impacto." },
-                  { id: "maniobra_empujar", nombre: "Ataque de Empuje", descripcion: "Al impactar, suma el dado al daño. Si es Grande o menor, debe superar FUE o ser empujado hasta 4,5 m." },
-                  { id: "maniobra_animar", nombre: "Arenga", descripcion: "Como acción adicional, un aliado a 9 m gana PG temporales = dado + mitad de tu nivel de guerrero." },
-                  { id: "maniobra_ripostar", nombre: "Ripostar", descripcion: "Cuando una criatura falla un ataque cuerpo a cuerpo contra ti, usa tu reacción para atacar y sumar el dado al daño." },
-                  { id: "maniobra_barrer", nombre: "Ataque de Barrido", descripcion: "Al impactar cuerpo a cuerpo, elige otra criatura a 1,5 m del objetivo y a tu alcance. Si la tirada original la impactaría, recibe daño = dado de superioridad." },
-                  { id: "maniobra_evaluacion", nombre: "Evaluación Táctica", descripcion: "Suma un dado de superioridad a una prueba de INT (Historia/Investigación) o SAB (Perspicacia)." },
-                  { id: "maniobra_zancadilla", nombre: "Ataque de Zancadilla", descripcion: "Al impactar, suma el dado al daño. Si el objetivo es Grande o menor, debe superar FUE o caer Derribado." },
+                  {
+                    id: "maniobra_emboscada",
+                    nombre: "Emboscada",
+                    descripcion:
+                      "Suma un dado de superioridad a una prueba de DES (Sigilo) o tirada de Iniciativa.",
+                  },
+                  {
+                    id: "maniobra_cebo",
+                    nombre: "Cebo y Cambio",
+                    descripcion:
+                      "A 1,5 m de una criatura voluntaria, intercambia posiciones gastando 1,5 m. Tú o ella ganáis +dado a CA hasta el inicio de tu siguiente turno.",
+                  },
+                  {
+                    id: "maniobra_mando",
+                    nombre: "Orden de Ataque",
+                    descripcion:
+                      "Reemplaza un ataque para que un aliado ataque con su reacción, sumando el dado al daño.",
+                  },
+                  {
+                    id: "maniobra_presencia",
+                    nombre: "Presencia Imponente",
+                    descripcion:
+                      "Suma un dado de superioridad a una prueba de CAR (Intimidación, Interpretación o Persuasión).",
+                  },
+                  {
+                    id: "maniobra_desarmar",
+                    nombre: "Ataque de Desarme",
+                    descripcion:
+                      "Al impactar, suma el dado al daño. El objetivo debe superar FUE o soltar un objeto.",
+                  },
+                  {
+                    id: "maniobra_distraer",
+                    nombre: "Golpe Distractor",
+                    descripcion:
+                      "Al impactar, suma el dado al daño. El siguiente ataque de otro aliado contra ese objetivo tiene ventaja.",
+                  },
+                  {
+                    id: "maniobra_evasion",
+                    nombre: "Evasión Táctica",
+                    descripcion:
+                      "Como acción adicional, toma la acción de Desengancharse y suma el dado a tu CA hasta el inicio de tu siguiente turno.",
+                  },
+                  {
+                    id: "maniobra_fintar",
+                    nombre: "Finta",
+                    descripcion:
+                      "Como acción adicional, elige una criatura a 1,5 m. Tienes ventaja en tu siguiente ataque contra ella; si impactas, suma el dado al daño.",
+                  },
+                  {
+                    id: "maniobra_provocar",
+                    nombre: "Ataque Provocador",
+                    descripcion:
+                      "Al impactar, suma el dado al daño. El objetivo debe superar SAB o tener desventaja en ataques contra otros hasta el final de tu siguiente turno.",
+                  },
+                  {
+                    id: "maniobra_embestida",
+                    nombre: "Embestida",
+                    descripcion:
+                      "Como acción adicional, toma la acción de Carrera. Si te mueves 1,5 m en línea recta antes de impactar cuerpo a cuerpo, suma el dado al daño.",
+                  },
+                  {
+                    id: "maniobra_maniobrar",
+                    nombre: "Ataque de Maniobra",
+                    descripcion:
+                      "Al impactar, suma el dado al daño. Un aliado puede usar su reacción para moverse la mitad de su velocidad sin provocar ataques de oportunidad del objetivo.",
+                  },
+                  {
+                    id: "maniobra_amenazar",
+                    nombre: "Ataque Amenazante",
+                    descripcion:
+                      "Al impactar, suma el dado al daño. El objetivo debe superar SAB o quedar Asustado hasta el final de tu siguiente turno.",
+                  },
+                  {
+                    id: "maniobra_parada",
+                    nombre: "Parada",
+                    descripcion:
+                      "Cuando recibes daño cuerpo a cuerpo, usa tu reacción para reducir el daño en dado + mod. FUE o DES.",
+                  },
+                  {
+                    id: "maniobra_precision",
+                    nombre: "Ataque de Precisión",
+                    descripcion:
+                      "Cuando fallas un ataque, suma el dado de superioridad a la tirada, pudiendo convertirlo en impacto.",
+                  },
+                  {
+                    id: "maniobra_empujar",
+                    nombre: "Ataque de Empuje",
+                    descripcion:
+                      "Al impactar, suma el dado al daño. Si es Grande o menor, debe superar FUE o ser empujado hasta 4,5 m.",
+                  },
+                  {
+                    id: "maniobra_animar",
+                    nombre: "Arenga",
+                    descripcion:
+                      "Como acción adicional, un aliado a 9 m gana PG temporales = dado + mitad de tu nivel de guerrero.",
+                  },
+                  {
+                    id: "maniobra_ripostar",
+                    nombre: "Ripostar",
+                    descripcion:
+                      "Cuando una criatura falla un ataque cuerpo a cuerpo contra ti, usa tu reacción para atacar y sumar el dado al daño.",
+                  },
+                  {
+                    id: "maniobra_barrer",
+                    nombre: "Ataque de Barrido",
+                    descripcion:
+                      "Al impactar cuerpo a cuerpo, elige otra criatura a 1,5 m del objetivo y a tu alcance. Si la tirada original la impactaría, recibe daño = dado de superioridad.",
+                  },
+                  {
+                    id: "maniobra_evaluacion",
+                    nombre: "Evaluación Táctica",
+                    descripcion:
+                      "Suma un dado de superioridad a una prueba de INT (Historia/Investigación) o SAB (Perspicacia).",
+                  },
+                  {
+                    id: "maniobra_zancadilla",
+                    nombre: "Ataque de Zancadilla",
+                    descripcion:
+                      "Al impactar, suma el dado al daño. Si el objetivo es Grande o menor, debe superar FUE o caer Derribado.",
+                  },
                 ],
               },
             ],
@@ -138,8 +238,7 @@ export const GUERRERO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
         rasgos: [
           {
             nombre: "Superioridad en Combate Mejorada",
-            descripcion:
-              "Tus dados de superioridad se convierten en d10.",
+            descripcion: "Tus dados de superioridad se convierten en d10.",
           },
         ],
       },
@@ -158,8 +257,7 @@ export const GUERRERO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
         rasgos: [
           {
             nombre: "Superioridad en Combate Suprema",
-            descripcion:
-              "Tus dados de superioridad se convierten en d12.",
+            descripcion: "Tus dados de superioridad se convierten en d12.",
           },
         ],
       },
@@ -330,8 +428,7 @@ export const GUERRERO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
         rasgos: [
           {
             nombre: "Opción de Disparo Arcano adicional",
-            descripcion:
-              "Aprendes una opción de Disparo Arcano adicional.",
+            descripcion: "Aprendes una opción de Disparo Arcano adicional.",
           },
         ],
       },
@@ -455,6 +552,7 @@ export const GUERRERO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Cortesano Elegante",
             descripcion:
               "Sumas tu mod. SAB a las pruebas de CAR (Persuasión). Ganas competencia en salvaciones de SAB. Si ya la tienes, ganas INT o CAR (a tu elección).",
+            efectos: [{ kind: "savingThrowProficiency", abilities: ["sab"] }],
           },
         ],
       },
@@ -517,12 +615,42 @@ export const GUERRERO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
                 tipo: "multi",
                 cantidad: 2,
                 opciones: [
-                  { id: "runa_nube", nombre: "Runa de la Nube", descripcion: "Ventaja en Juego de Manos y Engaño. Activa: redirige un ataque a otra criatura." },
-                  { id: "runa_fuego", nombre: "Runa del Fuego", descripcion: "Doble competencia con herramientas. Activa: +2d6 fuego y posible apresamiento." },
-                  { id: "runa_escarcha", nombre: "Runa de la Escarcha", descripcion: "Ventaja en Trato con Animales e Intimidación. Activa: +2 a FUE y CON 10 min." },
-                  { id: "runa_piedra", nombre: "Runa de Piedra", descripcion: "Ventaja en Perspicacia, visión en la oscuridad. Activa: hechiza a una criatura cercana." },
-                  { id: "runa_colina", nombre: "Runa de la Colina (nv7+)", descripcion: "Resistencia a veneno. Activa: resistencia a contundente/perforante/cortante 1 min." },
-                  { id: "runa_tormenta", nombre: "Runa de la Tormenta (nv7+)", descripcion: "Ventaja en Arcanos, no sorprendido. Activa: da ventaja/desventaja a tiradas cercanas." },
+                  {
+                    id: "runa_nube",
+                    nombre: "Runa de la Nube",
+                    descripcion:
+                      "Ventaja en Juego de Manos y Engaño. Activa: redirige un ataque a otra criatura.",
+                  },
+                  {
+                    id: "runa_fuego",
+                    nombre: "Runa del Fuego",
+                    descripcion:
+                      "Doble competencia con herramientas. Activa: +2d6 fuego y posible apresamiento.",
+                  },
+                  {
+                    id: "runa_escarcha",
+                    nombre: "Runa de la Escarcha",
+                    descripcion:
+                      "Ventaja en Trato con Animales e Intimidación. Activa: +2 a FUE y CON 10 min.",
+                  },
+                  {
+                    id: "runa_piedra",
+                    nombre: "Runa de Piedra",
+                    descripcion:
+                      "Ventaja en Perspicacia, visión en la oscuridad. Activa: hechiza a una criatura cercana.",
+                  },
+                  {
+                    id: "runa_colina",
+                    nombre: "Runa de la Colina (nv7+)",
+                    descripcion:
+                      "Resistencia a veneno. Activa: resistencia a contundente/perforante/cortante 1 min.",
+                  },
+                  {
+                    id: "runa_tormenta",
+                    nombre: "Runa de la Tormenta (nv7+)",
+                    descripcion:
+                      "Ventaja en Arcanos, no sorprendido. Activa: da ventaja/desventaja a tiradas cercanas.",
+                  },
                 ],
               },
             ],

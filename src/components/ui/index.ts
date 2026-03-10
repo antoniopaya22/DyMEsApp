@@ -106,6 +106,10 @@ export type { InfoBadgeProps } from "./InfoBadge";
 export { default as SectionLabel } from "./SectionLabel";
 export type { SectionLabelProps } from "./SectionLabel";
 
+// ─── Gradient Border (reusable horizontal gradient line) ─────────────
+export { default as GradientBorder } from "./GradientBorder";
+export type { GradientBorderProps } from "./GradientBorder";
+
 // ─── Empty State ─────────────────────────────────────────────────────
 export { default as EmptyState } from "./EmptyState";
 export type { EmptyStateProps } from "./EmptyState";
@@ -121,6 +125,10 @@ export type { GradientButtonProps } from "./GradientButton";
 // ─── Segmented Tabs (animated tab selector) ──────────────────────────
 export { default as SegmentedTabs } from "./SegmentedTabs";
 export type { SegmentedTabsProps, TabItem } from "./SegmentedTabs";
+
+// ─── Scrollable Tab Bar (for 5+ tabs, horizontal scroll) ────────────
+export { default as ScrollableTabBar } from "./ScrollableTabBar";
+export type { ScrollableTabBarProps } from "./ScrollableTabBar";
 
 // ─── Avatar Preview Modal (tap-to-enlarge character photo) ───────────
 export { default as AvatarPreviewModal } from "./AvatarPreviewModal";

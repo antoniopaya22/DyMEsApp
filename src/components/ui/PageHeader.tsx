@@ -18,13 +18,12 @@
  * />
  */
 
-import React, { useRef, useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   Animated,
-  Easing,
   StyleSheet,
   Platform,
   type StyleProp,
@@ -32,7 +31,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "@/hooks";
+import { useTheme, useEntranceAnimation } from "@/hooks";
+import GradientBorder from "./GradientBorder";
 
 export interface PageHeaderProps {
   /** Main screen title */
@@ -64,38 +64,15 @@ export default function PageHeader({
   style,
 }: PageHeaderProps) {
   const { colors } = useTheme();
-  const headerFade = useRef(new Animated.Value(animated ? 0 : 1)).current;
-  const headerSlide = useRef(new Animated.Value(animated ? 12 : 0)).current;
-
-  useEffect(() => {
-    if (!animated) return;
-    Animated.parallel([
-      Animated.timing(headerFade, {
-        toValue: 1,
-        duration: 400,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(headerSlide, {
-        toValue: 0,
-        duration: 450,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [animated, headerFade, headerSlide]);
+  const { containerStyle: headerAnimStyle } = useEntranceAnimation({
+    active: animated,
+    slide: true,
+    distance: 12,
+    slideDuration: 450,
+  });
 
   return (
-    <Animated.View
-      style={[
-        styles.header,
-        {
-          opacity: headerFade,
-          transform: [{ translateY: headerSlide }],
-        },
-        style,
-      ]}
-    >
+    <Animated.View style={[styles.header, headerAnimStyle, style]}>
       <LinearGradient
         colors={colors.gradientHeader}
         style={StyleSheet.absoluteFill}
@@ -154,20 +131,7 @@ export default function PageHeader({
       {children}
 
       {/* Bottom border gradient */}
-      <View style={styles.headerBorder}>
-        <LinearGradient
-          colors={[
-            "transparent",
-            colors.borderDefault + "66",
-            colors.borderDefault,
-            colors.borderDefault + "66",
-            "transparent",
-          ]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={{ height: 1, width: "100%" }}
-        />
-      </View>
+      <GradientBorder absolute />
     </Animated.View>
   );
 }
@@ -213,12 +177,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     marginTop: 10,
-  },
-  headerBorder: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 1,
   },
 });

@@ -3,14 +3,23 @@
  * Incluye las 9 razas del SRD con subrazas, bonificadores, rasgos y competencias.
  */
 
-import type { RaceId, SubraceId, AbilityKey, SkillKey, Size } from "@/types/character";
+import type {
+  RaceId,
+  SubraceId,
+  AbilityKey,
+  SkillKey,
+  Size,
+} from "@/types/character";
 import type { CustomRaceConfig } from "@/types/creation";
+import type { TraitEffect } from "@/types/traitEffects";
 
 // ─── Tipos de datos de raza ──────────────────────────────────────────
 
 export interface RaceTrait {
   nombre: string;
   descripcion: string;
+  /** Efectos mecánicos estructurados (opcional) */
+  efectos?: TraitEffect[];
 }
 
 /** Hechizo innato otorgado por la raza/subraza a un nivel determinado */
@@ -25,8 +34,8 @@ export interface RacialSpellEntry {
 
 /** Aptitud mágica innata de la raza/subraza */
 export interface RacialSpellcasting {
-  /** Característica de aptitud mágica */
-  ability: AbilityKey;
+  /** Característica de aptitud mágica (array = el jugador elige una) */
+  ability: AbilityKey | AbilityKey[];
   /** Lista de conjuros innatos con nivel mínimo */
   spells: RacialSpellEntry[];
 }
@@ -69,8 +78,6 @@ export interface RaceData {
   swimSpeed?: number;
   /** Velocidad de trepar en pies */
   climbSpeed?: number;
-  /** Velocidad no reducida por armadura pesada */
-  speedNotReducedByArmor?: boolean;
   darkvision: boolean;
   darkvisionRange?: number;
   traits: RaceTrait[];
@@ -96,6 +103,8 @@ export interface RaceData {
   lineageRequired?: boolean;
   /** Conjuros innatos de la raza (con nivel mínimo) */
   racialSpellcasting?: RacialSpellcasting;
+  /** PG extra por nivel (ej: Enano PHB'24 — Dwarven Toughness) */
+  hpBonusPerLevel?: number;
 }
 
 // ─── Linajes dracónidos ──────────────────────────────────────────────
@@ -109,90 +118,152 @@ export interface DragonLineage {
 }
 
 export const DRAGON_LINEAGES: DragonLineage[] = [
-  { id: "azul", dragon: "Azul", damageType: "Relámpago", breathWeapon: "Línea de 1,5×9 m", breathSave: "des" },
-  { id: "blanco", dragon: "Blanco", damageType: "Frío", breathWeapon: "Cono de 4,5 m", breathSave: "con" },
-  { id: "bronce", dragon: "Bronce", damageType: "Relámpago", breathWeapon: "Línea de 1,5×9 m", breathSave: "des" },
-  { id: "cobre", dragon: "Cobre", damageType: "Ácido", breathWeapon: "Línea de 1,5×9 m", breathSave: "des" },
-  { id: "negro", dragon: "Negro", damageType: "Ácido", breathWeapon: "Línea de 1,5×9 m", breathSave: "des" },
-  { id: "oro", dragon: "Oro", damageType: "Fuego", breathWeapon: "Cono de 4,5 m", breathSave: "des" },
-  { id: "oropel", dragon: "Oropel", damageType: "Fuego", breathWeapon: "Línea de 1,5×9 m", breathSave: "des" },
-  { id: "plata", dragon: "Plata", damageType: "Frío", breathWeapon: "Cono de 4,5 m", breathSave: "con" },
-  { id: "rojo", dragon: "Rojo", damageType: "Fuego", breathWeapon: "Cono de 4,5 m", breathSave: "des" },
-  { id: "verde", dragon: "Verde", damageType: "Veneno", breathWeapon: "Cono de 4,5 m", breathSave: "con" },
+  {
+    id: "azul",
+    dragon: "Azul",
+    damageType: "Relámpago",
+    breathWeapon: "Línea de 1,5×9 m",
+    breathSave: "des",
+  },
+  {
+    id: "blanco",
+    dragon: "Blanco",
+    damageType: "Frío",
+    breathWeapon: "Cono de 4,5 m",
+    breathSave: "con",
+  },
+  {
+    id: "bronce",
+    dragon: "Bronce",
+    damageType: "Relámpago",
+    breathWeapon: "Línea de 1,5×9 m",
+    breathSave: "des",
+  },
+  {
+    id: "cobre",
+    dragon: "Cobre",
+    damageType: "Ácido",
+    breathWeapon: "Línea de 1,5×9 m",
+    breathSave: "des",
+  },
+  {
+    id: "negro",
+    dragon: "Negro",
+    damageType: "Ácido",
+    breathWeapon: "Línea de 1,5×9 m",
+    breathSave: "des",
+  },
+  {
+    id: "oro",
+    dragon: "Oro",
+    damageType: "Fuego",
+    breathWeapon: "Cono de 4,5 m",
+    breathSave: "des",
+  },
+  {
+    id: "oropel",
+    dragon: "Oropel",
+    damageType: "Fuego",
+    breathWeapon: "Línea de 1,5×9 m",
+    breathSave: "des",
+  },
+  {
+    id: "plata",
+    dragon: "Plata",
+    damageType: "Frío",
+    breathWeapon: "Cono de 4,5 m",
+    breathSave: "con",
+  },
+  {
+    id: "rojo",
+    dragon: "Rojo",
+    damageType: "Fuego",
+    breathWeapon: "Cono de 4,5 m",
+    breathSave: "des",
+  },
+  {
+    id: "verde",
+    dragon: "Verde",
+    damageType: "Veneno",
+    breathWeapon: "Cono de 4,5 m",
+    breathSave: "con",
+  },
 ];
 
 // ─── Datos de razas ──────────────────────────────────────────────────
 
 export const RACES: Record<RaceId, RaceData> = {
-  // ─── ENANO ─────────────────────────────────────────────────────────
+  // ─── ENANO (PHB'24) ─────────────────────────────────────────────────
   enano: {
     id: "enano",
     nombre: "Enano",
     descripcion:
       "Robustos, resistentes y forjados en la piedra. Los enanos son conocidos por su resistencia, su amor por la artesanía y su inquebrantable sentido del honor.",
-    abilityBonuses: { con: 2 },
+    abilityBonuses: {},
+    freeAbilityBonusCount: 3,
     size: "mediano",
-    speed: 25,
-    speedNotReducedByArmor: true,
+    speed: 30,
     darkvision: true,
-    darkvisionRange: 60,
+    darkvisionRange: 120,
     traits: [
       {
         nombre: "Resistencia Enana",
         descripcion:
-          "Tienes ventaja en las tiradas de salvación contra veneno y posees resistencia al daño de veneno.",
-      },
-      {
-        nombre: "Entrenamiento de Combate Enano",
-        descripcion:
-          "Eres competente con hachas de guerra, hachas de mano, martillos de guerra y martillos ligeros.",
+          "Tienes resistencia al daño de veneno. También tienes ventaja en las tiradas de salvación que hagas para evitar o poner fin a la condición envenenado.",
+        efectos: [
+          {
+            kind: "damageModifier",
+            damageType: "veneno",
+            modifier: "resistance",
+          },
+        ],
       },
       {
         nombre: "Afinidad con la Piedra",
         descripcion:
-          "Cuando hagas una prueba de Inteligencia (Historia) relacionada con el origen de un trabajo en piedra, se te considerará competente en Historia y sumarás el doble de tu bonificador por competencia.",
+          "Como acción adicional, ganas Sentido del Temblor con un alcance de 18 m (60 pies) durante 10 minutos. Debes estar en una superficie de piedra, y esta termina antes si no estás en contacto con ella. Puedes usar este rasgo un número de veces igual a tu bonificador de competencia y recuperas todos los usos tras un descanso largo.",
+        efectos: [
+          {
+            kind: "limitedUse",
+            maxUses: "proficiencyBonus",
+            recharge: "long_rest",
+          },
+        ],
+      },
+      {
+        nombre: "Dureza Enana",
+        descripcion:
+          "Tus puntos de golpe máximos se incrementan en 1 y aumentarán en 1 más cada vez que subas de nivel.",
       },
     ],
     languages: ["Común", "Enano"],
-    weaponProficiencies: [
-      "Hacha de guerra",
-      "Hacha de mano",
-      "Martillo de guerra",
-      "Martillo ligero",
-    ],
-    toolChoices: [
-      "Herramientas de albañil",
-      "Herramientas de herrero",
-      "Suministros de cervecero",
-    ],
-    toolChoiceCount: 1,
+    hpBonusPerLevel: 1,
     subraces: [
       {
         id: "enano_colinas",
         nombre: "Enano de las Colinas",
         descripcion:
-          "Posees sentidos agudos, una profunda intuición y una resistencia extraordinaria.",
-        abilityBonuses: { sab: 1 },
+          "(Legado PHB'14) Posees sentidos agudos, una profunda intuición y una resistencia extraordinaria.",
+        abilityBonuses: {},
         traits: [
           {
-            nombre: "Aguante Enano",
+            nombre: "Aguante Enano (Legado)",
             descripcion:
-              "Tus puntos de golpe máximos se incrementan en 1 y aumentarán en 1 más cada vez que subas de nivel.",
+              "Tus puntos de golpe máximos se incrementan en 1 y aumentarán en 1 más cada vez que subas de nivel. (Incluido ya en la raza base actualizada.)",
           },
         ],
-        hpBonusPerLevel: 1,
+        hpBonusPerLevel: 0,
       },
       {
         id: "enano_montanas",
         nombre: "Enano de las Montañas",
         descripcion:
-          "Eres fuerte y robusto, acostumbrado a una vida dura en terrenos escabrosos.",
-        abilityBonuses: { fue: 2 },
+          "(Legado PHB'14) Eres fuerte y robusto, acostumbrado a una vida dura en terrenos escabrosos.",
+        abilityBonuses: {},
         traits: [
           {
             nombre: "Entrenamiento con Armadura Enana",
-            descripcion:
-              "Eres competente con las armaduras ligeras y medias.",
+            descripcion: "Eres competente con las armaduras ligeras y medias.",
           },
         ],
         armorProficiencies: ["Armaduras ligeras", "Armaduras medias"],
@@ -200,71 +271,62 @@ export const RACES: Record<RaceId, RaceData> = {
     ],
   },
 
-  // ─── ELFO ──────────────────────────────────────────────────────────
+  // ─── ELFO (PHB'24) ──────────────────────────────────────────────────
   elfo: {
     id: "elfo",
     nombre: "Elfo",
     descripcion:
       "Esbeltos, ágiles y conectados con la magia. Los elfos son seres longevos con sentidos agudos y una conexión profunda con la naturaleza y el mundo feérico.",
-    abilityBonuses: { des: 2 },
+    abilityBonuses: {},
+    freeAbilityBonusCount: 3,
     size: "mediano",
     speed: 30,
     darkvision: true,
     darkvisionRange: 60,
     traits: [
       {
-        nombre: "Sentidos Agudos",
-        descripcion: "Eres competente en la habilidad Percepción.",
-      },
-      {
         nombre: "Linaje Feérico",
         descripcion:
-          "Tienes ventaja en las tiradas de salvación para evitar que te hechicen y la magia no puede dormirte.",
+          "Tienes ventaja en las tiradas de salvación para evitar que te hechicen.",
+      },
+      {
+        nombre: "Agudeza Élfica",
+        descripcion:
+          "Eres competente en una de las siguientes habilidades a tu elección: Perspicacia, Percepción o Supervivencia.",
       },
       {
         nombre: "Trance",
         descripcion:
-          "Los elfos no necesitan dormir. Meditan profundamente durante 4 horas al día, obteniendo los mismos beneficios que un humano con 8 horas de sueño.",
+          "No necesitas dormir y la magia no puede dormirte. Puedes terminar un descanso largo en solo 4 horas si pasas esas horas en un trance meditativo, durante el cual permaneces consciente.",
       },
     ],
     languages: ["Común", "Élfico"],
-    skillProficiencies: ["percepcion"],
+    skillChoiceCount: 1,
+    skillChoicePool: ["perspicacia", "percepcion", "supervivencia"],
     subraces: [
       {
         id: "alto_elfo",
         nombre: "Alto Elfo",
         descripcion:
           "Posees una mente aguda y un dominio de, como mínimo, los rudimentos de la magia.",
-        abilityBonuses: { int: 1 },
+        abilityBonuses: {},
         traits: [
-          {
-            nombre: "Entrenamiento con Armas Élficas",
-            descripcion:
-              "Eres competente con espadas cortas, espadas largas, arcos cortos y arcos largos.",
-          },
           {
             nombre: "Truco",
             descripcion:
-              "Conoces un truco de tu elección de la lista de conjuros de mago. La Inteligencia es tu aptitud mágica para lanzarlo.",
+              "Conoces un truco de tu elección de la lista de conjuros de mago. Puedes usar Inteligencia, Sabiduría o Carisma como aptitud mágica.",
           },
           {
-            nombre: "Idioma Adicional",
+            nombre: "Detectar Magia",
             descripcion:
-              "Puedes hablar, leer y escribir un idioma adicional de tu elección.",
+              "Puedes lanzar detectar magia con este rasgo. A partir del nivel 3, también puedes lanzar paso brumoso. Puedes lanzar cada uno de estos conjuros sin un espacio de conjuros una vez, y recuperas la capacidad de hacerlo tras un descanso largo. También puedes lanzar estos conjuros usando espacios que tengas del nivel adecuado. Puedes usar Inteligencia, Sabiduría o Carisma como aptitud mágica.",
           },
         ],
-        weaponProficiencies: [
-          "Espada corta",
-          "Espada larga",
-          "Arco corto",
-          "Arco largo",
-        ],
-        extraLanguages: 1,
         racialSpellcasting: {
-          ability: "int",
+          ability: ["int", "sab", "car"],
           spells: [
-            // El jugador elige 1 truco de mago — se gestiona como cantrip elegible
-            // El spellId se resuelve en la creación (racialCantripChoice del draft)
+            { spellId: "detectar_magia", minLevel: 1 },
+            { spellId: "paso_brumoso", minLevel: 3 },
           ],
         },
       },
@@ -273,68 +335,51 @@ export const RACES: Record<RaceId, RaceData> = {
         nombre: "Elfo del Bosque",
         descripcion:
           "Posees sentidos e intuición agudos, y tus pies ágiles te llevan rápida y sigilosamente a través de tus bosques nativos.",
-        abilityBonuses: { sab: 1 },
+        abilityBonuses: {},
         speedOverride: 35,
         traits: [
-          {
-            nombre: "Entrenamiento con Armas Élficas",
-            descripcion:
-              "Eres competente con espadas cortas, espadas largas, arcos cortos y arcos largos.",
-          },
           {
             nombre: "Pies Ligeros",
             descripcion:
               "Tu velocidad base caminando aumenta a 10,5 m (35 pies).",
           },
           {
-            nombre: "Máscara de la Espesura",
+            nombre: "Magia del Bosque",
             descripcion:
-              "Puedes intentar esconderte incluso cuando estés levemente oculto por follaje, lluvia intensa, nieve u otro fenómeno natural.",
+              "Conoces el truco druidismo. A partir del nivel 3, puedes lanzar zancada larga. A partir del nivel 5, puedes lanzar pasar sin rastro. Puedes lanzar cada uno de estos conjuros sin un espacio de conjuros una vez, y recuperas la capacidad de hacerlo tras un descanso largo. También puedes lanzar estos conjuros usando espacios que tengas del nivel adecuado. Puedes usar Inteligencia, Sabiduría o Carisma como aptitud mágica.",
           },
         ],
-        weaponProficiencies: [
-          "Espada corta",
-          "Espada larga",
-          "Arco corto",
-          "Arco largo",
-        ],
+        racialSpellcasting: {
+          ability: ["int", "sab", "car"],
+          spells: [
+            { spellId: "druidismo", minLevel: 1, isCantrip: true },
+            { spellId: "zancada_larga", minLevel: 3 },
+            { spellId: "pasar_sin_rastro", minLevel: 5 },
+          ],
+        },
       },
       {
         id: "elfo_oscuro",
         nombre: "Elfo Oscuro (Drow)",
         descripcion:
           "Descendientes de una subraza de elfos de piel oscura que fueron desterrados al Infraoscuro.",
-        abilityBonuses: { car: 1 },
+        abilityBonuses: {},
         traits: [
           {
             nombre: "Visión en la Oscuridad Superior",
             descripcion:
               "Tu visión en la oscuridad tiene un alcance de 36 m (120 pies).",
-          },
-          {
-            nombre: "Sensibilidad a la Luz Solar",
-            descripcion:
-              "Tienes desventaja en tiradas de ataque y en pruebas de Sabiduría (Percepción) basadas en la vista cuando tú, el objetivo o lo que intentas percibir está bajo la luz solar directa.",
+            efectos: [{ kind: "darkvision", range: 120 }],
           },
           {
             nombre: "Magia Drow",
             descripcion:
-              "Conoces el truco luces danzantes. Al nivel 3 puedes lanzar hadas de fuego una vez al día. Al nivel 5 puedes lanzar oscuridad una vez al día. El Carisma es tu aptitud mágica.",
+              "Conoces el truco luces danzantes. A partir del nivel 3 puedes lanzar hadas de fuego una vez al día. A partir del nivel 5 puedes lanzar oscuridad una vez al día. Puedes usar Inteligencia, Sabiduría o Carisma como aptitud mágica.",
           },
-          {
-            nombre: "Entrenamiento con Armas Drow",
-            descripcion:
-              "Eres competente con estoques, espadas cortas y ballestas de mano.",
-          },
-        ],
-        weaponProficiencies: [
-          "Estoque",
-          "Espada corta",
-          "Ballesta de mano",
         ],
         darkvisionOverride: 120,
         racialSpellcasting: {
-          ability: "car",
+          ability: ["int", "sab", "car"],
           spells: [
             { spellId: "luces_danzantes", minLevel: 1, isCantrip: true },
             { spellId: "fuego_feerico", minLevel: 3 },
@@ -345,15 +390,16 @@ export const RACES: Record<RaceId, RaceData> = {
     ],
   },
 
-  // ─── MEDIANO ───────────────────────────────────────────────────────
+  // ─── MEDIANO (PHB'24) ───────────────────────────────────────────────
   mediano: {
     id: "mediano",
     nombre: "Mediano",
     descripcion:
       "Pequeños, ágiles y tremendamente afortunados. Los medianos son gente amable y curiosa que valora la comodidad del hogar pero no teme a la aventura.",
-    abilityBonuses: { des: 2 },
+    abilityBonuses: {},
+    freeAbilityBonusCount: 3,
     size: "pequeno",
-    speed: 25,
+    speed: 30,
     darkvision: false,
     traits: [
       {
@@ -371,6 +417,11 @@ export const RACES: Record<RaceId, RaceData> = {
         descripcion:
           "Puedes moverte a través del espacio ocupado por una criatura cuyo tamaño sea, al menos, una categoría superior al tuyo.",
       },
+      {
+        nombre: "Sigiloso por Naturaleza",
+        descripcion:
+          "Puedes realizar la acción de Esconderse incluso cuando solo estés oculto por una criatura que sea al menos una categoría de tamaño superior a ti.",
+      },
     ],
     languages: ["Común", "Mediano"],
     subraces: [
@@ -378,13 +429,13 @@ export const RACES: Record<RaceId, RaceData> = {
         id: "mediano_piesligeros",
         nombre: "Mediano Piesligeros",
         descripcion:
-          "Puedes esconderte con facilidad, incluso tras otras personas. Eres afable y te llevas bien con los demás.",
-        abilityBonuses: { car: 1 },
+          "(Legado PHB'14) Puedes esconderte con facilidad, incluso tras otras personas.",
+        abilityBonuses: {},
         traits: [
           {
-            nombre: "Sigiloso por Naturaleza",
+            nombre: "Sigiloso por Naturaleza (Legado)",
             descripcion:
-              "Puedes intentar esconderte incluso tras una criatura cuyo tamaño sea, al menos, una categoría superior al tuyo.",
+              "Puedes intentar esconderte incluso tras una criatura cuyo tamaño sea, al menos, una categoría superior al tuyo. (Incluido ya en la raza base actualizada.)",
           },
         ],
       },
@@ -392,45 +443,90 @@ export const RACES: Record<RaceId, RaceData> = {
         id: "mediano_fornido",
         nombre: "Mediano Fornido",
         descripcion:
-          "Más resistente que otros medianos, se dice que llevan sangre enana en sus venas.",
-        abilityBonuses: { con: 1 },
+          "(Legado PHB'14) Más resistente que otros medianos, se dice que llevan sangre enana en sus venas.",
+        abilityBonuses: {},
         traits: [
           {
             nombre: "Resistencia de los Fornidos",
             descripcion:
               "Tienes ventaja en las tiradas de salvación contra veneno y posees resistencia al daño de veneno.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "veneno",
+                modifier: "resistance",
+              },
+            ],
           },
         ],
       },
     ],
   },
 
-  // ─── HUMANO ────────────────────────────────────────────────────────
+  // ─── HUMANO (PHB'24) ────────────────────────────────────────────────
   humano: {
     id: "humano",
     nombre: "Humano",
     descripcion:
       "Versátiles, ambiciosos y diversos. Los humanos son la raza más adaptable y abundante, capaces de destacar en cualquier campo gracias a su determinación.",
-    abilityBonuses: { fue: 1, des: 1, con: 1, int: 1, sab: 1, car: 1 },
+    abilityBonuses: {},
+    freeAbilityBonusCount: 3,
     size: "mediano",
     speed: 30,
     darkvision: false,
-    traits: [],
+    traits: [
+      {
+        nombre: "Ingenioso",
+        descripcion:
+          "Ganas Inspiración Heroica cada vez que terminas un descanso largo.",
+      },
+      {
+        nombre: "Habilidoso",
+        descripcion: "Ganas competencia en una habilidad de tu elección.",
+      },
+      {
+        nombre: "Versátil",
+        descripcion:
+          "Ganas una Dote de Origen de tu elección. (La selección de dotes se gestiona por separado.)",
+      },
+    ],
     languages: ["Común"],
-    extraLanguages: 1,
+    skillChoiceCount: 1,
+    skillChoicePool: [
+      "acrobacias",
+      "atletismo",
+      "engano",
+      "historia",
+      "interpretacion",
+      "intimidacion",
+      "investigacion",
+      "juego_de_manos",
+      "medicina",
+      "naturaleza",
+      "percepcion",
+      "perspicacia",
+      "persuasion",
+      "religion",
+      "sigilo",
+      "supervivencia",
+      "trato_con_animales",
+      "arcanos",
+    ],
     subraces: [],
   },
 
-  // ─── DRACÓNIDO ─────────────────────────────────────────────────────
+  // ─── DRACÓNIDO (PHB'24) ─────────────────────────────────────────────
   draconido: {
     id: "draconido",
     nombre: "Dracónido",
     descripcion:
       "Descendientes de dragones, los dracónidos son guerreros orgullosos con aliento destructivo y escamas que reflejan su linaje ancestral.",
-    abilityBonuses: { fue: 2, car: 1 },
+    abilityBonuses: {},
+    freeAbilityBonusCount: 3,
     size: "mediano",
     speed: 30,
-    darkvision: false,
+    darkvision: true,
+    darkvisionRange: 60,
     traits: [
       {
         nombre: "Linaje Dracónico",
@@ -440,12 +536,31 @@ export const RACES: Record<RaceId, RaceData> = {
       {
         nombre: "Ataque de Aliento",
         descripcion:
-          "Puedes usar tu acción para exhalar energía destructora. La CD es 8 + mod. Constitución + bonificador por competencia. Daño: 2d6 (aumenta a 3d6 a nivel 6, 4d6 a nivel 11, 5d6 a nivel 16). Se recupera tras un descanso corto o largo.",
+          "Cuando realizas la acción de Atacar en tu turno, puedes reemplazar uno de tus ataques con una exhalación de energía mágica en un cono de 4,5 m (15 pies) o una línea de 1,5×9 m (30 pies) según tu linaje. Cada criatura en el área debe realizar una tirada de salvación (CD = 8 + mod. Constitución + bonificador por competencia). Daño: 1d10 (aumenta a 2d10 a nivel 5, 3d10 a nivel 11, 4d10 a nivel 17) en fallo, o mitad en éxito. Puedes usar este rasgo un número de veces igual a tu bonificador de competencia y recuperas todos los usos tras un descanso largo.",
+        efectos: [
+          {
+            kind: "limitedUse",
+            maxUses: "proficiencyBonus",
+            recharge: "long_rest",
+          },
+        ],
       },
       {
         nombre: "Resistencia al Daño",
         descripcion:
           "Posees resistencia al tipo de daño asociado a tu Linaje Dracónico.",
+      },
+      {
+        nombre: "Vuelo Dracónico",
+        descripcion:
+          "A partir del nivel 5, puedes usar una acción adicional para manifestar alas espectrales. Ganas velocidad de vuelo igual a tu velocidad de movimiento durante 10 minutos. Puedes usar este rasgo un número de veces igual a tu bonificador de competencia y recuperas todos los usos tras un descanso largo. No puedes usar este rasgo si llevas armadura media o pesada.",
+        efectos: [
+          {
+            kind: "limitedUse",
+            maxUses: "proficiencyBonus",
+            recharge: "long_rest",
+          },
+        ],
       },
     ],
     languages: ["Común", "Dracónico"],
@@ -453,22 +568,23 @@ export const RACES: Record<RaceId, RaceData> = {
     subraces: [],
   },
 
-  // ─── GNOMO ─────────────────────────────────────────────────────────
+  // ─── GNOMO (PHB'24) ─────────────────────────────────────────────────
   gnomo: {
     id: "gnomo",
     nombre: "Gnomo",
     descripcion:
       "Ingeniosos, curiosos y llenos de energía. Los gnomos combinan una mente brillante con un espíritu alegre que les impulsa a explorar todos los misterios del mundo.",
-    abilityBonuses: { int: 2 },
+    abilityBonuses: {},
+    freeAbilityBonusCount: 3,
     size: "pequeno",
-    speed: 25,
+    speed: 30,
     darkvision: true,
     darkvisionRange: 60,
     traits: [
       {
         nombre: "Astucia Gnoma",
         descripcion:
-          "Tienes ventaja en todas las tiradas de salvación de Inteligencia, Sabiduría y Carisma contra magia.",
+          "Tienes ventaja en las tiradas de salvación de Inteligencia, Sabiduría y Carisma.",
       },
     ],
     languages: ["Común", "Gnomo"],
@@ -477,25 +593,32 @@ export const RACES: Record<RaceId, RaceData> = {
         id: "gnomo_bosque",
         nombre: "Gnomo del Bosque",
         descripcion:
-          "Posees una habilidad natural para la ilusión y la rapidez innata, así como una conexión con los animales pequeños.",
-        abilityBonuses: { des: 1 },
+          "Posees una habilidad natural para la ilusión y una conexión con los animales pequeños.",
+        abilityBonuses: {},
         traits: [
           {
             nombre: "Ilusionista Nato",
             descripcion:
-              "Conoces el truco ilusión menor. La Inteligencia es tu aptitud mágica para lanzarlo.",
+              "Conoces el truco ilusión menor. Puedes usar Inteligencia, Sabiduría o Carisma como aptitud mágica para lanzarlo.",
           },
           {
-            nombre: "Hablar con las Bestias Pequeñas",
+            nombre: "Hablar con los Animales",
             descripcion:
-              "Puedes comunicarte con bestias de tamaño Pequeño o inferior mediante sonidos y gestos simples.",
+              "Puedes lanzar el conjuro hablar con los animales un número de veces igual a tu bonificador de competencia y recuperas todos los usos tras un descanso largo. También puedes lanzar este conjuro usando espacios que tengas del nivel adecuado.",
+            efectos: [
+              {
+                kind: "limitedUse",
+                maxUses: "proficiencyBonus",
+                recharge: "long_rest",
+              },
+            ],
           },
         ],
-        cantrips: ["ilusion_menor"],
         racialSpellcasting: {
-          ability: "int",
+          ability: ["int", "sab", "car"],
           spells: [
             { spellId: "ilusion_menor", minLevel: 1, isCantrip: true },
+            { spellId: "hablar_con_los_animales", minLevel: 1 },
           ],
         },
       },
@@ -504,20 +627,21 @@ export const RACES: Record<RaceId, RaceData> = {
         nombre: "Gnomo de las Rocas",
         descripcion:
           "Posees un ingenio natural y eres más resistente que otros gnomos.",
-        abilityBonuses: { con: 1 },
+        abilityBonuses: {},
         traits: [
-          {
-            nombre: "Saber del Artífice",
-            descripcion:
-              "Cuando hagas una prueba de Inteligencia (Historia) relacionada con objetos mágicos, alquímicos o tecnológicos, sumarás el doble de tu bonificador por competencia.",
-          },
           {
             nombre: "Manitas",
             descripcion:
-              "Eres competente con herramientas de manitas. Puedes construir dispositivos mecánicos Diminutos (caja de música, encendedor o juguete mecánico).",
+              "Conoces los trucos remendar y prestidigitación. Puedes usar Inteligencia, Sabiduría o Carisma como aptitud mágica para lanzarlos.",
           },
         ],
-        toolProficiencies: ["Herramientas de manitas"],
+        racialSpellcasting: {
+          ability: ["int", "sab", "car"],
+          spells: [
+            { spellId: "remendar", minLevel: 1, isCantrip: true },
+            { spellId: "prestidigitacion", minLevel: 1, isCantrip: true },
+          ],
+        },
       },
     ],
   },
@@ -541,8 +665,7 @@ export const RACES: Record<RaceId, RaceData> = {
       },
       {
         nombre: "Versátil con Habilidades",
-        descripcion:
-          "Ganas competencia en dos habilidades de tu elección.",
+        descripcion: "Ganas competencia en dos habilidades de tu elección.",
       },
     ],
     languages: ["Común", "Élfico"],
@@ -592,6 +715,7 @@ export const RACES: Record<RaceId, RaceData> = {
         nombre: "Aguante Incansable",
         descripcion:
           "Cuando tus PG se reducen a 0 pero no mueres, puedes recuperar 1 PG. Debes terminar un descanso largo para reutilizarlo.",
+        efectos: [{ kind: "limitedUse", maxUses: 1, recharge: "long_rest" }],
       },
       {
         nombre: "Ataques Salvajes",
@@ -604,41 +728,131 @@ export const RACES: Record<RaceId, RaceData> = {
     subraces: [],
   },
 
-  // ─── TIEFLING ──────────────────────────────────────────────────────
+  // ─── TIEFLING (PHB'24) ──────────────────────────────────────────────
   tiefling: {
     id: "tiefling",
     nombre: "Tiefling",
     descripcion:
-      "Marcados por su herencia infernal, los tieflings cargan con la desconfianza del mundo pero poseen un carisma cautivador y poderes mágicos innatos.",
-    abilityBonuses: { int: 1, car: 2 },
+      "Marcados por su herencia infernal, los tieflings cargan con la desconfianza del mundo pero poseen un carisma cautivador y poderes mágicos innatos. Elige un Legado Infernal que determina tus poderes.",
+    abilityBonuses: {},
+    freeAbilityBonusCount: 3,
     size: "mediano",
     speed: 30,
     darkvision: true,
     darkvisionRange: 60,
     traits: [
       {
-        nombre: "Resistencia Infernal",
-        descripcion: "Tienes resistencia al daño de fuego.",
-      },
-      {
-        nombre: "Linaje Infernal",
+        nombre: "Legado Infernal",
         descripcion:
-          "Conoces el truco taumaturgia. Al nivel 3 puedes lanzar reprensión infernal (nivel 2) una vez al día. Al nivel 5 puedes lanzar oscuridad una vez al día. El Carisma es tu aptitud mágica.",
+          "Eres heredero de un legado infernal que te otorga poderes mágicos innatos. Elige un legado: Abisal, Ctónico o Infernal.",
       },
     ],
     languages: ["Común", "Infernal"],
-    subraces: [],
     racialSpellcasting: {
-      ability: "car",
-      spells: [
-        { spellId: "taumaturgia", minLevel: 1, isCantrip: true },
-        { spellId: "reprension_infernal", minLevel: 3 },
-        { spellId: "oscuridad", minLevel: 5 },
-      ],
+      ability: ["int", "sab", "car"],
+      spells: [{ spellId: "taumaturgia", minLevel: 1, isCantrip: true }],
     },
+    subraces: [
+      {
+        id: "tiefling_abisal",
+        nombre: "Legado Abisal",
+        descripcion:
+          "Tu linaje te conecta con los Abismos, otorgándote resistencia al veneno y magia vinculada a la corrupción abisal.",
+        abilityBonuses: {},
+        traits: [
+          {
+            nombre: "Resistencia Abisal",
+            descripcion: "Tienes resistencia al daño de veneno.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "veneno",
+                modifier: "resistance",
+              },
+            ],
+          },
+          {
+            nombre: "Magia Abisal",
+            descripcion:
+              "Conoces el truco taumaturgia. A partir del nivel 3, puedes lanzar rayo de enfermedad una vez. A partir del nivel 5, puedes lanzar corona de locura una vez. Recuperas la capacidad de lanzar estos conjuros tras un descanso largo. También puedes lanzarlos usando espacios de conjuros del nivel adecuado. Puedes usar Inteligencia, Sabiduría o Carisma como aptitud mágica.",
+          },
+        ],
+        racialSpellcasting: {
+          ability: ["int", "sab", "car"],
+          spells: [
+            { spellId: "rayo_de_enfermedad", minLevel: 3 },
+            { spellId: "corona_de_locura", minLevel: 5 },
+          ],
+        },
+      },
+      {
+        id: "tiefling_ctonico",
+        nombre: "Legado Ctónico",
+        descripcion:
+          "Tu linaje te conecta con el inframundo, otorgándote resistencia al daño necrótico y magia vinculada a la muerte.",
+        abilityBonuses: {},
+        traits: [
+          {
+            nombre: "Resistencia Ctónica",
+            descripcion: "Tienes resistencia al daño necrótico.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "necrotico",
+                modifier: "resistance",
+              },
+            ],
+          },
+          {
+            nombre: "Magia Ctónica",
+            descripcion:
+              "Conoces el truco taumaturgia. A partir del nivel 3, puedes lanzar toque gélido de la muerte una vez. A partir del nivel 5, puedes lanzar oscuridad una vez. Recuperas la capacidad de lanzar estos conjuros tras un descanso largo. También puedes lanzarlos usando espacios de conjuros del nivel adecuado. Puedes usar Inteligencia, Sabiduría o Carisma como aptitud mágica.",
+          },
+        ],
+        racialSpellcasting: {
+          ability: ["int", "sab", "car"],
+          spells: [
+            { spellId: "toque_gelido_de_la_muerte", minLevel: 3 },
+            { spellId: "oscuridad", minLevel: 5 },
+          ],
+        },
+      },
+      {
+        id: "tiefling_infernal",
+        nombre: "Legado Infernal",
+        descripcion:
+          "Tu linaje te conecta con los Nueve Infiernos, otorgándote resistencia al fuego y magia infernal clásica.",
+        abilityBonuses: {},
+        traits: [
+          {
+            nombre: "Resistencia Infernal",
+            descripcion: "Tienes resistencia al daño de fuego.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "fuego",
+                modifier: "resistance",
+              },
+            ],
+          },
+          {
+            nombre: "Magia Infernal",
+            descripcion:
+              "Conoces el truco taumaturgia. A partir del nivel 3, puedes lanzar reprensión infernal (nivel 2) una vez. A partir del nivel 5, puedes lanzar oscuridad una vez. Recuperas la capacidad de lanzar estos conjuros tras un descanso largo. También puedes lanzarlos usando espacios de conjuros del nivel adecuado. Puedes usar Inteligencia, Sabiduría o Carisma como aptitud mágica.",
+          },
+        ],
+        racialSpellcasting: {
+          ability: ["int", "sab", "car"],
+          spells: [
+            { spellId: "reprension_infernal", minLevel: 3 },
+            { spellId: "oscuridad", minLevel: 5 },
+          ],
+        },
+      },
+    ],
   },
 
-  // ─── HADA (Expansión) ───────────────────────────────────────────────
+  // ─── HADA (MPMM — corregida) ────────────────────────────────────────
   hada: {
     id: "hada",
     nombre: "Hada",
@@ -664,22 +878,22 @@ export const RACES: Record<RaceId, RaceData> = {
       {
         nombre: "Magia Feérica",
         descripcion:
-          "Conoces el truco prestidigitación. A partir del nivel 3, puedes lanzar hechizo de hada una vez al día. A partir del nivel 5, puedes lanzar aumentar/reducir una vez al día. Puedes elegir Inteligencia, Sabiduría o Carisma como aptitud mágica para estos conjuros. No necesitas componentes materiales.",
+          "Conoces el truco druidismo. A partir del nivel 3, puedes lanzar hechizo de hada una vez al día. A partir del nivel 5, puedes lanzar aumentar/reducir una vez al día. Puedes elegir Inteligencia, Sabiduría o Carisma como aptitud mágica para estos conjuros. No necesitas componentes materiales.",
       },
     ],
     languages: ["Común", "Silvano"],
     subraces: [],
     racialSpellcasting: {
-      ability: "car",
+      ability: ["int", "sab", "car"],
       spells: [
-        { spellId: "prestidigitacion", minLevel: 1, isCantrip: true },
+        { spellId: "druidismo", minLevel: 1, isCantrip: true },
         { spellId: "hechizo_de_hada", minLevel: 3 },
         { spellId: "aumentar_reducir", minLevel: 5 },
       ],
     },
   },
 
-  // ─── LIEBREN (Expansión) ───────────────────────────────────────────
+  // ─── LIEBREN (MPMM — corregida) ─────────────────────────────────────
   liebren: {
     id: "liebren",
     nombre: "Liebren",
@@ -695,16 +909,31 @@ export const RACES: Record<RaceId, RaceData> = {
         nombre: "Reflejos de Liebre",
         descripcion:
           "Puedes sumar tu bonificador de competencia a tu tirada de iniciativa.",
+        efectos: [{ kind: "initiativeBonus", addProficiencyBonus: true }],
       },
       {
         nombre: "Salto Liebren",
         descripcion:
           "Como acción bonus, puedes saltar una distancia igual a 5 veces tu bonificador de competencia sin provocar ataques de oportunidad. Puedes usar este rasgo un número de veces igual a tu bonificador de competencia, y recuperas todos los usos tras un descanso largo.",
+        efectos: [
+          {
+            kind: "limitedUse",
+            maxUses: "proficiencyBonus",
+            recharge: "long_rest",
+          },
+        ],
       },
       {
-        nombre: "Suerte Caprichosa",
+        nombre: "Pies de la Suerte",
         descripcion:
-          "Cuando falles una prueba de característica, tirada de ataque, tirada de salvación o prueba de característica, puedes tirar un d4 y sumarlo al resultado, pudiendo cambiar el resultado. Puedes usar este rasgo un número de veces igual a tu bonificador de competencia y recuperas todos los usos tras un descanso largo.",
+          "Cuando falles una tirada de salvación de Destreza, puedes usar tu reacción para tirar un d4 y sumarlo al resultado, pudiendo cambiar el resultado. Puedes usar este rasgo un número de veces igual a tu bonificador de competencia y recuperas todos los usos tras un descanso largo.",
+        efectos: [
+          {
+            kind: "limitedUse",
+            maxUses: "proficiencyBonus",
+            recharge: "long_rest",
+          },
+        ],
       },
       {
         nombre: "Pies Ágiles",
@@ -753,23 +982,27 @@ export function buildRaceDataFromCustom(config: CustomRaceConfig): RaceData {
     climbSpeed: config.climbSpeed,
     darkvision: config.darkvision,
     darkvisionRange: config.darkvisionRange,
-    traits: config.traits.map((t) => ({ nombre: t.nombre, descripcion: t.descripcion })),
+    traits: config.traits.map((t) => ({
+      nombre: t.nombre,
+      descripcion: t.descripcion,
+    })),
     languages: config.languages.length > 0 ? config.languages : ["Común"],
     skillProficiencies: config.skillProficiencies as SkillKey[] | undefined,
     weaponProficiencies: config.weaponProficiencies,
     armorProficiencies: config.armorProficiencies,
     toolProficiencies: config.toolProficiencies,
     subraces: [],
-    racialSpellcasting: config.racialSpells && config.racialSpells.length > 0
-      ? {
-          ability: "car" as AbilityKey, // Default spellcasting ability
-          spells: config.racialSpells.map((s) => ({
-            spellId: s.nombre.toLowerCase().replace(/\s+/g, "_"),
-            minLevel: s.minLevel,
-            isCantrip: s.isCantrip || undefined,
-          })),
-        }
-      : undefined,
+    racialSpellcasting:
+      config.racialSpells && config.racialSpells.length > 0
+        ? {
+            ability: "car" as AbilityKey, // Default spellcasting ability
+            spells: config.racialSpells.map((s) => ({
+              spellId: s.nombre.toLowerCase().replace(/\s+/g, "_"),
+              minLevel: s.minLevel,
+              isCantrip: s.isCantrip || undefined,
+            })),
+          }
+        : undefined,
   };
 }
 
@@ -785,7 +1018,7 @@ export function getRaceData(raceId: RaceId): RaceData {
  */
 export function getSubraceData(
   raceId: RaceId,
-  subraceId: SubraceId
+  subraceId: SubraceId,
 ): SubraceData | null {
   if (!subraceId) return null;
   const race = RACES[raceId];
@@ -798,14 +1031,16 @@ export function getSubraceData(
  */
 export function getTotalRacialBonuses(
   raceId: RaceId,
-  subraceId: SubraceId
+  subraceId: SubraceId,
 ): Partial<Record<AbilityKey, number>> {
   const race = RACES[raceId];
   const subrace = subraceId
     ? race.subraces.find((s) => s.id === subraceId)
     : null;
 
-  const bonuses: Partial<Record<AbilityKey, number>> = { ...race.abilityBonuses };
+  const bonuses: Partial<Record<AbilityKey, number>> = {
+    ...race.abilityBonuses,
+  };
 
   if (subrace) {
     for (const [key, value] of Object.entries(subrace.abilityBonuses)) {
@@ -822,7 +1057,7 @@ export function getTotalRacialBonuses(
  */
 export function getAllRaceTraits(
   raceId: RaceId,
-  subraceId: SubraceId
+  subraceId: SubraceId,
 ): RaceTrait[] {
   const race = RACES[raceId];
   const subrace = subraceId
@@ -868,12 +1103,16 @@ export function getRacialSpellsForLevel(
 
   if (race.racialSpellcasting) {
     entries.push(
-      ...race.racialSpellcasting.spells.filter((s) => s.minLevel <= characterLevel),
+      ...race.racialSpellcasting.spells.filter(
+        (s) => s.minLevel <= characterLevel,
+      ),
     );
   }
   if (subrace?.racialSpellcasting) {
     entries.push(
-      ...subrace.racialSpellcasting.spells.filter((s) => s.minLevel <= characterLevel),
+      ...subrace.racialSpellcasting.spells.filter(
+        (s) => s.minLevel <= characterLevel,
+      ),
     );
   }
 

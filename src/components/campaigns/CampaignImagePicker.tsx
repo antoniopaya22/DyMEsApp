@@ -129,9 +129,7 @@ function ImageOption({
         <Image source={source} style={styles.image} resizeMode="cover" />
 
         {/* Dark overlay when NOT selected */}
-        {!isSelected && (
-          <View style={styles.dimOverlay} />
-        )}
+        {!isSelected && <View style={styles.dimOverlay} />}
 
         {/* Gold gradient glow when selected */}
         {isSelected && (
@@ -215,7 +213,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
+    shadowColor: "#000", // static: theme-independent
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.3,
     shadowRadius: 2,

@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks";
 import { formatModifier, type Character } from "@/types/character";
 import { withAlpha } from "@/utils/theme";
+import { usePvFijos } from "@/stores/settingsStore";
 
 interface HPStepProps {
   hpMethod: "fixed" | "roll";
@@ -37,6 +38,7 @@ export default function HPStep({
   classData,
 }: HPStepProps) {
   const { colors } = useTheme();
+  const pvFijos = usePvFijos();
 
   return (
     <ScrollView
@@ -53,8 +55,9 @@ export default function HPStep({
           lineHeight: 20,
         }}
       >
-        Al subir de nivel, ganas Puntos de Golpe adicionales. Elige cómo
-        determinar los PG ganados.
+        {pvFijos
+          ? "Al subir de nivel, ganas Puntos de Golpe adicionales usando el valor fijo del dado de golpe."
+          : "Al subir de nivel, ganas Puntos de Golpe adicionales. Elige cómo determinar los PG ganados."}
       </Text>
 
       {/* Method selection */}
@@ -161,102 +164,104 @@ export default function HPStep({
         </TouchableOpacity>
 
         {/* Roll option */}
-        <TouchableOpacity
-          onPress={() => setHpMethod("roll")}
-          activeOpacity={0.7}
-          style={{
-            borderRadius: 14,
-            borderWidth: 2,
-            borderColor:
-              hpMethod === "roll"
-                ? withAlpha(colors.accentRed, 0.5)
-                : colors.borderDefault,
-            backgroundColor:
-              hpMethod === "roll"
-                ? withAlpha(colors.accentRed, 0.08)
-                : colors.bgCard,
-            padding: 16,
-          }}
-        >
-          <View
+        {!pvFijos && (
+          <TouchableOpacity
+            onPress={() => setHpMethod("roll")}
+            activeOpacity={0.7}
             style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 12,
+              borderRadius: 14,
+              borderWidth: 2,
+              borderColor:
+                hpMethod === "roll"
+                  ? withAlpha(colors.accentRed, 0.5)
+                  : colors.borderDefault,
+              backgroundColor:
+                hpMethod === "roll"
+                  ? withAlpha(colors.accentRed, 0.08)
+                  : colors.bgCard,
+              padding: 16,
             }}
           >
             <View
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 12,
-                backgroundColor:
-                  hpMethod === "roll"
-                    ? withAlpha(colors.accentRed, 0.2)
-                    : withAlpha(colors.textMuted, 0.15),
+                flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "center",
+                gap: 12,
               }}
             >
-              <Ionicons
-                name="dice-outline"
-                size={20}
-                color={
-                  hpMethod === "roll" ? colors.accentRed : colors.textMuted
-                }
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  color:
-                    hpMethod === "roll"
-                      ? colors.accentRed
-                      : colors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: "700",
-                }}
-              >
-                Tirar Dado
-              </Text>
-              <Text
-                style={{
-                  color: colors.textSecondary,
-                  fontSize: 13,
-                  fontWeight: "500",
-                  marginTop: 2,
-                }}
-              >
-                1{classData?.hitDie ?? "d8"} (1-{dieSides}) + CON (
-                {formatModifier(conMod)})
-              </Text>
-            </View>
-            {hpMethod === "roll" && hpRolled !== null && (
               <View
                 style={{
-                  backgroundColor: withAlpha(colors.accentRed, 0.2),
-                  borderRadius: 10,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  backgroundColor:
+                    hpMethod === "roll"
+                      ? withAlpha(colors.accentRed, 0.2)
+                      : withAlpha(colors.textMuted, 0.15),
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
+                <Ionicons
+                  name="dice-outline"
+                  size={20}
+                  color={
+                    hpMethod === "roll" ? colors.accentRed : colors.textMuted
+                  }
+                />
+              </View>
+              <View style={{ flex: 1 }}>
                 <Text
                   style={{
-                    color: colors.accentRed,
-                    fontSize: 18,
-                    fontWeight: "800",
+                    color:
+                      hpMethod === "roll"
+                        ? colors.accentRed
+                        : colors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: "700",
                   }}
                 >
-                  +{Math.max(1, hpRolled + conMod)}
+                  Tirar Dado
+                </Text>
+                <Text
+                  style={{
+                    color: colors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: "500",
+                    marginTop: 2,
+                  }}
+                >
+                  1{classData?.hitDie ?? "d8"} (1-{dieSides}) + CON (
+                  {formatModifier(conMod)})
                 </Text>
               </View>
-            )}
-          </View>
-        </TouchableOpacity>
+              {hpMethod === "roll" && hpRolled !== null && (
+                <View
+                  style={{
+                    backgroundColor: withAlpha(colors.accentRed, 0.2),
+                    borderRadius: 10,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.accentRed,
+                      fontSize: 18,
+                      fontWeight: "800",
+                    }}
+                  >
+                    +{Math.max(1, hpRolled + conMod)}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Roll dice button */}
-      {hpMethod === "roll" && (
+      {!pvFijos && hpMethod === "roll" && (
         <View style={{ alignItems: "center", gap: 12 }}>
           <TouchableOpacity
             onPress={rollHPDie}

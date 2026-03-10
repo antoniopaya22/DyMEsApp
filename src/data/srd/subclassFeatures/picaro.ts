@@ -23,6 +23,7 @@ export const PICARO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Trabajo en Alturas",
             descripcion:
               "Ganas velocidad de Trepar igual a tu velocidad. Ademas, puedes calcular tu distancia de salto usando tu Destreza en lugar de tu Fuerza.",
+            efectos: [{ kind: "speedBonus", climb: "walk" }],
           },
         ],
       },
@@ -242,6 +243,7 @@ export const PICARO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Audacia Temeraria",
             descripcion:
               "Puedes anadir tu mod. de CAR a las tiradas de iniciativa. Ademas, no necesitas ventaja para usar Ataque Furtivo si estas a 1,5 m del objetivo, no hay otra criatura a 1,5 m de ti y no tienes desventaja.",
+            efectos: [{ kind: "initiativeBonus", abilityBonus: "car" }],
           },
         ],
       },
@@ -480,6 +482,7 @@ export const PICARO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Movilidad Superior",
             descripcion:
               "Tu velocidad de caminar aumenta en 3 m. Si tienes velocidad de trepar o nadar, tambien aumenta en 3 m.",
+            efectos: [{ kind: "speedBonus", walkBonus: 10 }],
           },
         ],
       },

@@ -4,6 +4,7 @@
  */
 
 import type { ClassId } from "@/types/character";
+import type { TraitEffect } from "@/types/traitEffects";
 
 export interface SubclassChoiceOption {
   /** Identificador (slug) */
@@ -36,6 +37,8 @@ export interface SubclassFeatureDetail {
   descripcion: string;
   /** Si requiere elección del jugador */
   elecciones?: SubclassFeatureChoice[];
+  /** Efectos mecánicos estructurados (opcional) */
+  efectos?: TraitEffect[];
 }
 
 export interface SubclassLevelBlock {

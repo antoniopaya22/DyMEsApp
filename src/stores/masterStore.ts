@@ -22,6 +22,7 @@ import {
   removePlayerFromCampaign,
   findCharacterByCode,
 } from "@/services/supabaseService";
+import { extractErrorMessage } from "@/utils/storage";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -83,8 +84,7 @@ export const useMasterStore = create<MasterStore>((set, get) => ({
       const campaigns = await fetchMasterCampaigns(masterId);
       set({ campaigns, loadingCampaigns: false });
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Error al cargar campañas";
+      const msg = extractErrorMessage(err, "Error al cargar campañas");
       console.error("[MasterStore] loadCampaigns:", msg);
       set({ error: msg, loadingCampaigns: false });
     }
@@ -97,8 +97,7 @@ export const useMasterStore = create<MasterStore>((set, get) => ({
       set((s) => ({ campaigns: [campaign, ...s.campaigns] }));
       return campaign;
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Error al crear campaña";
+      const msg = extractErrorMessage(err, "Error al crear campaña");
       console.error("[MasterStore] createCampaign:", msg);
       set({ error: msg });
       throw err;
@@ -110,13 +109,10 @@ export const useMasterStore = create<MasterStore>((set, get) => ({
     try {
       const updated = await updateMasterCampaign(campaignId, input);
       set((s) => ({
-        campaigns: s.campaigns.map((c) =>
-          c.id === campaignId ? updated : c,
-        ),
+        campaigns: s.campaigns.map((c) => (c.id === campaignId ? updated : c)),
       }));
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Error al actualizar campaña";
+      const msg = extractErrorMessage(err, "Error al actualizar campaña");
       console.error("[MasterStore] updateCampaign:", msg);
       set({ error: msg });
     }
@@ -132,8 +128,7 @@ export const useMasterStore = create<MasterStore>((set, get) => ({
           s.activeCampaignId === campaignId ? null : s.activeCampaignId,
       }));
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Error al eliminar campaña";
+      const msg = extractErrorMessage(err, "Error al eliminar campaña");
       console.error("[MasterStore] deleteCampaign:", msg);
       set({ error: msg });
     }
@@ -151,8 +146,7 @@ export const useMasterStore = create<MasterStore>((set, get) => ({
       const players = await fetchCampaignPlayers(campaignId);
       set({ players, loadingPlayers: false });
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Error al cargar jugadores";
+      const msg = extractErrorMessage(err, "Error al cargar jugadores");
       console.error("[MasterStore] loadPlayers:", msg);
       set({ error: msg, loadingPlayers: false });
     }
@@ -172,9 +166,7 @@ export const useMasterStore = create<MasterStore>((set, get) => ({
       const { profile, ...character } = result;
 
       // 2. Check player not already in campaign
-      const existing = get().players.find(
-        (p) => p.profile.id === profile.id,
-      );
+      const existing = get().players.find((p) => p.profile.id === profile.id);
       if (existing) {
         throw new Error(
           `${profile.nombre || "Este jugador"} ya está en la campaña`,
@@ -204,8 +196,7 @@ export const useMasterStore = create<MasterStore>((set, get) => ({
         : profile.nombre || profile.codigo_jugador;
       return displayName;
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Error al añadir jugador";
+      const msg = extractErrorMessage(err, "Error al añadir jugador");
       console.error("[MasterStore] addPlayer:", msg);
       set({ error: msg });
       throw err;
@@ -217,13 +208,10 @@ export const useMasterStore = create<MasterStore>((set, get) => ({
     try {
       await removePlayerFromCampaign(campaignId, playerId);
       set((s) => ({
-        players: s.players.filter(
-          (p) => p.profile.id !== playerId,
-        ),
+        players: s.players.filter((p) => p.profile.id !== playerId),
       }));
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Error al eliminar jugador";
+      const msg = extractErrorMessage(err, "Error al eliminar jugador");
       console.error("[MasterStore] removePlayer:", msg);
       set({ error: msg });
     }

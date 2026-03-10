@@ -1,41 +1,31 @@
 /**
  * Shared styles for Compendium card components
+ *
+ * Slimmed down — card container/border/shadow styles are now handled by GlowCard.
+ * These styles cover the inner content layout shared across all card types.
  */
 
 import { StyleSheet } from "react-native";
 
 export const cardStyles = StyleSheet.create({
-  // ── Card Container ──
-  card: {
-    marginBottom: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: "hidden",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+  // ── Card header (icon + info + chevron row) ──
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 14,
   },
   cardIconBg: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 14,
+    marginRight: 12,
   },
   cardInfo: {
     flex: 1,
   },
   cardTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "bold",
   },
   cardSubtitle: {
@@ -45,15 +35,14 @@ export const cardStyles = StyleSheet.create({
 
   // ── Card Detail (expanded) ──
   cardDetail: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingTop: 14,
+    marginTop: 14,
     borderTopWidth: 1,
   },
   detailRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginTop: 12,
     marginBottom: 4,
   },
   detailSection: {

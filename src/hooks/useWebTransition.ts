@@ -14,6 +14,7 @@
  */
 
 import { useState, useCallback } from "react";
+import { DARK_THEME } from "@/utils/theme";
 
 // ─── Web Transition State ────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ const DEFAULT_WEB_TRANSITION_STATE: WebTransitionState = {
   url: "",
   label: undefined,
   delay: 1200,
-  accentColor: "#60a5fa",
+  accentColor: DARK_THEME.accentLightBlue,
   icon: undefined,
 };
 
@@ -58,18 +59,18 @@ export function useWebTransition() {
         delay?: number;
         accentColor?: string;
         icon?: string;
-      }
+      },
     ) => {
       setWebTransition({
         visible: true,
         url,
         label: options?.label,
         delay: options?.delay ?? 1200,
-        accentColor: options?.accentColor || "#60a5fa",
+        accentColor: options?.accentColor || DARK_THEME.accentLightBlue,
         icon: options?.icon,
       });
     },
-    []
+    [],
   );
 
   // Props to spread on WebTransition component

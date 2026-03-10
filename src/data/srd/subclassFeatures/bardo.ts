@@ -117,8 +117,7 @@ export const BARDO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
           },
           {
             nombre: "Estilo de Combate",
-            descripcion:
-              "Eliges un estilo de combate como especialidad.",
+            descripcion: "Eliges un estilo de combate como especialidad.",
             elecciones: [
               {
                 id: "estilo_combate",
@@ -370,6 +369,21 @@ export const BARDO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Gracia Deslumbrante",
             descripcion:
               "Mientras no lleves armadura y no empuñes Escudo, ganas las siguientes ventajas:\n• Tu CA es igual a 10 + mod. de Destreza + mod. de Carisma.\n• Tu velocidad aumenta en 3 m.\n• Tienes ventaja en las salvaciones de Destreza.",
+            efectos: [
+              {
+                kind: "acFormula",
+                formula: {
+                  type: "unarmoredDefense",
+                  abilities: ["des", "car"],
+                },
+                allowShield: false,
+              },
+              {
+                kind: "speedBonus",
+                walkBonus: 10,
+                condition: "sin armadura ni escudo",
+              },
+            ],
           },
           {
             nombre: "Pirueta Inspiradora",

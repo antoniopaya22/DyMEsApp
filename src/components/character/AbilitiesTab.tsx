@@ -12,11 +12,7 @@
  */
 
 import { useState } from "react";
-import {
-  View,
-  Animated,
-  Text,
-} from "react-native";
+import { View, Animated, Text } from "react-native";
 import { useCharacterStore } from "@/stores/characterStore";
 import { useHeaderScroll } from "@/hooks";
 import { ConfirmDialog, Toast } from "@/components/ui";
@@ -25,10 +21,12 @@ import {
   SPELLCASTING_ABILITY,
   CLASS_CASTER_TYPE,
   CLASS_SPELL_PREPARATION,
+  SPELLS_KNOWN,
 } from "@/types/spell";
 import type { ClassId } from "@/types/character";
 import { getClassData } from "@/data/srd/classes";
-import { getSpellById } from "@/data/srd/spells";
+import { getSpellById, getSpellsForClassUpToLevel } from "@/data/srd/spells";
+import { getMaxSpellLevelForClass } from "@/data/srd/leveling";
 import { calcPreparedSpells } from "@/utils/spells";
 import { getClassAbilityTheme } from "@/constants/abilities";
 
@@ -92,21 +90,37 @@ export default function AbilitiesTab() {
 
   // ── Spell data (for casters) ──
 
-  const allSpellIds = magicState
+  // Determinar si es un lanzador preparado puro (acceso a toda la lista de clase)
+  // Clérigo, Druida, Paladín tienen preparationType === "prepared" y NO tienen
+  // tabla SPELLS_KNOWN (a diferencia de Bardo, Hechicero, Explorador que sí la tienen).
+  const isPreparedCaster =
+    preparationType === "prepared" && !SPELLS_KNOWN[character.clase as ClassId];
+
+  const maxSpellLevel = getMaxSpellLevelForClass(
+    character.clase as ClassId,
+    character.nivel,
+  );
+
+  // Para lanzadores preparados: incluir todos los conjuros de clase disponibles
+  const classSpellIds = isPreparedCaster
+    ? getSpellsForClassUpToLevel(character.clase as ClassId, maxSpellLevel).map(
+        (s) => s.id,
+      )
+    : [];
+
+  const storedSpellIds = magicState
     ? [
-        ...new Set([
-          ...magicState.knownSpellIds,
-          ...magicState.preparedSpellIds,
-          ...magicState.spellbookIds,
-        ]),
+        ...magicState.knownSpellIds,
+        ...magicState.preparedSpellIds,
+        ...magicState.spellbookIds,
       ]
     : [
-        ...new Set([
-          ...character.knownSpellIds,
-          ...character.preparedSpellIds,
-          ...character.spellbookIds,
-        ]),
+        ...character.knownSpellIds,
+        ...character.preparedSpellIds,
+        ...character.spellbookIds,
       ];
+
+  const allSpellIds = [...new Set([...storedSpellIds, ...classSpellIds])];
 
   const cantrips = allSpellIds.filter((id) => {
     const spell = getSpellById(id);
@@ -144,8 +158,7 @@ export default function AbilitiesTab() {
       .replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
-  const getSpellLevel = (id: string): number =>
-    getSpellById(id)?.nivel ?? 1;
+  const getSpellLevel = (id: string): number => getSpellById(id)?.nivel ?? 1;
 
   const canCastSpell = (id: string): boolean => {
     if (preparationType === "known" || preparationType === "none") return true;
@@ -175,7 +188,8 @@ export default function AbilitiesTab() {
       }).length;
 
   const maxPreparedSpells =
-    (preparationType === "prepared" || preparationType === "spellbook") && spellcastingAbility
+    (preparationType === "prepared" || preparationType === "spellbook") &&
+    spellcastingAbility
       ? calcPreparedSpells(character.clase, character.nivel, abilityMod)
       : undefined;
 
@@ -202,10 +216,7 @@ export default function AbilitiesTab() {
 
   // ── Class Resource Actions ──
 
-  const handleUseClassResource = async (
-    resourceId: string,
-    nombre: string,
-  ) => {
+  const handleUseClassResource = async (resourceId: string, nombre: string) => {
     const success = await useClassResource(resourceId);
     if (success) showToast(`${nombre}: uso consumido`);
     else showToast(`${nombre}: no quedan usos`);
@@ -326,6 +337,7 @@ export default function AbilitiesTab() {
           onTogglePrepared={handleTogglePrepared}
           maxPreparedSpells={maxPreparedSpells}
           currentPreparedCount={currentPreparedCount}
+          isPreparedCaster={isPreparedCaster}
         />
         <CharacterTraitsSection
           traits={character.traits}

@@ -97,6 +97,19 @@ export default function LevelUpModal({
             incrementASI={w.incrementASI}
             decrementASI={w.decrementASI}
             character={w.character!}
+            dotesActivas={w.dotesActivas}
+            chooseFeat={w.chooseFeat}
+            setChooseFeat={w.setChooseFeat}
+            selectedFeatId={w.selectedFeatId}
+            setSelectedFeatId={w.setSelectedFeatId}
+            featAsiChoices={w.featAsiChoices}
+            featAsiEffect={w.featAsiEffect}
+            featAsiAmount={w.featAsiAmount}
+            featAsiAllowedKeys={w.featAsiAllowedKeys}
+            featAsiUsed={w.featAsiUsed}
+            featAsiComplete={w.featAsiComplete}
+            incrementFeatASI={w.incrementFeatASI}
+            decrementFeatASI={w.decrementFeatASI}
           />
         );
       case "spells":
@@ -183,6 +196,9 @@ export default function LevelUpModal({
             selectedSubclassId={w.selectedSubclassId}
             isCustomSubclass={w.isCustomSubclass}
             featureChoices={w.featureChoices}
+            chooseFeat={w.chooseFeat}
+            selectedFeatId={w.selectedFeatId}
+            featAsiChoices={w.featAsiChoices}
           />
         );
       default:
@@ -192,8 +208,7 @@ export default function LevelUpModal({
 
   // ─── Main render ───────────────────────────────────────────────────
 
-  const progressPercent =
-    ((w.currentStepIndex + 1) / w.steps.length) * 100;
+  const progressPercent = ((w.currentStepIndex + 1) / w.steps.length) * 100;
   const disabled = !w.canProceed() || w.isProcessing;
 
   return (
@@ -318,7 +333,9 @@ export default function LevelUpModal({
                 size={18}
                 color={colors.textSecondary}
               />
-              <Text style={[s.secondaryBtnText, { color: colors.textSecondary }]}>
+              <Text
+                style={[s.secondaryBtnText, { color: colors.textSecondary }]}
+              >
                 {w.isFirstStep ? "Cancelar" : "Atrás"}
               </Text>
             </TouchableOpacity>
@@ -342,13 +359,17 @@ export default function LevelUpModal({
               {w.isProcessing ? (
                 <>
                   <ActivityIndicator size="small" color={colors.textInverted} />
-                  <Text style={[s.primaryBtnText, { color: colors.textInverted }]}>
+                  <Text
+                    style={[s.primaryBtnText, { color: colors.textInverted }]}
+                  >
                     Aplicando…
                   </Text>
                 </>
               ) : (
                 <>
-                  <Text style={[s.primaryBtnText, { color: colors.textInverted }]}>
+                  <Text
+                    style={[s.primaryBtnText, { color: colors.textInverted }]}
+                  >
                     {w.isLastStep ? "¡Confirmar!" : "Siguiente"}
                   </Text>
                   <Ionicons

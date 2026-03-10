@@ -196,6 +196,23 @@ export const CLERIGO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Avatar de Batalla",
             descripcion:
               "Ganas resistencia a daño contundente, perforante y cortante.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "contundente",
+                modifier: "resistance",
+              },
+              {
+                kind: "damageModifier",
+                damageType: "cortante",
+                modifier: "resistance",
+              },
+              {
+                kind: "damageModifier",
+                damageType: "perforante",
+                modifier: "resistance",
+              },
+            ],
           },
         ],
       },
@@ -244,6 +261,14 @@ export const CLERIGO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Alma de la Forja",
             descripcion:
               "Ganas resistencia al daño de fuego. Mientras lleves armadura pesada, ganas +1 a la CA.",
+            efectos: [
+              { kind: "acBonus", bonus: 1, condition: "con armadura pesada" },
+              {
+                kind: "damageModifier",
+                damageType: "fuego",
+                modifier: "resistance",
+              },
+            ],
           },
         ],
       },
@@ -254,6 +279,28 @@ export const CLERIGO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Santo de la Forja y el Fuego",
             descripcion:
               "Ganas inmunidad al daño de fuego. Mientras lleves armadura pesada, ganas resistencia al daño contundente, perforante y cortante de ataques no mágicos.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "fuego",
+                modifier: "immunity",
+              },
+              {
+                kind: "damageModifier",
+                damageType: "contundente",
+                modifier: "resistance",
+              },
+              {
+                kind: "damageModifier",
+                damageType: "cortante",
+                modifier: "resistance",
+              },
+              {
+                kind: "damageModifier",
+                damageType: "perforante",
+                modifier: "resistance",
+              },
+            ],
           },
         ],
       },
@@ -422,6 +469,13 @@ export const CLERIGO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Nacido de la Tormenta",
             descripcion:
               "Ganas velocidad de vuelo igual a tu velocidad de caminar siempre que no estés bajo tierra ni en interior.",
+            efectos: [
+              {
+                kind: "speedBonus",
+                fly: "walk",
+                condition: "no bajo tierra ni en interior",
+              },
+            ],
           },
         ],
       },
@@ -562,6 +616,7 @@ export const CLERIGO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Ojos de la Noche",
             descripcion:
               "Ganas visión en la oscuridad a 90 m. En ese radio ves en penumbra como en luz brillante y en oscuridad como en penumbra. Como acción, puedes compartir esta visión con criaturas voluntarias a 3 m (hasta tu mod. SAB, mín. 1). Dura 1 hora. 1 uso por descanso largo (o gasta un espacio de conjuro para repetir).",
+            efectos: [{ kind: "darkvision", range: 300 }],
           },
           {
             nombre: "Bendición del Vigilante",

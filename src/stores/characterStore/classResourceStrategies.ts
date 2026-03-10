@@ -4,10 +4,15 @@
  * New classes can be supported by adding entries to CLASS_RESOURCE_REGISTRY.
  */
 
-import { UNLIMITED_RESOURCE, type ClassResourceInfo } from "./classResourceTypes";
+import {
+  UNLIMITED_RESOURCE,
+  type ClassResourceInfo,
+} from "./classResourceTypes";
 import { RAGE_USES } from "@/data/srd/leveling";
 
-type ClassResourceFactory = (level: number) => Record<string, ClassResourceInfo>;
+type ClassResourceFactory = (
+  level: number,
+) => Record<string, ClassResourceInfo>;
 
 // ─── Individual class strategies ─────────────────────────────────────
 
@@ -18,7 +23,8 @@ function barbaroResources(level: number): Record<string, ClassResourceInfo> {
       id: "furia",
       nombre: "Furia",
       max: rageMax === "ilimitado" ? UNLIMITED_RESOURCE : (rageMax as number),
-      current: rageMax === "ilimitado" ? UNLIMITED_RESOURCE : (rageMax as number),
+      current:
+        rageMax === "ilimitado" ? UNLIMITED_RESOURCE : (rageMax as number),
       recovery: "long_rest",
     },
   };
@@ -154,6 +160,60 @@ function magoResources(_level: number): Record<string, ClassResourceInfo> {
   };
 }
 
+function bardoResources(level: number): Record<string, ClassResourceInfo> {
+  const resources: Record<string, ClassResourceInfo> = {};
+  resources.inspiracion_bardica = {
+    id: "inspiracion_bardica",
+    nombre: "Inspiración Bárdica",
+    max: 3, // Should be CHA mod, but factory only receives level. Use 3 as default.
+    current: 3,
+    recovery: level >= 5 ? "short_rest" : "long_rest",
+  };
+  return resources;
+}
+
+function clerigoResources(level: number): Record<string, ClassResourceInfo> {
+  const resources: Record<string, ClassResourceInfo> = {};
+  if (level >= 2) {
+    resources.canalizar_divinidad = {
+      id: "canalizar_divinidad",
+      nombre: "Canalizar Divinidad",
+      max: level >= 18 ? 3 : level >= 6 ? 2 : 1,
+      current: level >= 18 ? 3 : level >= 6 ? 2 : 1,
+      recovery: "short_rest",
+    };
+  }
+  return resources;
+}
+
+function druidaResources(level: number): Record<string, ClassResourceInfo> {
+  const resources: Record<string, ClassResourceInfo> = {};
+  if (level >= 2) {
+    resources.forma_salvaje = {
+      id: "forma_salvaje",
+      nombre: "Forma Salvaje",
+      max: level >= 20 ? UNLIMITED_RESOURCE : 2,
+      current: level >= 20 ? UNLIMITED_RESOURCE : 2,
+      recovery: "short_rest",
+    };
+  }
+  return resources;
+}
+
+function hechiceroResources(level: number): Record<string, ClassResourceInfo> {
+  const resources: Record<string, ClassResourceInfo> = {};
+  if (level >= 2) {
+    resources.puntos_hechiceria = {
+      id: "puntos_hechiceria",
+      nombre: "Puntos de Hechicería",
+      max: level,
+      current: level,
+      recovery: "long_rest",
+    };
+  }
+  return resources;
+}
+
 function brujoResources(level: number): Record<string, ClassResourceInfo> {
   const resources: Record<string, ClassResourceInfo> = {};
   // Astucia Mágica (nivel 2+): recuperar espacios de Magia de Pacto, 1 uso por descanso largo
@@ -224,9 +284,13 @@ function brujoResources(level: number): Record<string, ClassResourceInfo> {
 /** Registry mapping class names to their resource factory functions */
 const CLASS_RESOURCE_REGISTRY: Record<string, ClassResourceFactory> = {
   barbaro: barbaroResources,
+  bardo: bardoResources,
   brujo: brujoResources,
+  clerigo: clerigoResources,
+  druida: druidaResources,
   explorador: exploradorResources,
   guerrero: guerreroResources,
+  hechicero: hechiceroResources,
   mago: magoResources,
   monje: monjeResources,
   paladin: paladinResources,

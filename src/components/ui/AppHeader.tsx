@@ -13,14 +13,13 @@
  * <AppHeader rightActions={<MyButton />} />
  */
 
-import React, { useRef, useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   Image,
   Animated,
-  Easing,
   StyleSheet,
   Platform,
   type StyleProp,
@@ -30,8 +29,9 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore } from "@/stores/authStore";
-import { useTheme } from "@/hooks";
+import { useTheme, useEntranceAnimation } from "@/hooks";
 import { InlineDndLogo } from "./DndLogo";
+import GradientBorder from "./GradientBorder";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -62,17 +62,7 @@ export default function AppHeader({
   const profile = useAuthStore((s) => s.profile);
   const user = useAuthStore((s) => s.user);
 
-  const headerFade = useRef(new Animated.Value(animated ? 0 : 1)).current;
-
-  useEffect(() => {
-    if (!animated) return;
-    Animated.timing(headerFade, {
-      toValue: 1,
-      duration: 400,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  }, [animated, headerFade]);
+  const { opacity: headerFade } = useEntranceAnimation({ active: animated });
 
   // ── Avatar helpers ──
   const avatarUrl = profile?.avatar_url ?? null;
@@ -93,9 +83,7 @@ export default function AppHeader({
   };
 
   return (
-    <Animated.View
-      style={[styles.header, { opacity: headerFade }, style]}
-    >
+    <Animated.View style={[styles.header, { opacity: headerFade }, style]}>
       <LinearGradient
         colors={colors.gradientHeader}
         style={StyleSheet.absoluteFill}
@@ -179,10 +167,7 @@ export default function AppHeader({
             activeOpacity={0.7}
           >
             {avatarUrl ? (
-              <Image
-                source={{ uri: avatarUrl }}
-                style={styles.avatarImage}
-              />
+              <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
             ) : (
               <View
                 style={[
@@ -200,11 +185,7 @@ export default function AppHeader({
                     {initials}
                   </Text>
                 ) : (
-                  <Ionicons
-                    name="person"
-                    size={18}
-                    color={colors.accentGold}
-                  />
+                  <Ionicons name="person" size={18} color={colors.accentGold} />
                 )}
               </View>
             )}
@@ -216,20 +197,7 @@ export default function AppHeader({
       {children}
 
       {/* Bottom border gradient */}
-      <View style={styles.headerBorder}>
-        <LinearGradient
-          colors={[
-            "transparent",
-            colors.borderDefault + "66",
-            colors.borderDefault,
-            colors.borderDefault + "66",
-            "transparent",
-          ]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={{ height: 1, width: "100%" }}
-        />
-      </View>
+      <GradientBorder absolute />
     </Animated.View>
   );
 }
@@ -287,12 +255,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "800",
     letterSpacing: -0.3,
-  },
-  headerBorder: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 1,
   },
 });

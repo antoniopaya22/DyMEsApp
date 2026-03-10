@@ -380,6 +380,13 @@ export const MAGO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Acostumbrado a la No Muerte",
             descripcion:
               "Ganas resistencia al daño necrótico. Tu máximo de PG no puede ser reducido.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "necrotico",
+                modifier: "resistance",
+              },
+            ],
           },
         ],
       },
@@ -524,8 +531,8 @@ export const MAGO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
           },
           {
             nombre: "Ingenio Táctico",
-            descripcion:
-              "Sumas tu mod. INT a tus tiradas de iniciativa.",
+            descripcion: "Sumas tu mod. INT a tus tiradas de iniciativa.",
+            efectos: [{ kind: "initiativeBonus", abilityBonus: "int" }],
           },
         ],
       },
@@ -546,6 +553,9 @@ export const MAGO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Magia Duradera",
             descripcion:
               "Mientras mantienes concentración en un conjuro, ganas +2 a CA y a todas las salvaciones.",
+            efectos: [
+              { kind: "acBonus", bonus: 2, condition: "durante concentración" },
+            ],
           },
         ],
       },

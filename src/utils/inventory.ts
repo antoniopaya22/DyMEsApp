@@ -22,7 +22,10 @@ export function calcTotalWeight(items: InventoryItem[]): number {
 }
 
 export function calcCoinWeight(coins: Coins): number {
-  const totalCoins = Object.values(coins).reduce((sum, count) => sum + count, 0);
+  const totalCoins = Object.values(coins).reduce(
+    (sum, count) => sum + count,
+    0,
+  );
   return totalCoins / 50;
 }
 
@@ -34,17 +37,103 @@ export function calcCarryingCapacity(strengthScore: number): number {
   return strengthScore * 15;
 }
 
-export function isEncumbered(currentWeight: number, strengthScore: number): boolean {
+export function isEncumbered(
+  currentWeight: number,
+  strengthScore: number,
+): boolean {
   return currentWeight > calcCarryingCapacity(strengthScore);
 }
 
 export function calcEncumbrancePercentage(
   currentWeight: number,
-  strengthScore: number
+  strengthScore: number,
 ): number {
   const capacity = calcCarryingCapacity(strengthScore);
   if (capacity === 0) return 0;
   return Math.min(100, Math.round((currentWeight / capacity) * 100));
+}
+
+// ─── Carga detallada (Variante SRD 5.1) ─────────────────────────────
+
+/**
+ * Niveles de carga detallada según la variante del SRD 5.1:
+ * - "normal":   peso ≤ FUE × 5  → sin penalización
+ * - "cargado":  peso > FUE × 5  → velocidad −10 pies
+ * - "muy_cargado": peso > FUE × 10 → velocidad −20 pies + desventaja
+ * - "sobrecargado": peso > FUE × 15 → no puede moverse
+ */
+export type EncumbranceTier =
+  | "normal"
+  | "cargado"
+  | "muy_cargado"
+  | "sobrecargado";
+
+export interface DetailedEncumbrance {
+  /** Nivel de carga actual */
+  tier: EncumbranceTier;
+  /** Peso actual */
+  currentWeight: number;
+  /** Umbral "cargado": FUE × 5 (en libras) */
+  encumberedThreshold: number;
+  /** Umbral "muy cargado": FUE × 10 (en libras) */
+  heavilyEncumberedThreshold: number;
+  /** Umbral "sobrecargado" (capacidad máxima): FUE × 15 (en libras) */
+  maxCapacity: number;
+  /** Porcentaje de llenado respecto a capacidad máxima (0-100+) */
+  percentage: number;
+  /** Reducción de velocidad en pies (0, 10 o 20) */
+  speedPenaltyFeet: number;
+  /** true si tiene desventaja en ataques, salvaciones y pruebas de FUE/DES/CON */
+  hasDisadvantage: boolean;
+}
+
+/**
+ * Calcula la carga detallada según la variante del SRD 5.1.
+ * Todos los umbrales están en libras (sistema interno del juego).
+ */
+export function calcDetailedEncumbrance(
+  currentWeight: number,
+  strengthScore: number,
+): DetailedEncumbrance {
+  const encumberedThreshold = strengthScore * 5;
+  const heavilyEncumberedThreshold = strengthScore * 10;
+  const maxCapacity = strengthScore * 15;
+
+  const percentage =
+    maxCapacity === 0 ? 0 : Math.round((currentWeight / maxCapacity) * 100);
+
+  let tier: EncumbranceTier;
+  let speedPenaltyFeet: number;
+  let hasDisadvantage: boolean;
+
+  if (currentWeight > maxCapacity) {
+    tier = "sobrecargado";
+    speedPenaltyFeet = 0; // Can't move at all
+    hasDisadvantage = true;
+  } else if (currentWeight > heavilyEncumberedThreshold) {
+    tier = "muy_cargado";
+    speedPenaltyFeet = 20;
+    hasDisadvantage = true;
+  } else if (currentWeight > encumberedThreshold) {
+    tier = "cargado";
+    speedPenaltyFeet = 10;
+    hasDisadvantage = false;
+  } else {
+    tier = "normal";
+    speedPenaltyFeet = 0;
+    hasDisadvantage = false;
+  }
+
+  return {
+    tier,
+    currentWeight,
+    encumberedThreshold,
+    heavilyEncumberedThreshold,
+    maxCapacity,
+    percentage,
+    speedPenaltyFeet,
+    hasDisadvantage,
+  };
 }
 
 // ─── Monedas ─────────────────────────────────────────────────────────
@@ -59,7 +148,8 @@ export function calcTotalGoldValue(coins: Coins): number {
 
 export function countActiveAttunements(items: InventoryItem[]): number {
   return items.filter(
-    (item) => item.magicDetails?.requiresAttunement && item.magicDetails?.attuned
+    (item) =>
+      item.magicDetails?.requiresAttunement && item.magicDetails?.attuned,
   ).length;
 }
 
@@ -83,7 +173,9 @@ export function getEquippedArmor(items: InventoryItem[]): InventoryItem | null {
   );
 }
 
-export function getEquippedShield(items: InventoryItem[]): InventoryItem | null {
+export function getEquippedShield(
+  items: InventoryItem[],
+): InventoryItem | null {
   return (
     items.find((item) => item.equipado && item.categoria === "escudo") ?? null
   );
@@ -95,7 +187,7 @@ export function calcArmorClass(
   equippedArmor: InventoryItem | null,
   equippedShield: InventoryItem | null,
   dexModifier: number,
-  miscBonus: number = 0
+  miscBonus: number = 0,
 ): {
   total: number;
   base: number;
@@ -111,7 +203,9 @@ export function calcArmorClass(
   if (!equippedArmor || !equippedArmor.armorDetails) {
     base = 10;
     dexBonus = dexModifier;
-    breakdownParts.push(`10 + DES (${dexModifier >= 0 ? "+" : ""}${dexModifier})`);
+    breakdownParts.push(
+      `10 + DES (${dexModifier >= 0 ? "+" : ""}${dexModifier})`,
+    );
   } else {
     const armor = equippedArmor.armorDetails;
     base = armor.baseAC;
@@ -122,12 +216,12 @@ export function calcArmorClass(
     } else if (armor.maxDexBonus !== null) {
       dexBonus = Math.min(dexModifier, armor.maxDexBonus);
       breakdownParts.push(
-        `${equippedArmor.nombre} (${base}) + DES (${dexBonus >= 0 ? "+" : ""}${dexBonus}, máx. +${armor.maxDexBonus})`
+        `${equippedArmor.nombre} (${base}) + DES (${dexBonus >= 0 ? "+" : ""}${dexBonus}, máx. +${armor.maxDexBonus})`,
       );
     } else {
       dexBonus = dexModifier;
       breakdownParts.push(
-        `${equippedArmor.nombre} (${base}) + DES (${dexBonus >= 0 ? "+" : ""}${dexBonus})`
+        `${equippedArmor.nombre} (${base}) + DES (${dexBonus >= 0 ? "+" : ""}${dexBonus})`,
       );
     }
   }
@@ -160,7 +254,7 @@ export function calcWeaponAttackBonus(
   strModifier: number,
   dexModifier: number,
   proficiencyBonus: number,
-  isProficient: boolean
+  isProficient: boolean,
 ): number {
   let abilityMod: number;
 
@@ -178,7 +272,7 @@ export function calcWeaponAttackBonus(
 export function calcWeaponDamageModifier(
   weapon: WeaponDetails,
   strModifier: number,
-  dexModifier: number
+  dexModifier: number,
 ): number {
   if (weapon.properties.includes("sutil")) {
     return Math.max(strModifier, dexModifier);
@@ -203,7 +297,7 @@ export function formatWeaponDamage(
 
 export function createDefaultInventory(
   inventoryId: string,
-  characterId: string
+  characterId: string,
 ): Inventory {
   return {
     id: inventoryId,
@@ -234,7 +328,10 @@ export function createEmptyItem(id: string): InventoryItem {
  * Ej: "Jabalina ×4" → { nombre: "Jabalina", cantidad: 4 }
  *     "Daga" → { nombre: "Daga", cantidad: 1 }
  */
-function parseItemNameQuantity(raw: string): { nombre: string; cantidad: number } {
+function parseItemNameQuantity(raw: string): {
+  nombre: string;
+  cantidad: number;
+} {
   const match = raw.match(/^(.+?)\s*[×x](\d+)$/i);
   if (match) {
     return { nombre: match[1].trim(), cantidad: parseInt(match[2], 10) };
@@ -317,7 +414,9 @@ export interface StartingInventoryParams {
  * Construye el inventario inicial del personaje a partir del equipamiento
  * elegido durante la creación (clase + trasfondo).
  */
-export function buildStartingInventory(params: StartingInventoryParams): Inventory {
+export function buildStartingInventory(
+  params: StartingInventoryParams,
+): Inventory {
   const {
     inventoryId,
     characterId,

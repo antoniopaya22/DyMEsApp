@@ -3,6 +3,7 @@
  */
 
 import { ABILITY_NAMES, type AbilityKey, SKILLS } from "@/types/character";
+import { formatModifier } from "@/utils/character";
 
 /** Format ability bonus map into a readable string (e.g. "FUE +2, DES +1") */
 export function formatAbilityBonuses(
@@ -17,10 +18,7 @@ export function formatAbilityBonuses(
     .join(", ");
 }
 
-/** Format a modifier number with sign (e.g. +2 or -1) */
-export function formatModifier(mod: number): string {
-  return mod >= 0 ? `+${mod}` : `${mod}`;
-}
+export { formatModifier };
 
 /** Format a skill key into its Spanish display name */
 export function formatSkillName(skill: string): string {

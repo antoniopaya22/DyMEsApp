@@ -5,12 +5,26 @@
 
 import { create } from "zustand";
 import { randomUUID } from "expo-crypto";
-import type { Campaign, CreateCampaignInput, UpdateCampaignInput } from "@/types/campaign";
-import { STORAGE_KEYS, setItem, getItem } from "@/utils/storage";
+import type {
+  Campaign,
+  CreateCampaignInput,
+  UpdateCampaignInput,
+} from "@/types/campaign";
+import {
+  STORAGE_KEYS,
+  setItem,
+  getItem,
+  sortByLastAccess,
+  extractErrorMessage,
+} from "@/utils/storage";
 import { now } from "@/utils/providers";
 import { useCharacterStore } from "./characterStore";
 import { deleteCreationDraft } from "./creationStore";
-import { syncLocalCampaign, deleteLocalCampaignBackup, deleteCharacterFromCloud } from "@/services/supabaseService";
+import {
+  syncLocalCampaign,
+  deleteLocalCampaignBackup,
+  deleteCharacterFromCloud,
+} from "@/services/supabaseService";
 import { supabase } from "@/lib/supabase";
 
 // ─── Tipos del store ─────────────────────────────────────────────────
@@ -32,7 +46,10 @@ interface CampaignActions {
   /** Crea una nueva partida y la persiste */
   createCampaign: (input: CreateCampaignInput) => Promise<Campaign>;
   /** Actualiza una partida existente */
-  updateCampaign: (id: string, input: UpdateCampaignInput) => Promise<Campaign | null>;
+  updateCampaign: (
+    id: string,
+    input: UpdateCampaignInput,
+  ) => Promise<Campaign | null>;
   /** Elimina una partida y su personaje asociado */
   deleteCampaign: (id: string) => Promise<void>;
   /** Obtiene una partida por su ID */
@@ -61,37 +78,34 @@ async function persistCampaigns(campaigns: Campaign[]): Promise<void> {
 }
 
 /**
- * Ordena las partidas por fecha de último acceso (más reciente primero).
- */
-function sortByLastAccess(campaigns: Campaign[]): Campaign[] {
-  return [...campaigns].sort(
-    (a, b) => new Date(b.actualizadoEn).getTime() - new Date(a.actualizadoEn).getTime()
-  );
-}
-
-/**
  * Sync a campaign to Supabase in the background (fire-and-forget).
  * Uses supabase.auth directly to avoid a circular import with authStore.
  * Silently fails if the user is not logged in or sync fails.
  */
 function syncCampaignToCloud(campaign: Campaign): void {
-  supabase.auth.getUser().then(({ data }) => {
-    const userId = data.user?.id;
-    if (!userId) return;
-    syncLocalCampaign(userId, campaign).catch((err) =>
-      console.warn("[CampaignStore] Cloud sync failed:", err),
-    );
-  }).catch(() => {});
+  supabase.auth
+    .getUser()
+    .then(({ data }) => {
+      const userId = data.user?.id;
+      if (!userId) return;
+      syncLocalCampaign(userId, campaign).catch((err) =>
+        console.warn("[CampaignStore] Cloud sync failed:", err),
+      );
+    })
+    .catch(() => {});
 }
 
 /** Delete a campaign backup from Supabase in the background */
 function deleteCampaignFromCloud(campaignId: string): void {
-  supabase.auth.getUser().then(({ data }) => {
-    if (!data.user?.id) return;
-    deleteLocalCampaignBackup(campaignId).catch((err) =>
-      console.warn("[CampaignStore] Cloud delete failed:", err),
-    );
-  }).catch(() => {});
+  supabase.auth
+    .getUser()
+    .then(({ data }) => {
+      if (!data.user?.id) return;
+      deleteLocalCampaignBackup(campaignId).catch((err) =>
+        console.warn("[CampaignStore] Cloud delete failed:", err),
+      );
+    })
+    .catch(() => {});
 }
 
 // ─── Store ───────────────────────────────────────────────────────────
@@ -112,8 +126,7 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
       const campaigns = stored ? sortByLastAccess(stored) : [];
       set({ campaigns, loading: false });
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error al cargar las partidas";
+      const message = extractErrorMessage(err, "Error al cargar las partidas");
       console.error("[CampaignStore] loadCampaigns:", message);
       set({ error: message, loading: false });
     }
@@ -139,8 +152,7 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
       syncCampaignToCloud(newCampaign);
       return newCampaign;
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error al crear la partida";
+      const message = extractErrorMessage(err, "Error al crear la partida");
       console.error("[CampaignStore] createCampaign:", message);
       set({ error: message });
       throw new Error(message);
@@ -159,7 +171,8 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
       const existing = campaigns[index];
       const updatedCampaign: Campaign = {
         ...existing,
-        nombre: input.nombre !== undefined ? input.nombre.trim() : existing.nombre,
+        nombre:
+          input.nombre !== undefined ? input.nombre.trim() : existing.nombre,
         descripcion:
           input.descripcion !== undefined
             ? input.descripcion?.trim() || undefined
@@ -177,8 +190,10 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
       syncCampaignToCloud(updatedCampaign);
       return updatedCampaign;
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error al actualizar la partida";
+      const message = extractErrorMessage(
+        err,
+        "Error al actualizar la partida",
+      );
       console.error("[CampaignStore] updateCampaign:", message);
       set({ error: message });
       throw new Error(message);
@@ -216,8 +231,7 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
         error: null,
       });
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error al eliminar la partida";
+      const message = extractErrorMessage(err, "Error al eliminar la partida");
       console.error("[CampaignStore] deleteCampaign:", message);
       set({ error: message });
       throw new Error(message);
@@ -250,8 +264,10 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
       set({ campaigns: sorted, error: null });
       syncCampaignToCloud(sorted.find((c) => c.id === campaignId)!);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error al vincular el personaje";
+      const message = extractErrorMessage(
+        err,
+        "Error al vincular el personaje",
+      );
       console.error("[CampaignStore] linkCharacter:", message);
       set({ error: message });
     }
@@ -275,10 +291,10 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
       set({ campaigns: sorted, error: null });
       syncCampaignToCloud(sorted.find((c) => c.id === campaignId)!);
     } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Error al desvincular el personaje";
+      const message = extractErrorMessage(
+        err,
+        "Error al desvincular el personaje",
+      );
       console.error("[CampaignStore] unlinkCharacter:", message);
       set({ error: message });
     }
@@ -301,7 +317,9 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
       set({ campaigns: sorted });
     } catch (err) {
       // Silenciar errores de touch, no es crítico
-      console.warn("[CampaignStore] touchCampaign: no se pudo actualizar la fecha");
+      console.warn(
+        "[CampaignStore] touchCampaign: no se pudo actualizar la fecha",
+      );
     }
   },
 

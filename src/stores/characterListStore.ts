@@ -9,8 +9,21 @@
 
 import { create } from "zustand";
 import { randomUUID } from "expo-crypto";
-import type { Character, ClassId, RaceId, Sexo, SubraceId } from "@/types/character";
-import { STORAGE_KEYS, setItem, getItem, removeItem } from "@/utils/storage";
+import type {
+  Character,
+  ClassId,
+  RaceId,
+  Sexo,
+  SubraceId,
+} from "@/types/character";
+import {
+  STORAGE_KEYS,
+  setItem,
+  getItem,
+  removeItem,
+  sortByLastAccess,
+  extractErrorMessage,
+} from "@/utils/storage";
 import { now } from "@/utils/providers";
 import { useCharacterStore } from "./characterStore";
 import { deleteCreationDraft } from "./creationStore";
@@ -60,7 +73,10 @@ interface CharacterListActions {
   /** Añade un personaje a la lista */
   addCharacter: (character: Character) => Promise<void>;
   /** Actualiza los datos de resumen de un personaje */
-  updateCharacterSummary: (id: string, updates: Partial<CharacterSummary>) => Promise<void>;
+  updateCharacterSummary: (
+    id: string,
+    updates: Partial<CharacterSummary>,
+  ) => Promise<void>;
   /** Elimina un personaje y todos sus datos asociados */
   deleteCharacter: (id: string) => Promise<void>;
   /** Obtiene un resumen por ID */
@@ -77,12 +93,6 @@ type CharacterListStore = CharacterListState & CharacterListActions;
 
 async function persistList(characters: CharacterSummary[]): Promise<void> {
   await setItem(STORAGE_KEYS.CHARACTER_LIST, characters);
-}
-
-function sortByLastAccess(characters: CharacterSummary[]): CharacterSummary[] {
-  return [...characters].sort(
-    (a, b) => new Date(b.actualizadoEn).getTime() - new Date(a.actualizadoEn).getTime(),
-  );
 }
 
 /** Extrae un resumen ligero del personaje completo */
@@ -155,7 +165,9 @@ export const useCharacterListStore = create<CharacterListStore>((set, get) => ({
   loadCharacters: async () => {
     set({ loading: true, error: null });
     try {
-      let stored = await getItem<CharacterSummary[]>(STORAGE_KEYS.CHARACTER_LIST);
+      let stored = await getItem<CharacterSummary[]>(
+        STORAGE_KEYS.CHARACTER_LIST,
+      );
 
       // Auto-migración: si no existe la lista, intentar migrar desde campañas
       if (!stored) {
@@ -170,10 +182,16 @@ export const useCharacterListStore = create<CharacterListStore>((set, get) => ({
       let needsPersist = false;
       const reconciled: CharacterSummary[] = [];
       for (const summary of stored) {
-        const fullChar = await getItem<Character>(STORAGE_KEYS.CHARACTER(summary.id));
+        const fullChar = await getItem<Character>(
+          STORAGE_KEYS.CHARACTER(summary.id),
+        );
         if (fullChar) {
           const fresh = toCharacterSummary(fullChar);
-          if (fresh.nivel !== summary.nivel || fresh.nombre !== summary.nombre || fresh.actualizadoEn !== summary.actualizadoEn) {
+          if (
+            fresh.nivel !== summary.nivel ||
+            fresh.nombre !== summary.nombre ||
+            fresh.actualizadoEn !== summary.actualizadoEn
+          ) {
             needsPersist = true;
           }
           reconciled.push(fresh);
@@ -188,8 +206,10 @@ export const useCharacterListStore = create<CharacterListStore>((set, get) => ({
       const characters = sortByLastAccess(reconciled);
       set({ characters, loading: false });
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error al cargar los personajes";
+      const message = extractErrorMessage(
+        err,
+        "Error al cargar los personajes",
+      );
       console.error("[CharacterListStore] loadCharacters:", message);
       set({ error: message, loading: false });
     }
@@ -203,28 +223,36 @@ export const useCharacterListStore = create<CharacterListStore>((set, get) => ({
       await persistList(updated);
       set({ characters: updated, error: null });
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error al añadir el personaje";
+      const message = extractErrorMessage(err, "Error al añadir el personaje");
       console.error("[CharacterListStore] addCharacter:", message);
       set({ error: message });
       throw new Error(message);
     }
   },
 
-  updateCharacterSummary: async (id: string, updates: Partial<CharacterSummary>) => {
+  updateCharacterSummary: async (
+    id: string,
+    updates: Partial<CharacterSummary>,
+  ) => {
     try {
       const { characters } = get();
       const index = characters.findIndex((c) => c.id === id);
       if (index === -1) return;
 
       const updatedList = [...characters];
-      updatedList[index] = { ...updatedList[index], ...updates, actualizadoEn: now() };
+      updatedList[index] = {
+        ...updatedList[index],
+        ...updates,
+        actualizadoEn: now(),
+      };
       const sorted = sortByLastAccess(updatedList);
       await persistList(sorted);
       set({ characters: sorted, error: null });
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error al actualizar el personaje";
+      const message = extractErrorMessage(
+        err,
+        "Error al actualizar el personaje",
+      );
       console.error("[CharacterListStore] updateCharacterSummary:", message);
       set({ error: message });
     }
@@ -252,8 +280,10 @@ export const useCharacterListStore = create<CharacterListStore>((set, get) => ({
       await persistList(filtered);
       set({ characters: filtered, error: null });
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error al eliminar el personaje";
+      const message = extractErrorMessage(
+        err,
+        "Error al eliminar el personaje",
+      );
       console.error("[CharacterListStore] deleteCharacter:", message);
       set({ error: message });
       throw new Error(message);
@@ -276,7 +306,9 @@ export const useCharacterListStore = create<CharacterListStore>((set, get) => ({
       await persistList(sorted);
       set({ characters: sorted });
     } catch {
-      console.warn("[CharacterListStore] touchCharacter: no se pudo actualizar");
+      console.warn(
+        "[CharacterListStore] touchCharacter: no se pudo actualizar",
+      );
     }
   },
 

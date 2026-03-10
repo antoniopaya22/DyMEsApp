@@ -44,6 +44,13 @@ export const DRUIDA_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Protección de la Naturaleza",
             descripcion:
               "Eres inmune a la condición de Envenenado y tienes resistencia a un tipo de daño según tu tierra actual: Árida → Fuego, Polar → Frío, Templada → Rayo, Tropical → Veneno.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "veneno",
+                modifier: "immunity",
+              },
+            ],
           },
         ],
       },
@@ -142,6 +149,7 @@ export const DRUIDA_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Afinidad Acuática",
             descripcion:
               "La emanación de Ira del Mar aumenta a 3 m. Además, obtienes velocidad de nado igual a tu velocidad.",
+            efectos: [{ kind: "speedBonus", swim: "walk" }],
           },
         ],
       },
@@ -152,6 +160,28 @@ export const DRUIDA_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Hijo de la Tormenta",
             descripcion:
               "Mientras tu Ira del Mar esté activa: obtienes velocidad de vuelo igual a tu velocidad, y tienes resistencia al daño de Frío, Rayo y Trueno.",
+            efectos: [
+              {
+                kind: "speedBonus",
+                fly: "walk",
+                condition: "durante Ira del Mar",
+              },
+              {
+                kind: "damageModifier",
+                damageType: "frio",
+                modifier: "resistance",
+              },
+              {
+                kind: "damageModifier",
+                damageType: "relampago",
+                modifier: "resistance",
+              },
+              {
+                kind: "damageModifier",
+                damageType: "trueno",
+                modifier: "resistance",
+              },
+            ],
           },
         ],
       },
@@ -216,6 +246,23 @@ export const DRUIDA_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Lleno de Estrellas",
             descripcion:
               "Mientras estés en Forma Estelar, te vuelves parcialmente incorpóreo: tienes resistencia al daño contundente, perforante y cortante.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "contundente",
+                modifier: "resistance",
+              },
+              {
+                kind: "damageModifier",
+                damageType: "cortante",
+                modifier: "resistance",
+              },
+              {
+                kind: "damageModifier",
+                damageType: "perforante",
+                modifier: "resistance",
+              },
+            ],
           },
         ],
       },
@@ -411,7 +458,7 @@ export const DRUIDA_SUBCLASS_FEATURES: SubclassFeatureData[] = [
           {
             nombre: "Vínculo Mejorado",
             descripcion:
-              "Cuando lanzas un conjuro que inflige daño de fuego o restaura PG mientras tu espíritu de llama está invocado, tira 1d8 y suma el resultado a una tirada de daño o curación del conjuro. Además, los conjuros con alcance distinto de \"personal\" pueden originarse desde ti o desde el espíritu.",
+              'Cuando lanzas un conjuro que inflige daño de fuego o restaura PG mientras tu espíritu de llama está invocado, tira 1d8 y suma el resultado a una tirada de daño o curación del conjuro. Además, los conjuros con alcance distinto de "personal" pueden originarse desde ti o desde el espíritu.',
           },
         ],
       },

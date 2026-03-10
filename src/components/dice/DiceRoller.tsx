@@ -88,13 +88,13 @@ function getDiePresets(
 ): { die: DieType; sides: number; color: string }[] {
   const palette = [
     colors.accentLightBlue, // d3
-    colors.accentGreen,     // d4
-    colors.accentBlue,      // d6
-    colors.accentPurple,    // d8
-    colors.accentAmber,     // d10
-    colors.accentDanger,    // d12
-    colors.accentPink,      // d20
-    colors.accentOrange,    // d100
+    colors.accentGreen, // d4
+    colors.accentBlue, // d6
+    colors.accentPurple, // d8
+    colors.accentAmber, // d10
+    colors.accentDanger, // d12
+    colors.accentPink, // d20
+    colors.accentOrange, // d100
   ];
   return DIE_PRESET_SIDES.map((p, i) => ({ ...p, color: palette[i] }));
 }
@@ -438,7 +438,9 @@ export default function DiceRoller({
                     backgroundColor: isActive
                       ? modeColor + "20"
                       : "transparent",
-                    borderColor: isActive ? modeColor + "60" : colors.borderSubtle,
+                    borderColor: isActive
+                      ? modeColor + "60"
+                      : colors.borderSubtle,
                   },
                 ]}
               >
@@ -531,10 +533,7 @@ export default function DiceRoller({
             ]}
           >
             <View
-              style={[
-                st.dieIconBg,
-                { backgroundColor: preset.color + "20" },
-              ]}
+              style={[st.dieIconBg, { backgroundColor: preset.color + "20" }]}
             >
               <Ionicons name="dice-outline" size={20} color={preset.color} />
             </View>
@@ -661,10 +660,7 @@ export default function DiceRoller({
       return (
         <View style={st.emptyResult}>
           <View
-            style={[
-              st.emptyResultIcon,
-              { backgroundColor: colors.bgElevated },
-            ]}
+            style={[st.emptyResultIcon, { backgroundColor: colors.bgElevated }]}
           >
             <Ionicons name="dice-outline" size={36} color={colors.textMuted} />
           </View>
@@ -719,7 +715,9 @@ export default function DiceRoller({
           transform: [{ translateX: shakeTranslate }, { scale: scaleAnim }],
         }}
       >
-        <View style={[st.resultCard, { backgroundColor: bgColor, borderColor }]}>
+        <View
+          style={[st.resultCard, { backgroundColor: bgColor, borderColor }]}
+        >
           {/* Critical / Fumble label */}
           {isCritical && (
             <View
@@ -858,11 +856,7 @@ export default function DiceRoller({
                 },
               ]}
             >
-              <Ionicons
-                name="refresh"
-                size={15}
-                color={colors.textSecondary}
-              />
+              <Ionicons name="refresh" size={15} color={colors.textSecondary} />
               <Text
                 style={[st.resultActionText, { color: colors.textSecondary }]}
               >
@@ -947,9 +941,7 @@ export default function DiceRoller({
               {entry.total}
             </Text>
           </View>
-          <Text
-            style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}
-          >
+          <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}>
             {entry.formula}
             {entry.modifier !== 0
               ? entry.modifier > 0
@@ -977,16 +969,14 @@ export default function DiceRoller({
   const renderHistory = () => (
     <View style={{ flex: 1 }}>
       {/* History header */}
-      <View style={[st.historyHeader, { borderBottomColor: colors.borderSubtle }]}>
+      <View
+        style={[st.historyHeader, { borderBottomColor: colors.borderSubtle }]}
+      >
         <TouchableOpacity
           onPress={() => setShowHistory(false)}
           style={st.historyBackBtn}
         >
-          <Ionicons
-            name="arrow-back"
-            size={20}
-            color={colors.textSecondary}
-          />
+          <Ionicons name="arrow-back" size={20} color={colors.textSecondary} />
           <Text style={[st.historyTitle, { color: colors.textPrimary }]}>
             Historial
           </Text>
@@ -1051,9 +1041,7 @@ export default function DiceRoller({
       <View
         style={[st.dividerLine, { backgroundColor: colors.borderSubtle }]}
       />
-      <Text style={[st.dividerText, { color: colors.textMuted }]}>
-        {label}
-      </Text>
+      <Text style={[st.dividerText, { color: colors.textMuted }]}>{label}</Text>
       <View
         style={[st.dividerLine, { backgroundColor: colors.borderSubtle }]}
       />
@@ -1076,9 +1064,7 @@ export default function DiceRoller({
           style={[
             StyleSheet.absoluteFill,
             {
-              backgroundColor: isDark
-                ? "rgba(0,0,0,0.7)"
-                : "rgba(0,0,0,0.45)",
+              backgroundColor: isDark ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.45)",
               opacity: backdropAnim,
             },
           ]}
@@ -1101,7 +1087,7 @@ export default function DiceRoller({
               transform: [{ translateY: slideUpAnim }],
               ...Platform.select({
                 ios: {
-                  shadowColor: "#000",
+                  shadowColor: colors.shadowColor,
                   shadowOffset: { width: 0, height: -4 },
                   shadowOpacity: 0.25,
                   shadowRadius: 16,

@@ -19,7 +19,10 @@ export {
   hitDieValue,
   hitDieFixedValue,
   formatModifier,
+  resolveLimitedUse,
 } from "@/utils/character";
+
+import type { TraitEffect } from "./traitEffects";
 
 // ─── Enums y tipos base ──────────────────────────────────────────────
 
@@ -139,6 +142,9 @@ export type SubraceId =
   | "mediano_fornido"
   | "gnomo_bosque"
   | "gnomo_rocas"
+  | "tiefling_abisal"
+  | "tiefling_ctonico"
+  | "tiefling_infernal"
   | null;
 
 // ─── Clases ──────────────────────────────────────────────────────────
@@ -220,7 +226,10 @@ export interface SavingThrowProficiency {
   source?: string;
 }
 
-export type SavingThrowProficiencies = Record<AbilityKey, SavingThrowProficiency>;
+export type SavingThrowProficiencies = Record<
+  AbilityKey,
+  SavingThrowProficiency
+>;
 
 // ─── Puntos de golpe / Vida ──────────────────────────────────────────
 
@@ -308,6 +317,8 @@ export interface Trait {
   currentUses: number | null;
   /** Tipo de recarga */
   recharge: "short_rest" | "long_rest" | "dawn" | null;
+  /** Efectos mecánicos del rasgo (vacío o undefined = sin efecto mecánico) */
+  efectos?: TraitEffect[];
 }
 
 // ─── Personalidad ────────────────────────────────────────────────────
@@ -353,6 +364,10 @@ export interface LevelUpRecord {
   spellsLearned?: string[];
   /** Hechizos intercambiados: [viejo, nuevo] */
   spellsSwapped?: [string, string][];
+  /** ID de la dote elegida en lugar del ASI */
+  featChosen?: string;
+  /** Distribución de ASI de la dote elegida */
+  featAsiChoices?: Partial<AbilityScores>;
   /** Rasgos de clase obtenidos */
   traitsGained?: string[];
 }

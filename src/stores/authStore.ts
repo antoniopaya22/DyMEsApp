@@ -21,7 +21,7 @@ import { makeRedirectUri } from "expo-auth-session";
 import type { Session, User, AuthChangeEvent } from "@supabase/supabase-js";
 import type { Profile, AppMode } from "@/types/master";
 import { translateAuthError } from "@/utils/auth";
-import { clearUserData } from "@/utils/storage";
+import { clearUserData, extractErrorMessage } from "@/utils/storage";
 import { restoreFromCloud } from "@/services/supabaseService";
 import { useCharacterStore } from "./characterStore";
 import { useCampaignStore } from "./campaignStore";
@@ -70,7 +70,10 @@ async function extractAndSetSession(callbackUrl: string): Promise<boolean> {
       console.log("[AuthStore] PKCE code detected, exchanging for session...");
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) {
-        console.error("[AuthStore] exchangeCodeForSession failed:", error.message);
+        console.error(
+          "[AuthStore] exchangeCodeForSession failed:",
+          error.message,
+        );
         return false;
       }
       return true;
@@ -96,7 +99,10 @@ async function extractAndSetSession(callbackUrl: string): Promise<boolean> {
       }
     }
 
-    console.warn("[AuthStore] Callback URL had no code or tokens:", callbackUrl.substring(0, 100));
+    console.warn(
+      "[AuthStore] Callback URL had no code or tokens:",
+      callbackUrl.substring(0, 100),
+    );
     return false;
   } catch (err) {
     console.error("[AuthStore] extractAndSetSession error:", err);
@@ -122,7 +128,11 @@ interface AuthActions {
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   /** Register a new account with email + password + optional display name */
-  signUpWithEmail: (email: string, password: string, name?: string) => Promise<void>;
+  signUpWithEmail: (
+    email: string,
+    password: string,
+    name?: string,
+  ) => Promise<void>;
   signOut: () => Promise<void>;
   fetchProfile: () => Promise<void>;
   setAppMode: (mode: AppMode) => Promise<void>;
@@ -147,7 +157,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   // ── Initialize ──
   initialize: () => {
     // 1. Restore existing session
-    supabase.auth.getSession()
+    supabase.auth
+      .getSession()
       .then(async ({ data: { session } }) => {
         set({
           session,
@@ -160,7 +171,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           // Restore campaigns + characters from Supabase if local storage is empty
           const restored = await restoreFromCloud(session.user.id);
           if (restored > 0) {
-            console.log(`[AuthStore] Restored ${restored} campaigns from cloud`);
+            console.log(
+              `[AuthStore] Restored ${restored} campaigns from cloud`,
+            );
             useCampaignStore.getState().loadCampaigns();
             useCharacterListStore.getState().loadCharacters();
           }
@@ -176,7 +189,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       (_event: AuthChangeEvent, session: Session | null) => {
-        console.log("[AuthStore] onAuthStateChange:", _event, "session:", !!session, "user:", session?.user?.email);
+        console.log(
+          "[AuthStore] onAuthStateChange:",
+          _event,
+          "session:",
+          !!session,
+          "user:",
+          session?.user?.email,
+        );
         // Synchronous state update — safe to do inside the callback.
         set({ session, user: session?.user ?? null, loading: false });
 
@@ -193,7 +213,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             if (event === "SIGNED_IN") {
               const restored = await restoreFromCloud(userId);
               if (restored > 0) {
-                console.log(`[AuthStore] Restored ${restored} campaigns from cloud`);
+                console.log(
+                  `[AuthStore] Restored ${restored} campaigns from cloud`,
+                );
                 useCampaignStore.getState().loadCampaigns();
                 useCharacterListStore.getState().loadCharacters();
               }
@@ -239,7 +261,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           skipBrowserRedirect: true,
         },
       });
-      if (error || !data.url) throw error ?? new Error("No se obtuvo la URL de autorización");
+      if (error || !data.url)
+        throw error ?? new Error("No se obtuvo la URL de autorización");
 
       // 2. Open the auth URL in the system browser
       console.log("[AuthStore] Opening OAuth with REDIRECT_URI:", REDIRECT_URI);
@@ -247,8 +270,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       // Extract the redirect_to that Supabase will use
       try {
         const authUrlParsed = new URL(data.url);
-        console.log("[AuthStore] redirect_to in auth URL:", authUrlParsed.searchParams.get("redirect_to"));
-      } catch { /* ignore parse errors */ }
+        console.log(
+          "[AuthStore] redirect_to in auth URL:",
+          authUrlParsed.searchParams.get("redirect_to"),
+        );
+      } catch {
+        /* ignore parse errors */
+      }
 
       // ── Set up a one-shot Linking listener ──
       // On Android / Expo Go, openAuthSessionAsync may return "dismiss"
@@ -267,13 +295,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         REDIRECT_URI,
       );
       let didTimeout = false;
-      const timeoutPromise = new Promise<WebBrowser.WebBrowserAuthSessionResult>(
-        (resolve) =>
+      const timeoutPromise =
+        new Promise<WebBrowser.WebBrowserAuthSessionResult>((resolve) =>
           setTimeout(() => {
             didTimeout = true;
             resolve({ type: WebBrowser.WebBrowserResultType.DISMISS });
           }, BROWSER_TIMEOUT_MS),
-      );
+        );
       const result = await Promise.race([browserPromise, timeoutPromise]);
 
       // Clean up the Custom Tab on Android
@@ -288,12 +316,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         "[AuthStore] WebBrowser result:",
         result.type,
         didTimeout ? "(timed out)" : "",
-        result.type === "success" ? (result as { url?: string }).url?.substring(0, 100) : "",
+        result.type === "success"
+          ? (result as { url?: string }).url?.substring(0, 100)
+          : "",
       );
 
       // If timed out, try to close the browser popup
       if (didTimeout) {
-        try { WebBrowser.dismissBrowser(); } catch { /* may not be open */ }
+        try {
+          WebBrowser.dismissBrowser();
+        } catch {
+          /* may not be open */
+        }
       }
 
       // Determine the callback URL: prefer WebBrowser's result,
@@ -302,7 +336,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       if (result.type === "success" && "url" in result && result.url) {
         callbackUrl = result.url;
       } else if (linkingUrl) {
-        console.log("[AuthStore] WebBrowser returned", result.type, "— using Linking URL as fallback");
+        console.log(
+          "[AuthStore] WebBrowser returned",
+          result.type,
+          "— using Linking URL as fallback",
+        );
         callbackUrl = linkingUrl;
       }
 
@@ -329,13 +367,16 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       // Otherwise, clear loading — user will need to try again
       console.warn(
         "[AuthStore] OAuth: no session established. " +
-        "Ensure that the Redirect URL in Supabase Dashboard " +
-        "(Authentication → URL Configuration) includes: " + REDIRECT_URI,
+          "Ensure that the Redirect URL in Supabase Dashboard " +
+          "(Authentication → URL Configuration) includes: " +
+          REDIRECT_URI,
       );
       set({ loading: false });
     } catch (err) {
-      const raw =
-        err instanceof Error ? err.message : "Error al iniciar sesión con Google";
+      const raw = extractErrorMessage(
+        err,
+        "Error al iniciar sesión con Google",
+      );
       const message = translateAuthError(raw);
       console.error("[AuthStore] signInWithGoogle:", raw);
       set({ error: message, loading: false });
@@ -357,8 +398,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         loading: false,
       });
     } catch (err) {
-      const raw =
-        err instanceof Error ? err.message : "Error al iniciar sesión";
+      const raw = extractErrorMessage(err, "Error al iniciar sesión");
       const message = translateAuthError(raw);
       console.error("[AuthStore] signInWithEmail:", raw);
       set({ error: message, loading: false });
@@ -381,9 +421,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       // Supabase returns a fake user with no session when email already exists
       // (to prevent email enumeration). Detect this case:
       const isExistingUser =
-        data.user &&
-        !data.session &&
-        data.user.identities?.length === 0;
+        data.user && !data.session && data.user.identities?.length === 0;
 
       if (isExistingUser) {
         set({
@@ -403,12 +441,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       } else {
         set({
           loading: false,
-          successMessage: "\u00a1Cuenta creada! Revisa tu correo para confirmar tu cuenta.",
+          successMessage:
+            "\u00a1Cuenta creada! Revisa tu correo para confirmar tu cuenta.",
         });
       }
     } catch (err) {
-      const raw =
-        err instanceof Error ? err.message : "Error al crear la cuenta";
+      const raw = extractErrorMessage(err, "Error al crear la cuenta");
       const message = translateAuthError(raw);
       console.error("[AuthStore] signUpWithEmail:", raw);
       set({ error: message, loading: false });
@@ -450,8 +488,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
       set({ session: null, user: null, profile: null, loading: false });
     } catch (err) {
-      const raw =
-        err instanceof Error ? err.message : "Error al cerrar sesión";
+      const raw = extractErrorMessage(err, "Error al cerrar sesión");
       const message = translateAuthError(raw);
       console.error("[AuthStore] signOut:", raw);
       set({ error: message, loading: false });
@@ -467,7 +504,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     }
 
     try {
-      console.log("[AuthStore] fetchProfile: fetching for user", user.id, user.email);
+      console.log(
+        "[AuthStore] fetchProfile: fetching for user",
+        user.id,
+        user.email,
+      );
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -475,18 +516,31 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         .single();
 
       if (error) {
-        console.warn("[AuthStore] fetchProfile error:", error.code, error.message);
+        console.warn(
+          "[AuthStore] fetchProfile error:",
+          error.code,
+          error.message,
+        );
         // Table doesn't exist yet — skip silently
-        if (error.code === "42P01" || error.message?.includes("does not exist")) {
+        if (
+          error.code === "42P01" ||
+          error.message?.includes("does not exist")
+        ) {
           return;
         }
 
         // Profile row not found — auto-create it from user metadata
         // (the handle_new_user trigger may not have fired for this user)
         if (error.code === "PGRST116") {
-          console.log("[AuthStore] fetchProfile: no profile row found, creating one...");
+          console.log(
+            "[AuthStore] fetchProfile: no profile row found, creating one...",
+          );
           const meta = user.user_metadata ?? {};
-          const nombre = meta.full_name || meta.name || user.email?.split("@")[0] || "Usuario";
+          const nombre =
+            meta.full_name ||
+            meta.name ||
+            user.email?.split("@")[0] ||
+            "Usuario";
           const avatarUrl = meta.avatar_url || meta.picture || null;
 
           const { data: created, error: insertErr } = await supabase
@@ -500,18 +554,31 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             .single();
 
           if (insertErr) {
-            console.error("[AuthStore] fetchProfile: failed to create profile:", insertErr.message);
+            console.error(
+              "[AuthStore] fetchProfile: failed to create profile:",
+              insertErr.message,
+            );
             return;
           }
-          console.log("[AuthStore] fetchProfile: created profile", created?.nombre, created?.codigo_jugador);
-          set({ profile: created as Profile });
+          const createdProfile = created as Profile | null;
+          console.log(
+            "[AuthStore] fetchProfile: created profile",
+            createdProfile?.nombre,
+            createdProfile?.codigo_jugador,
+          );
+          set({ profile: createdProfile as Profile });
           return;
         }
 
         throw error;
       }
-      console.log("[AuthStore] fetchProfile: got profile", data?.nombre, data?.codigo_jugador);
-      set({ profile: data as Profile });
+      const fetchedProfile = data as Profile | null;
+      console.log(
+        "[AuthStore] fetchProfile: got profile",
+        fetchedProfile?.nombre,
+        fetchedProfile?.codigo_jugador,
+      );
+      set({ profile: fetchedProfile as Profile });
     } catch (err) {
       console.error("[AuthStore] fetchProfile:", err);
     }
@@ -532,7 +599,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         // Table doesn't exist yet — just update local state
         if (error.message?.includes("does not exist")) {
           set((state) => ({
-            profile: state.profile ? { ...state.profile, modo_actual: mode } : null,
+            profile: state.profile
+              ? { ...state.profile, modo_actual: mode }
+              : null,
           }));
           return;
         }

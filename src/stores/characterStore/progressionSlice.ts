@@ -3,27 +3,24 @@
  * Contains the complex levelUp orchestration and resetToLevel1 logic.
  */
 
-import type {
-  Character,
-  AbilityKey,
-} from "@/types/character";
-import { calcModifier, calcProficiencyBonus } from "@/types/character";
+import type { Character } from "@/types/character";
+import { calcProficiencyBonus } from "@/types/character";
+import { hitDieValue } from "@/utils/character";
 import { now } from "@/utils/providers";
 import { getClassData, calcLevel1HP } from "@/data/srd/classes";
-import { getSubraceData } from "@/data/srd/races";
-import {
-  MAX_LEVEL,
-  canLevelUp,
-  getLevelUpSummary,
-} from "@/data/srd/leveling";
+import { getRaceData, getSubraceData } from "@/data/srd/races";
+import { MAX_LEVEL, canLevelUp, getLevelUpSummary } from "@/data/srd/leveling";
 import { STORAGE_KEYS } from "@/utils/storage";
 import {
-  hitDieSides,
   createDefaultMagicState,
   createDefaultClassResources,
   safeSetItem,
 } from "./helpers";
-import type { CharacterStore, ProgressionActions, LevelUpOptions } from "./types";
+import type {
+  CharacterStore,
+  ProgressionActions,
+  LevelUpOptions,
+} from "./types";
 import {
   applyHPGain,
   applyASI,
@@ -31,8 +28,18 @@ import {
   buildSubclassTraits,
   buildLevelRecord,
   applyMagicProgression,
+  buildFeatTrait,
+  getFeatHpBonusPerLevel,
+  applyTraitEffectMutations,
+  applyFeatEffects,
+  resetAbilityScoresToLevel1,
+  filterTraitsForLevel1,
 } from "./levelUpHelpers";
-import { useCharacterListStore, toCharacterSummary } from "@/stores/characterListStore";
+import {
+  useCharacterListStore,
+  toCharacterSummary,
+} from "@/stores/characterListStore";
+import { computeTraitEffectMutations } from "@/utils/traitEffects";
 
 type SetState = (partial: Partial<CharacterStore>) => void;
 type GetState = () => CharacterStore;
@@ -102,10 +109,21 @@ export function createProgressionSlice(
 
       const newLevel = character.nivel + 1;
       const summary = getLevelUpSummary(character.clase, newLevel);
-      const dieSides = hitDieSides(character.hitDice.die);
+      const dieSides = hitDieValue(character.hitDice.die);
 
       // ── Calcular PG ganados ──
-      const { hpGained, conMod } = applyHPGain(character, options, dieSides);
+      const subraceData = character.subraza
+        ? getSubraceData(character.raza, character.subraza)
+        : null;
+      const raceData = getRaceData(character.raza);
+      const hpBonusPerLevel =
+        raceData.hpBonusPerLevel ?? subraceData?.hpBonusPerLevel ?? 0;
+      const { hpGained, conMod } = applyHPGain(
+        character,
+        options,
+        dieSides,
+        hpBonusPerLevel,
+      );
 
       // ── Aplicar mejoras de característica (ASI) ──
       const { updatedScores, retroactiveHP } = applyASI(
@@ -121,13 +139,31 @@ export function createProgressionSlice(
       const newCurrentHP = character.hp.current + hpGained + retroactiveHP;
 
       // ── Registro de nivel ──
-      const levelRecord = buildLevelRecord(newLevel, hpGained, options, summary);
+      const levelRecord = buildLevelRecord(
+        newLevel,
+        hpGained,
+        options,
+        summary,
+      );
 
-      // ── Nuevos rasgos (clase + subclase) ──
+      // ── Nuevos rasgos (clase + subclase + dote) ──
       const newTraits = [
         ...buildNewTraits(character, summary, newLevel, options),
         ...buildSubclassTraits(character, newLevel, options),
       ];
+
+      // Add feat trait if a feat was chosen instead of ASI
+      if (options.featChosen) {
+        const featTrait = buildFeatTrait(
+          options.featChosen,
+          newLevel,
+          options.featAsiChoices,
+        );
+        if (featTrait) newTraits.push(featTrait);
+      }
+
+      // ── Computar mutaciones de efectos de rasgos ──
+      const effectMutations = computeTraitEffectMutations(character, newTraits);
 
       // ── Actualizar personaje ──
       let updatedChar: Character = {
@@ -147,13 +183,27 @@ export function createProgressionSlice(
         actualizadoEn: now(),
       };
 
+      // ── Aplicar mutaciones de efectos de rasgos ──
+      updatedChar = applyTraitEffectMutations(updatedChar, effectMutations);
+
+      // ── Aplicar efectos de la dote elegida ──
+      if (options.featChosen) {
+        updatedChar = applyFeatEffects(
+          updatedChar,
+          options.featChosen,
+          newLevel,
+        );
+      }
+
       set({ character: updatedChar });
 
       // ── Recalcular recursos de clase ──
       const newClassResources = createDefaultClassResources(updatedChar);
       const { classResources: oldClassResources } = get();
       if (oldClassResources) {
-        for (const [id, newRes] of Object.entries(newClassResources.resources)) {
+        for (const [id, newRes] of Object.entries(
+          newClassResources.resources,
+        )) {
           const oldRes = oldClassResources.resources[id];
           if (oldRes) {
             const maxIncrease = newRes.max - oldRes.max;
@@ -167,18 +217,30 @@ export function createProgressionSlice(
       set({ classResources: newClassResources });
 
       // ── Persistir ──
-      await safeSetItem(STORAGE_KEYS.CLASS_RESOURCES(updatedChar.id), newClassResources);
+      await safeSetItem(
+        STORAGE_KEYS.CLASS_RESOURCES(updatedChar.id),
+        newClassResources,
+      );
       await safeSetItem(STORAGE_KEYS.CHARACTER(character.id), updatedChar);
 
       // ── Actualizar estado mágico ──
-      const updatedMagic = applyMagicProgression(updatedChar, magicState, options);
+      const updatedMagic = applyMagicProgression(
+        updatedChar,
+        magicState,
+        options,
+      );
       if (updatedMagic) {
         set({ magicState: updatedMagic });
         await safeSetItem(STORAGE_KEYS.MAGIC_STATE(character.id), updatedMagic);
 
         // Sincronizar knownSpellIds del personaje con magicState
-        if (updatedMagic.knownSpellIds.length !== updatedChar.knownSpellIds.length ||
-            updatedMagic.knownSpellIds.some(id => !updatedChar.knownSpellIds.includes(id))) {
+        if (
+          updatedMagic.knownSpellIds.length !==
+            updatedChar.knownSpellIds.length ||
+          updatedMagic.knownSpellIds.some(
+            (id) => !updatedChar.knownSpellIds.includes(id),
+          )
+        ) {
           updatedChar = {
             ...updatedChar,
             knownSpellIds: [...updatedMagic.knownSpellIds],
@@ -192,7 +254,9 @@ export function createProgressionSlice(
 
       // ── Sincronizar resumen en la lista de personajes ──
       const charSummary = toCharacterSummary(updatedChar);
-      await useCharacterListStore.getState().updateCharacterSummary(updatedChar.id, charSummary);
+      await useCharacterListStore
+        .getState()
+        .updateCharacterSummary(updatedChar.id, charSummary);
 
       return summary;
     },
@@ -204,57 +268,30 @@ export function createProgressionSlice(
       const classData = getClassData(character.clase);
 
       // ── Reset ability scores: remove all improvements ──
-      const resetAbilityScores = { ...character.abilityScores };
-      const abilityKeys: AbilityKey[] = [
-        "fue",
-        "des",
-        "con",
-        "int",
-        "sab",
-        "car",
-      ];
-      for (const key of abilityKeys) {
-        const detail = { ...resetAbilityScores[key] };
-        detail.improvement = 0;
-        detail.total =
-          detail.override !== null
-            ? detail.override
-            : Math.min(20, detail.base + detail.racial + detail.misc);
-        detail.modifier = calcModifier(detail.total);
-        resetAbilityScores[key] = detail;
-      }
+      const resetAbilityScores = resetAbilityScoresToLevel1(
+        character.abilityScores,
+      );
 
       // ── Recalculate HP at level 1 ──
       const conMod = resetAbilityScores.con.modifier;
       const subraceData = character.subraza
         ? getSubraceData(character.raza, character.subraza)
         : null;
-      const hpBonusPerLevel = subraceData?.hpBonusPerLevel ?? 0;
-      const level1HP =
-        calcLevel1HP(character.clase, conMod) + hpBonusPerLevel;
+      const raceData = getRaceData(character.raza);
+      const hpBonusPerLevel =
+        raceData.hpBonusPerLevel ?? subraceData?.hpBonusPerLevel ?? 0;
+      const level1HP = calcLevel1HP(character.clase, conMod) + hpBonusPerLevel;
 
       // ── Restore only level-1 spells ──
-      const level1Record = character.levelHistory.find(
-        (r) => r.level === 1,
-      );
+      const level1Record = character.levelHistory.find((r) => r.level === 1);
       const level1Spells = level1Record?.spellsLearned ?? [];
 
       // ── Keep only race, background, and level-1 class traits ──
-      const traitsToKeep = character.traits.filter(
-        (t) =>
-          t.origen === "raza" ||
-          t.origen === "trasfondo" ||
-          t.origen === "dote" ||
-          t.origen === "manual",
+      const finalTraits = filterTraitsForLevel1(
+        character.traits,
+        classData.level1Features,
+        character.levelHistory,
       );
-      const level1TraitNames = new Set(
-        level1Record?.traitsGained ??
-          classData.level1Features.map((f) => f.nombre),
-      );
-      const level1ClassTraits = character.traits.filter(
-        (t) => t.origen === "clase" && level1TraitNames.has(t.nombre),
-      );
-      const finalTraits = [...traitsToKeep, ...level1ClassTraits];
 
       // ── Build reset character ──
       const timestamp = now();
@@ -283,8 +320,7 @@ export function createProgressionSlice(
             ],
         knownSpellIds: [...level1Spells],
         preparedSpellIds: [...level1Spells],
-        spellbookIds:
-          character.clase === "mago" ? [...level1Spells] : [],
+        spellbookIds: character.clase === "mago" ? [...level1Spells] : [],
         actualizadoEn: timestamp,
       };
 
@@ -294,10 +330,7 @@ export function createProgressionSlice(
       // ── Reset magic state ──
       const newMagicState = createDefaultMagicState(updatedChar);
       set({ magicState: newMagicState });
-      await safeSetItem(
-        STORAGE_KEYS.MAGIC_STATE(character.id),
-        newMagicState,
-      );
+      await safeSetItem(STORAGE_KEYS.MAGIC_STATE(character.id), newMagicState);
 
       // ── Reset class resources ──
       const newClassResources = createDefaultClassResources(updatedChar);
@@ -309,7 +342,9 @@ export function createProgressionSlice(
 
       // ── Sincronizar resumen en la lista de personajes ──
       const resetSummary = toCharacterSummary(updatedChar);
-      await useCharacterListStore.getState().updateCharacterSummary(updatedChar.id, resetSummary);
+      await useCharacterListStore
+        .getState()
+        .updateCharacterSummary(updatedChar.id, resetSummary);
     },
   };
 }

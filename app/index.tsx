@@ -29,6 +29,7 @@ import {
   AppHeader,
 } from "@/components/ui";
 import { useTheme, useDialog, useToast } from "@/hooks";
+import { withAlpha } from "@/utils/theme";
 import { CharacterCard, HomeEmptyState } from "@/components/campaigns";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -59,7 +60,7 @@ export default function HomeScreen() {
           useNativeDriver: true,
         }),
         Animated.timing(fabGlow, {
-          toValue: 0.30,
+          toValue: 0.3,
           duration: 1500,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
@@ -114,10 +115,7 @@ export default function HomeScreen() {
         : null;
 
     const raceName =
-      item.customRaceName ??
-      subraceData?.nombre ??
-      raceData?.nombre ??
-      "—";
+      item.customRaceName ?? subraceData?.nombre ?? raceData?.nombre ?? "—";
 
     return (
       <CharacterCard
@@ -263,6 +261,7 @@ export default function HomeScreen() {
         style={[
           styles.fab,
           {
+            shadowColor: colors.accentShadow,
             transform: [{ scale: fabScale }],
             shadowOpacity: fabGlow,
           },
@@ -290,7 +289,11 @@ export default function HomeScreen() {
           style={styles.fabTouchable}
         >
           <LinearGradient
-            colors={["#00D4E8", colors.accentRed, "#0097A7"]}
+            colors={[
+              colors.gradientButtonStart,
+              colors.gradientButtonMid,
+              colors.gradientButtonEnd,
+            ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.fabGradient}
@@ -321,7 +324,6 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    shadowColor: "#00BCD4",
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 14,
     elevation: 8,

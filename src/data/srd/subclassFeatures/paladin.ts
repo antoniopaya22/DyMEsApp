@@ -87,6 +87,23 @@ export const PALADIN_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Aura de Custodia",
             descripcion:
               "La magia ancestral cae sobre ti con tal peso que forma una protección arcana; tú y tus aliados tenéis resistencia al daño necrótico, psíquico y radiante mientras estéis en tu Aura de Protección.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "necrotico",
+                modifier: "resistance",
+              },
+              {
+                kind: "damageModifier",
+                damageType: "psiquico",
+                modifier: "resistance",
+              },
+              {
+                kind: "damageModifier",
+                damageType: "radiante",
+                modifier: "resistance",
+              },
+            ],
           },
         ],
       },
@@ -146,6 +163,7 @@ export const PALADIN_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Aura de Presteza",
             descripcion:
               "Tu velocidad aumenta en 3 m. Además, siempre que un aliado entre en tu Aura de Protección por primera vez en un turno o empiece su turno allí, la velocidad de ese aliado aumenta en 3 m hasta el final de su siguiente turno.",
+            efectos: [{ kind: "speedBonus", walkBonus: 10 }],
           },
         ],
       },

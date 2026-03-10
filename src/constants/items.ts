@@ -82,6 +82,11 @@ export const ITEM_RARITY_NAMES: Record<ItemRarity, string> = {
   artefacto: "Artefacto",
 };
 
+/**
+ * Static rarity colors — dark-mode optimized (Tailwind 500 shades).
+ * These are domain-specific category colors, not theme tokens.
+ * They may need a light-mode variant if contrast becomes an issue.
+ */
 export const ITEM_RARITY_COLORS: Record<ItemRarity, string> = {
   comun: "#9ca3af",
   poco_comun: "#22c55e",

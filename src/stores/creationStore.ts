@@ -20,17 +20,31 @@ import type {
   Personality,
   Appearance,
   Character,
-  SavingThrowProficiencies,
   Sexo,
-  DamageModifier,
-  DamageType,
 } from "@/types/character";
-import type { CustomRaceConfig, CustomBackgroundConfig } from "@/types/creation";
+import type {
+  CustomRaceConfig,
+  CustomBackgroundConfig,
+} from "@/types/creation";
 import { calcProficiencyBonus } from "@/types/character";
-import { STORAGE_KEYS, setItem, getItem, removeItem } from "@/utils/storage";
-import { getRaceData, getSubraceData, getTotalRacialBonuses, getRacialSpellsForLevel, buildRaceDataFromCustom, DRAGON_LINEAGES } from "@/data/srd/races";
+import {
+  STORAGE_KEYS,
+  setItem,
+  getItem,
+  removeItem,
+  extractErrorMessage,
+} from "@/utils/storage";
+import {
+  getRaceData,
+  getSubraceData,
+  getTotalRacialBonuses,
+  buildRaceDataFromCustom,
+} from "@/data/srd/races";
 import { getClassData, calcLevel1HP } from "@/data/srd/classes";
-import { getBackgroundData, buildBackgroundDataFromCustom } from "@/data/srd/backgrounds";
+import {
+  getBackgroundData,
+  buildBackgroundDataFromCustom,
+} from "@/data/srd/backgrounds";
 import { createDefaultInventory } from "@/types/item";
 import {
   buildAbilityScoresDetailed,
@@ -38,7 +52,15 @@ import {
   buildCharacterTraits,
   buildProficiencies,
   buildInitialSpells,
+  buildSavingThrows,
+  applySavingThrowMutations,
+  buildBaseDarkvision,
+  resolveFinalDarkvision,
+  buildDamageModifiers,
+  resolveRacialSpellIdsForLevel1,
+  buildInitialLevelHistory,
 } from "./characterBuilderHelpers";
+import { computeTraitEffectMutations } from "@/utils/traitEffects";
 import { now } from "@/utils/providers";
 
 // ─── Constantes ──────────────────────────────────────────────────────
@@ -87,6 +109,10 @@ interface CreationState {
 }
 
 interface CreationActions {
+  // ── Helper interno ──
+  /** Actualiza campos del borrador y marca dirty (uso interno) */
+  _updateDraft: (patch: Partial<CharacterCreationDraft>) => void;
+
   // ── Gestión del borrador ──
   /** Inicia un nuevo borrador (campaignId opcional, por defecto "current") */
   startCreation: (campaignId?: string) => Promise<void>;
@@ -199,7 +225,7 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
     try {
       await setItem(STORAGE_KEYS.CREATION_DRAFT(draftId), newDraft);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      const message = extractErrorMessage(err);
       console.error(`[CreationStore] startCreation: ${message}`);
     }
   },
@@ -209,7 +235,7 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
     try {
       const draftId = campaignId ?? "current";
       const stored = await getItem<CharacterCreationDraft>(
-        STORAGE_KEYS.CREATION_DRAFT(draftId)
+        STORAGE_KEYS.CREATION_DRAFT(draftId),
       );
       if (stored) {
         set({ draft: stored, loading: false, isDirty: false });
@@ -218,8 +244,7 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
       set({ loading: false });
       return false;
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error al cargar el borrador";
+      const message = extractErrorMessage(err, "Error al cargar el borrador");
       console.error("[CreationStore] loadDraft:", message);
       set({ error: message, loading: false });
       return false;
@@ -237,12 +262,11 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
       };
       await setItem(
         STORAGE_KEYS.CREATION_DRAFT(draft.campaignId),
-        updatedDraft
+        updatedDraft,
       );
       set({ draft: updatedDraft, isDirty: false });
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error al guardar el borrador";
+      const message = extractErrorMessage(err, "Error al guardar el borrador");
       console.error("[CreationStore] saveDraft:", message);
       set({ error: message });
     }
@@ -262,7 +286,7 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
     try {
       const draftId = campaignId ?? "current";
       const stored = await getItem<CharacterCreationDraft>(
-        STORAGE_KEYS.CREATION_DRAFT(draftId)
+        STORAGE_KEYS.CREATION_DRAFT(draftId),
       );
       return stored !== null;
     } catch {
@@ -294,203 +318,72 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
   },
 
   // ── Setters de cada paso ───────────────────────────────────────────
-
-  setNombre: (nombre: string) => {
+  // Helper interno: actualiza campos del borrador y marca dirty
+  _updateDraft: (patch: Partial<CharacterCreationDraft>) => {
     const { draft } = get();
     if (!draft) return;
-    set({ draft: { ...draft, nombre }, isDirty: true });
+    set({ draft: { ...draft, ...patch }, isDirty: true });
   },
 
-  setSexo: (sexo: Sexo) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({ draft: { ...draft, sexo }, isDirty: true });
-  },
+  setNombre: (nombre) => get()._updateDraft({ nombre }),
+  setSexo: (sexo) => get()._updateDraft({ sexo }),
+  setAbilityScoreMethod: (method) =>
+    get()._updateDraft({ abilityScoreMethod: method }),
+  setAbilityScores: (scores) =>
+    get()._updateDraft({ abilityScoresBase: scores }),
+  setSkillChoices: (skills) => get()._updateDraft({ skillChoices: skills }),
+  setSpellChoices: (choices) => get()._updateDraft({ spellChoices: choices }),
+  setEquipmentChoices: (choices) =>
+    get()._updateDraft({ equipmentChoices: choices }),
+  setPersonality: (personality) => get()._updateDraft({ personality }),
+  setAlineamiento: (alineamiento) => get()._updateDraft({ alineamiento }),
+  setAppearance: (appearance) => get()._updateDraft({ appearance }),
+  setFreeAbilityBonuses: (bonuses) =>
+    get()._updateDraft({ freeAbilityBonuses: bonuses }),
+  setDragonLineage: (lineageId) =>
+    get()._updateDraft({ dragonLineage: lineageId }),
+  setRaceToolChoice: (tool) => get()._updateDraft({ raceToolChoice: tool }),
+  setRacialCantripChoice: (spellId) =>
+    get()._updateDraft({ racialCantripChoice: spellId }),
 
-  setRaza: (raza: RaceId, subraza: SubraceId) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: {
-        ...draft,
-        raza,
-        subraza,
-        // Limpiar elecciones que dependen de la raza
-        skillChoices: undefined,
-        dragonLineage: undefined,
-        raceToolChoice: undefined,
-        racialCantripChoice: undefined,
-        // Limpiar datos custom si se elige una raza estándar
-        ...(raza !== "personalizada" ? { customRaceData: undefined } : {}),
-      },
-      isDirty: true,
+  // Setters con efectos secundarios (limpian elecciones dependientes)
+  setRaza: (raza, subraza) =>
+    get()._updateDraft({
+      raza,
+      subraza,
+      skillChoices: undefined,
+      dragonLineage: undefined,
+      raceToolChoice: undefined,
+      racialCantripChoice: undefined,
+      freeAbilityBonuses: undefined,
+      ...(raza !== "personalizada" ? { customRaceData: undefined } : {}),
+    }),
+
+  setCustomRaceData: (data) => get()._updateDraft({ customRaceData: data }),
+
+  setClase: (clase) =>
+    get()._updateDraft({
+      clase,
+      skillChoices: undefined,
+      spellChoices: undefined,
+      equipmentChoices: undefined,
+    }),
+
+  setTrasfondo: (trasfondo) => {
+    const { draft, _updateDraft } = get();
+    _updateDraft({
+      trasfondo,
+      skillChoices: undefined,
+      customBackgroundData:
+        trasfondo === "personalizada" ? draft?.customBackgroundData : undefined,
     });
   },
 
-  setCustomRaceData: (data: CustomRaceConfig) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: { ...draft, customRaceData: data },
-      isDirty: true,
-    });
-  },
-
-  setClase: (clase: ClassId) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: {
-        ...draft,
-        clase,
-        // Limpiar elecciones que dependen de la clase
-        skillChoices: undefined,
-        spellChoices: undefined,
-        equipmentChoices: undefined,
-      },
-      isDirty: true,
-    });
-  },
-
-  setAbilityScoreMethod: (method: AbilityScoreMethod) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: { ...draft, abilityScoreMethod: method },
-      isDirty: true,
-    });
-  },
-
-  setAbilityScores: (scores: AbilityScores) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: { ...draft, abilityScoresBase: scores },
-      isDirty: true,
-    });
-  },
-
-  setTrasfondo: (trasfondo: BackgroundId) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: {
-        ...draft,
-        trasfondo,
-        // Limpiar elecciones de habilidades ya que el trasfondo otorga habilidades fijas
-        skillChoices: undefined,
-        // Limpiar datos custom si se cambia a un trasfondo SRD
-        customBackgroundData: trasfondo === "personalizada"
-          ? draft.customBackgroundData
-          : undefined,
-      },
-      isDirty: true,
-    });
-  },
-
-  setCustomBackgroundData: (data: CustomBackgroundConfig) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: {
-        ...draft,
-        customBackgroundData: data,
-        // Limpiar skills cuando cambia el trasfondo custom
-        skillChoices: undefined,
-      },
-      isDirty: true,
-    });
-  },
-
-  setSkillChoices: (skills: SkillKey[]) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: { ...draft, skillChoices: skills },
-      isDirty: true,
-    });
-  },
-
-  setSpellChoices: (choices) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: { ...draft, spellChoices: choices },
-      isDirty: true,
-    });
-  },
-
-  setEquipmentChoices: (choices: Record<string, string>) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: { ...draft, equipmentChoices: choices },
-      isDirty: true,
-    });
-  },
-
-  setPersonality: (personality: Personality) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: { ...draft, personality },
-      isDirty: true,
-    });
-  },
-
-  setAlineamiento: (alineamiento: Alignment) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: { ...draft, alineamiento },
-      isDirty: true,
-    });
-  },
-
-  setAppearance: (appearance: Appearance) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: { ...draft, appearance },
-      isDirty: true,
-    });
-  },
-
-  setFreeAbilityBonuses: (bonuses: AbilityKey[]) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: { ...draft, freeAbilityBonuses: bonuses },
-      isDirty: true,
-    });
-  },
-
-  setDragonLineage: (lineageId: string) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: { ...draft, dragonLineage: lineageId },
-      isDirty: true,
-    });
-  },
-
-  setRaceToolChoice: (tool: string) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: { ...draft, raceToolChoice: tool },
-      isDirty: true,
-    });
-  },
-
-  setRacialCantripChoice: (spellId: string) => {
-    const { draft } = get();
-    if (!draft) return;
-    set({
-      draft: { ...draft, racialCantripChoice: spellId },
-      isDirty: true,
-    });
-  },
+  setCustomBackgroundData: (data) =>
+    get()._updateDraft({
+      customBackgroundData: data,
+      skillChoices: undefined,
+    }),
 
   startRecreation: async (character: Character) => {
     // Build a draft pre-populated with the character's immutable creation data.
@@ -505,10 +398,16 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
       sexo: character.sexo,
       raza: character.raza,
       subraza: character.subraza ?? undefined,
-      customRaceData: character.raza === "personalizada" ? character.customRaceData : undefined,
+      customRaceData:
+        character.raza === "personalizada"
+          ? character.customRaceData
+          : undefined,
       clase: character.clase,
       trasfondo: character.trasfondo,
-      customBackgroundData: character.trasfondo === "personalizada" ? character.customBackgroundData : undefined,
+      customBackgroundData:
+        character.trasfondo === "personalizada"
+          ? character.customBackgroundData
+          : undefined,
       alineamiento: character.alineamiento,
       personality: character.personality,
       appearance: character.appearance,
@@ -530,9 +429,12 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
 
     set({ draft: newDraft, isDirty: true, error: null });
     try {
-      await setItem(STORAGE_KEYS.CREATION_DRAFT(character.campaignId ?? "current"), newDraft);
+      await setItem(
+        STORAGE_KEYS.CREATION_DRAFT(character.campaignId ?? "current"),
+        newDraft,
+      );
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      const message = extractErrorMessage(err);
       console.error(`[CreationStore] startRecreation: ${message}`);
     }
   },
@@ -545,13 +447,18 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
 
     switch (step) {
       case 1: // Nombre
-        return !!draft.nombre && draft.nombre.trim().length >= 1 && !!draft.sexo;
+        return (
+          !!draft.nombre && draft.nombre.trim().length >= 1 && !!draft.sexo
+        );
 
       case 2: // Raza
         if (!draft.raza) return false;
         if (draft.raza === "personalizada") {
           // Custom race needs at least a name
-          return !!draft.customRaceData && draft.customRaceData.nombre.trim().length >= 1;
+          return (
+            !!draft.customRaceData &&
+            draft.customRaceData.nombre.trim().length >= 1
+          );
         }
         const raceData = getRaceData(draft.raza);
         // Si la raza tiene subrazas, una debe estar seleccionada
@@ -561,23 +468,41 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
       case 3: // Clase
         return !!draft.clase;
 
-      case 4: // Estadísticas
+      case 4: {
+        // Estadísticas
         if (!draft.abilityScoreMethod || !draft.abilityScoresBase) return false;
         const scores = draft.abilityScoresBase;
         // Todas las puntuaciones deben ser al menos 1
-        return (
-          scores.fue >= 1 &&
-          scores.des >= 1 &&
-          scores.con >= 1 &&
-          scores.int >= 1 &&
-          scores.sab >= 1 &&
-          scores.car >= 1
-        );
+        if (
+          scores.fue < 1 ||
+          scores.des < 1 ||
+          scores.con < 1 ||
+          scores.int < 1 ||
+          scores.sab < 1 ||
+          scores.car < 1
+        )
+          return false;
+        // Si la raza otorga bonificadores libres, deben estar asignados
+        if (draft.raza && draft.raza !== "personalizada") {
+          const rd = getRaceData(draft.raza);
+          if (rd.freeAbilityBonusCount && rd.freeAbilityBonusCount > 0) {
+            if (
+              !draft.freeAbilityBonuses ||
+              draft.freeAbilityBonuses.length !== rd.freeAbilityBonusCount
+            )
+              return false;
+          }
+        }
+        return true;
+      }
 
       case 5: // Trasfondo
         if (!draft.trasfondo) return false;
         if (draft.trasfondo === "personalizada") {
-          return !!draft.customBackgroundData && draft.customBackgroundData.nombre.trim().length >= 1;
+          return (
+            !!draft.customBackgroundData &&
+            draft.customBackgroundData.nombre.trim().length >= 1
+          );
         }
         return true;
 
@@ -589,7 +514,8 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
         const classData = getClassData(draft.clase);
         if (classData.casterType === "none") return true;
         // Half-casters sin conjuros a nivel 1 (explorador, paladín)
-        if (classData.cantripsAtLevel1 === 0 && classData.spellsAtLevel1 === 0) return true;
+        if (classData.cantripsAtLevel1 === 0 && classData.spellsAtLevel1 === 0)
+          return true;
         return !!draft.spellChoices;
 
       case 8: // Equipamiento
@@ -644,21 +570,24 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
     const inventoryId = draft.recreatingInventoryId ?? randomUUID();
     const timestamp = now();
 
-    const raceData = draft.raza === "personalizada" && draft.customRaceData
-      ? buildRaceDataFromCustom(draft.customRaceData)
-      : getRaceData(draft.raza);
+    const raceData =
+      draft.raza === "personalizada" && draft.customRaceData
+        ? buildRaceDataFromCustom(draft.customRaceData)
+        : getRaceData(draft.raza);
     const subraceData = draft.subraza
       ? getSubraceData(draft.raza, draft.subraza)
       : null;
     const classData = getClassData(draft.clase);
-    const backgroundData = draft.trasfondo === "personalizada" && draft.customBackgroundData
-      ? buildBackgroundDataFromCustom(draft.customBackgroundData)
-      : getBackgroundData(draft.trasfondo);
+    const backgroundData =
+      draft.trasfondo === "personalizada" && draft.customBackgroundData
+        ? buildBackgroundDataFromCustom(draft.customBackgroundData)
+        : getBackgroundData(draft.trasfondo);
 
     // ── Puntuaciones de característica ──
-    const racialBonuses = draft.raza === "personalizada" && draft.customRaceData
-      ? draft.customRaceData.abilityBonuses
-      : getTotalRacialBonuses(draft.raza, draft.subraza ?? null);
+    const racialBonuses =
+      draft.raza === "personalizada" && draft.customRaceData
+        ? draft.customRaceData.abilityBonuses
+        : getTotalRacialBonuses(draft.raza, draft.subraza ?? null);
     const abilityScores = buildAbilityScoresDetailed(
       draft.abilityScoresBase,
       racialBonuses,
@@ -673,19 +602,13 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
     });
 
     // ── Tiradas de salvación ──
-    const abilityKeys: AbilityKey[] = ["fue", "des", "con", "int", "sab", "car"];
-    const savingThrows = {} as SavingThrowProficiencies;
-    for (const key of abilityKeys) {
-      savingThrows[key] = {
-        proficient: classData.savingThrows.includes(key),
-        source: classData.savingThrows.includes(key) ? "clase" : undefined,
-      };
-    }
+    const savingThrows = buildSavingThrows(classData.savingThrows);
 
-    // ── Puntos de golpe ──
+    // ── Puntos de golpe (base, se sumará bonus de rasgos más adelante) ──
     const conMod = abilityScores.con.modifier;
-    const hpBonusPerLevel = subraceData?.hpBonusPerLevel ?? 0;
-    const maxHP = calcLevel1HP(draft.clase, conMod) + hpBonusPerLevel;
+    const hpBonusPerLevel =
+      raceData.hpBonusPerLevel ?? subraceData?.hpBonusPerLevel ?? 0;
+    const baseMaxHP = calcLevel1HP(draft.clase, conMod) + hpBonusPerLevel;
 
     // ── Competencias generales ──
     const proficiencies = buildProficiencies({
@@ -712,6 +635,25 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
       backgroundFeatureDescription: backgroundData.featureDescription,
     });
 
+    // ── Mutaciones derivadas de efectos de rasgos ──
+    const isCustomRace = draft.raza === "personalizada";
+    const baseWalkSpeed = subraceData?.speedOverride ?? raceData.speed;
+    const baseDarkvision = buildBaseDarkvision(
+      isCustomRace,
+      draft.customRaceData,
+      raceData,
+      subraceData,
+    );
+
+    const traitMutations = computeTraitEffectMutations(
+      {
+        nivel: 1,
+        darkvision: baseDarkvision,
+        speed: { walk: baseWalkSpeed },
+      } as Character,
+      traits,
+    );
+
     // ── Personalidad y apariencia ──
     const personality: Personality = draft.personality ?? {
       traits: [],
@@ -721,79 +663,39 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
     };
     const appearance: Appearance = draft.appearance ?? {};
 
-    // ── Resistencias al daño (raciales) ──
-    const damageModifiers: DamageModifier[] = [];
-    if (draft.raza === "personalizada" && draft.customRaceData?.damageResistances) {
-      for (const type of draft.customRaceData.damageResistances) {
-        damageModifiers.push({
-          type,
-          modifier: "resistance" as const,
-          source: draft.customRaceData.nombre || "Raza personalizada",
-        });
-      }
-    } else {
-      // Resistencias SRD
-      if (draft.raza === "enano") {
-        damageModifiers.push({ type: "veneno", modifier: "resistance", source: raceData.nombre });
-      }
-      if (draft.raza === "tiefling") {
-        damageModifiers.push({ type: "fuego", modifier: "resistance", source: raceData.nombre });
-      }
-      if (draft.subraza === "mediano_fornido") {
-        damageModifiers.push({ type: "veneno", modifier: "resistance", source: subraceData!.nombre });
-      }
-      if (draft.raza === "draconido" && draft.dragonLineage) {
-        const lineage = DRAGON_LINEAGES.find(l => l.id === draft.dragonLineage);
-        if (lineage) {
-          const damageTypeId = lineage.damageType
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "") as DamageType;
-          damageModifiers.push({
-            type: damageTypeId,
-            modifier: "resistance",
-            source: `Linaje Dracónico (${lineage.dragon})`,
-          });
-        }
-      }
-    }
-
-    // ── Visión en la oscuridad ──
-    const darkvision = draft.raza === "personalizada"
-      ? (draft.customRaceData?.darkvision ? 60 : 0)
-      : raceData.darkvision
-        ? (subraceData?.darkvisionOverride ?? raceData.darkvisionRange ?? 60)
-        : 0;
-
-    // ── Hechizos ──
-    const racialSpellsLv1 = draft.raza === "personalizada" && draft.customRaceData?.racialSpells
-      ? draft.customRaceData.racialSpells
-          .filter((s) => s.minLevel <= 1)
-          .map((s) => s.nombre.toLowerCase().replace(/\s+/g, "_"))
-      : draft.raza !== "personalizada"
-        ? getRacialSpellsForLevel(
-            draft.raza,
-            draft.subraza ?? null,
-            1,
-          ).map((s) => s.spellId)
-        : [];
-
-    const { knownSpellIds, preparedSpellIds, spellbookIds } = buildInitialSpells(
-      draft.spellChoices,
-      draft.clase,
-      racialSpellsLv1,
+    // ── Resistencias al daño ──
+    const damageModifiers = buildDamageModifiers(
+      isCustomRace,
+      draft.customRaceData,
+      traitMutations,
     );
 
+    // ── Tiradas de salvación (aplicar cambios de rasgos) ──
+    applySavingThrowMutations(savingThrows, traitMutations);
+
+    // ── Visión en la oscuridad (max entre racial y efectos de rasgos) ──
+    const darkvision = resolveFinalDarkvision(baseDarkvision, traitMutations);
+
+    // ── Puntos de golpe (final, con bonus de rasgos) ──
+    const maxHP = baseMaxHP + (traitMutations.hpBonusFromTraits ?? 0);
+
+    // ── Hechizos ──
+    const racialSpellsLv1 = resolveRacialSpellIdsForLevel1(
+      isCustomRace,
+      draft.customRaceData,
+      draft.raza,
+      draft.subraza,
+    );
+
+    const { knownSpellIds, preparedSpellIds, spellbookIds } =
+      buildInitialSpells(draft.spellChoices, draft.clase, racialSpellsLv1);
+
     // ── Historial de nivel ──
-    const levelHistory: Character["levelHistory"] = [
-      {
-        level: 1,
-        date: timestamp,
-        hpGained: maxHP,
-        hpMethod: "fixed",
-        spellsLearned: knownSpellIds.length > 0 ? [...knownSpellIds] : undefined,
-      },
-    ];
+    const levelHistory = buildInitialLevelHistory(
+      timestamp,
+      maxHP,
+      knownSpellIds,
+    );
 
     // ── Ensamblar personaje ──
     const character: Character = {
@@ -803,11 +705,21 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
       sexo: draft.sexo,
       raza: draft.raza,
       subraza: draft.subraza ?? null,
-      customRaceName: draft.raza === "personalizada" ? draft.customRaceData?.nombre?.trim() : undefined,
-      customRaceData: draft.raza === "personalizada" ? draft.customRaceData : undefined,
+      customRaceName:
+        draft.raza === "personalizada"
+          ? draft.customRaceData?.nombre?.trim()
+          : undefined,
+      customRaceData:
+        draft.raza === "personalizada" ? draft.customRaceData : undefined,
       clase: draft.clase,
-      customBackgroundName: draft.trasfondo === "personalizada" ? draft.customBackgroundData?.nombre?.trim() : undefined,
-      customBackgroundData: draft.trasfondo === "personalizada" ? draft.customBackgroundData : undefined,
+      customBackgroundName:
+        draft.trasfondo === "personalizada"
+          ? draft.customBackgroundData?.nombre?.trim()
+          : undefined,
+      customBackgroundData:
+        draft.trasfondo === "personalizada"
+          ? draft.customBackgroundData
+          : undefined,
       subclase: null,
       nivel: 1,
       experiencia: 0,
@@ -870,9 +782,10 @@ export function calcTotalScoresPreview(
   freeAbilityBonuses?: AbilityKey[],
   customBonuses?: Partial<Record<AbilityKey, number>>,
 ): AbilityScores {
-  const racialBonuses = raceId === "personalizada" && customBonuses
-    ? customBonuses
-    : getTotalRacialBonuses(raceId, subraceId ?? null);
+  const racialBonuses =
+    raceId === "personalizada" && customBonuses
+      ? customBonuses
+      : getTotalRacialBonuses(raceId, subraceId ?? null);
 
   // Compute free bonuses (e.g. semi-elf picks 2 × +1)
   const freeBonuses: Partial<Record<AbilityKey, number>> = {};
@@ -946,9 +859,7 @@ export function getAvailableClassSkills(
     }
   }
 
-  return [...pool].filter(
-    (skill) => !granted.includes(skill)
-  );
+  return [...pool].filter((skill) => !granted.includes(skill));
 }
 
 /**
@@ -957,7 +868,7 @@ export function getAvailableClassSkills(
  */
 export function getRequiredSkillCount(
   classId: ClassId | undefined,
-  raceId: RaceId | undefined
+  raceId: RaceId | undefined,
 ): number {
   let count = 0;
 

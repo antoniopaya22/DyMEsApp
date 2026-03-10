@@ -27,7 +27,10 @@ import { useMasterStore } from "@/stores/masterStore";
 import { useTheme, useDialog, useToast } from "@/hooks";
 import { ConfirmDialog, Toast, AppHeader } from "@/components/ui";
 import { CampaignImagePicker } from "@/components/campaigns";
-import { getCampaignImageSource, type CampaignImageId } from "@/constants/campaignImages";
+import {
+  getCampaignImageSource,
+  type CampaignImageId,
+} from "@/constants/campaignImages";
 import type { MasterCampaign } from "@/types/master";
 
 // ─── Component ───────────────────────────────────────────────────────
@@ -36,12 +39,8 @@ export default function MasterHomeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user } = useAuthStore();
-  const {
-    campaigns,
-    loadingCampaigns,
-    loadCampaigns,
-    deleteCampaign,
-  } = useMasterStore();
+  const { campaigns, loadingCampaigns, loadCampaigns, deleteCampaign } =
+    useMasterStore();
   const { dialogProps, showDestructive } = useDialog();
   const { toastProps, showSuccess } = useToast();
 
@@ -73,13 +72,11 @@ export default function MasterHomeScreen() {
     if (!newName.trim() || !user) return;
     setCreating(true);
     try {
-      const campaign = await useMasterStore
-        .getState()
-        .createCampaign(user.id, {
-          nombre: newName,
-          descripcion: newDesc || undefined,
-          imagen: newImage || undefined,
-        });
+      const campaign = await useMasterStore.getState().createCampaign(user.id, {
+        nombre: newName,
+        descripcion: newDesc || undefined,
+        imagen: newImage || undefined,
+      });
       setShowCreate(false);
       setNewName("");
       setNewDesc("");
@@ -147,10 +144,7 @@ export default function MasterHomeScreen() {
           style={styles.cardImageGradient}
         />
         <View style={styles.cardImageOverlay}>
-          <Text
-            style={styles.cardImageTitle}
-            numberOfLines={1}
-          >
+          <Text style={styles.cardImageTitle} numberOfLines={1}>
             {item.nombre}
           </Text>
         </View>
@@ -167,12 +161,25 @@ export default function MasterHomeScreen() {
             </Text>
           ) : null}
         </View>
-        <Ionicons name="chevron-forward" size={20} color={colors.chevronColor} />
+        <Ionicons
+          name="chevron-forward"
+          size={20}
+          color={colors.chevronColor}
+        />
       </View>
 
-      <View style={[styles.campaignMeta, { borderTopColor: colors.borderSeparator }]}>
+      <View
+        style={[
+          styles.campaignMeta,
+          { borderTopColor: colors.borderSeparator },
+        ]}
+      >
         <View style={styles.metaItem}>
-          <Ionicons name="calendar-outline" size={12} color={colors.textMuted} />
+          <Ionicons
+            name="calendar-outline"
+            size={12}
+            color={colors.textMuted}
+          />
           <Text style={[styles.metaText, { color: colors.textMuted }]}>
             {new Date(item.actualizado_en).toLocaleDateString("es-ES")}
           </Text>
@@ -272,10 +279,7 @@ export default function MasterHomeScreen() {
               Nueva campaña
             </Text>
 
-            <CampaignImagePicker
-              selected={newImage}
-              onSelect={setNewImage}
-            />
+            <CampaignImagePicker selected={newImage} onSelect={setNewImage} />
 
             <TextInput
               style={[
@@ -313,13 +317,12 @@ export default function MasterHomeScreen() {
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[
-                  styles.modalBtn,
-                  { backgroundColor: colors.bgSubtle },
-                ]}
+                style={[styles.modalBtn, { backgroundColor: colors.bgSubtle }]}
                 onPress={() => setShowCreate(false)}
               >
-                <Text style={[styles.modalBtnText, { color: colors.textSecondary }]}>
+                <Text
+                  style={[styles.modalBtnText, { color: colors.textSecondary }]}
+                >
                   Cancelar
                 </Text>
               </TouchableOpacity>
@@ -338,7 +341,12 @@ export default function MasterHomeScreen() {
                 {creating ? (
                   <ActivityIndicator size="small" color={colors.textInverted} />
                 ) : (
-                  <Text style={[styles.modalBtnText, { color: colors.textInverted }]}>
+                  <Text
+                    style={[
+                      styles.modalBtnText,
+                      { color: colors.textInverted },
+                    ]}
+                  >
                     Crear
                   </Text>
                 )}
@@ -460,7 +468,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     elevation: 6,
-    shadowColor: "#000",
+    shadowColor: "#000", // static: theme-independent
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,

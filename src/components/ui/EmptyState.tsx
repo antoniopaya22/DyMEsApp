@@ -64,7 +64,7 @@ export default function EmptyState({
   onCtaPress,
   ctaColors,
 }: EmptyStateProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   // Entrance animations
   const iconScale = useRef(new Animated.Value(0.3)).current;
@@ -82,23 +82,62 @@ export default function EmptyState({
     const stagger = Animated.stagger(120, [
       // Icon: scale-up bounce
       Animated.parallel([
-        Animated.spring(iconScale, { toValue: 1, friction: 5, tension: 120, useNativeDriver: true }),
-        Animated.timing(iconOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.spring(iconScale, {
+          toValue: 1,
+          friction: 5,
+          tension: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(iconOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
       ]),
       // Title: fade + slide
       Animated.parallel([
-        Animated.timing(titleOpacity, { toValue: 1, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-        Animated.timing(titleTranslateY, { toValue: 0, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(titleOpacity, {
+          toValue: 1,
+          duration: 350,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(titleTranslateY, {
+          toValue: 0,
+          duration: 350,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
       ]),
       // Subtitle: fade + slide
       Animated.parallel([
-        Animated.timing(subtitleOpacity, { toValue: 1, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-        Animated.timing(subtitleTranslateY, { toValue: 0, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(subtitleOpacity, {
+          toValue: 1,
+          duration: 350,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(subtitleTranslateY, {
+          toValue: 0,
+          duration: 350,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
       ]),
       // CTA: fade + slide
       Animated.parallel([
-        Animated.timing(ctaOpacity, { toValue: 1, duration: 400, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-        Animated.timing(ctaTranslateY, { toValue: 0, duration: 400, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(ctaOpacity, {
+          toValue: 1,
+          duration: 400,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(ctaTranslateY, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
       ]),
     ]);
     stagger.start();
@@ -106,8 +145,18 @@ export default function EmptyState({
     // Subtle idle bounce on the icon
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(idleBounce, { toValue: -4, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(idleBounce, { toValue: 0, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(idleBounce, {
+          toValue: -4,
+          duration: 1200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(idleBounce, {
+          toValue: 0,
+          duration: 1200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
       ]),
     );
     // Start idle bounce after entrance (delayed)
@@ -120,25 +169,33 @@ export default function EmptyState({
     };
   }, []);
 
-  const defaultCtaColors = isDark
-    ? ["#33EBFF", colors.accentRed, "#00BCD4"] as const
-    : ["#0E8BA5", colors.accentRed, "#0B5E73"] as const;
+  const defaultCtaColors = [
+    colors.gradientButtonStart,
+    colors.gradientButtonMid,
+    colors.gradientButtonEnd,
+  ] as const;
   const resolvedCtaColors = ctaColors ?? defaultCtaColors;
 
   return (
     <View style={styles.container}>
       {/* Icon */}
-      <Animated.View style={{ opacity: iconOpacity, transform: [{ scale: iconScale }, { translateY: idleBounce }] }}>
+      <Animated.View
+        style={{
+          opacity: iconOpacity,
+          transform: [{ scale: iconScale }, { translateY: idleBounce }],
+        }}
+      >
         {customIcon ?? (
-          <View style={[
-            styles.iconContainer,
-            { backgroundColor: `${colors.textMuted}12`, borderColor: `${colors.textMuted}20` },
-          ]}>
-            <Ionicons
-              name={icon}
-              size={36}
-              color={colors.textMuted}
-            />
+          <View
+            style={[
+              styles.iconContainer,
+              {
+                backgroundColor: `${colors.textMuted}12`,
+                borderColor: `${colors.textMuted}20`,
+              },
+            ]}
+          >
+            <Ionicons name={icon} size={36} color={colors.textMuted} />
           </View>
         )}
       </Animated.View>
@@ -147,7 +204,11 @@ export default function EmptyState({
       <Animated.Text
         style={[
           styles.title,
-          { color: colors.emptyTitle ?? colors.textPrimary, opacity: titleOpacity, transform: [{ translateY: titleTranslateY }] },
+          {
+            color: colors.emptyTitle ?? colors.textPrimary,
+            opacity: titleOpacity,
+            transform: [{ translateY: titleTranslateY }],
+          },
         ]}
       >
         {title}
@@ -158,7 +219,11 @@ export default function EmptyState({
         <Animated.Text
           style={[
             styles.subtitle,
-            { color: colors.emptySubtitle ?? colors.textSecondary, opacity: subtitleOpacity, transform: [{ translateY: subtitleTranslateY }] },
+            {
+              color: colors.emptySubtitle ?? colors.textSecondary,
+              opacity: subtitleOpacity,
+              transform: [{ translateY: subtitleTranslateY }],
+            },
           ]}
         >
           {subtitle}
@@ -167,9 +232,14 @@ export default function EmptyState({
 
       {/* Optional CTA */}
       {ctaLabel && onCtaPress ? (
-        <Animated.View style={{ opacity: ctaOpacity, transform: [{ translateY: ctaTranslateY }] }}>
+        <Animated.View
+          style={{
+            opacity: ctaOpacity,
+            transform: [{ translateY: ctaTranslateY }],
+          }}
+        >
           <TouchableOpacity
-            style={styles.ctaButton}
+            style={[styles.ctaButton, { shadowColor: colors.accentShadow }]}
             onPress={onCtaPress}
             activeOpacity={0.85}
           >
@@ -180,7 +250,9 @@ export default function EmptyState({
               style={styles.ctaGradient}
             >
               <Ionicons name="add" size={22} color={colors.textInverted} />
-              <Text style={[styles.ctaText, { color: colors.textInverted }]}>{ctaLabel}</Text>
+              <Text style={[styles.ctaText, { color: colors.textInverted }]}>
+                {ctaLabel}
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
@@ -220,7 +292,7 @@ const styles = StyleSheet.create({
   ctaButton: {
     borderRadius: 14,
     overflow: "hidden",
-    shadowColor: "#00BCD4",
+    shadowColor: "#000", // static: theme-independent
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,

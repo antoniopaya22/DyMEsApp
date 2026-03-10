@@ -23,6 +23,7 @@ import type { ReactNode } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/hooks";
+import { withAlpha } from "@/utils/theme";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -99,9 +100,9 @@ function getTypeConfig(
     warning: {
       icon: "alert-circle",
       color: colors.accentGold,
-      bgColor: "rgba(0,229,255,0.10)",
-      borderColor: "rgba(0,229,255,0.20)",
-      ringColor: "rgba(0,229,255,0.12)",
+      bgColor: withAlpha(colors.accentRed, 0.1),
+      borderColor: withAlpha(colors.accentRed, 0.2),
+      ringColor: withAlpha(colors.accentRed, 0.12),
     },
     success: {
       icon: "checkmark-circle",

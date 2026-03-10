@@ -8,3 +8,6 @@ export { default as NotesTab } from "./NotesTab";
 export { default as OverviewTab } from "./OverviewTab";
 export { default as PersonalityAppearanceEditor } from "./PersonalityAppearanceEditor";
 export { TraitCard } from "./TraitCard";
+
+// Character sheet shared components
+export { CharacterSheetBase, StandaloneHeader, CompactHeader } from "./sheet";

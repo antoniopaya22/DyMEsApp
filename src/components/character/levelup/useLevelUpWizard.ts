@@ -7,7 +7,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Animated, Easing } from "react-native";
-import { useCharacterStore, type LevelUpOptions } from "@/stores/characterStore";
+import {
+  useCharacterStore,
+  type LevelUpOptions,
+} from "@/stores/characterStore";
+import { usePvFijos, useDotesActivas } from "@/stores/settingsStore";
 import {
   getLevelUpSummary,
   ASI_POINTS,
@@ -26,7 +30,9 @@ import {
   hitDieFixedValue,
   hitDieValue,
   type AbilityKey,
+  type AbilityScores,
 } from "@/types/character";
+import { getFeatById } from "@/data/srd/feats";
 import { Ionicons } from "@expo/vector-icons";
 
 // Re-export so existing consumers keep working
@@ -57,6 +63,8 @@ export function useLevelUpWizard(
   onComplete: () => void,
 ) {
   const { character, levelUp, getMagicState } = useCharacterStore();
+  const pvFijos = usePvFijos();
+  const dotesActivas = useDotesActivas();
 
   // ── Wizard navigation ──
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -77,6 +85,13 @@ export function useLevelUpWizard(
     sab: 0,
     car: 0,
   });
+
+  // ── Feat (alternative to ASI when dotesActivas is enabled) ──
+  const [chooseFeat, setChooseFeat] = useState(false);
+  const [selectedFeatId, setSelectedFeatId] = useState<string | null>(null);
+  const [featAsiChoices, setFeatAsiChoices] = useState<Partial<AbilityScores>>(
+    {},
+  );
 
   // ── Subclass ──
   const [subclassName, setSubclassName] = useState("");
@@ -138,6 +153,18 @@ export function useLevelUpWizard(
   const newProfBonus = calcProficiencyBonus(newLevel);
   const oldProfBonus = character?.proficiencyBonus ?? 2;
   const profChanged = newProfBonus !== oldProfBonus;
+
+  // ── Feat ASI derived values ──
+  const selectedFeat = selectedFeatId ? getFeatById(selectedFeatId) : null;
+  const featAsiEffect =
+    selectedFeat?.efectos.find((e) => e.type === "asi") ?? null;
+  const featAsiAmount = featAsiEffect?.asiAmount ?? 0;
+  const featAsiAllowedKeys = featAsiEffect?.asiChoices ?? [];
+  const featAsiUsed = Object.values(featAsiChoices).reduce(
+    (s, v) => s + (v ?? 0),
+    0,
+  );
+  const featAsiComplete = featAsiAmount === 0 || featAsiUsed === featAsiAmount;
 
   // ── Navigation helpers ──
   const currentStep = steps[currentStepIndex] as StepDef | undefined;
@@ -226,10 +253,13 @@ export function useLevelUpWizard(
       setCurrentStepIndex(0);
 
       // Reset all state
-      setHpMethod("fixed");
+      setHpMethod("fixed"); // Always start with fixed; when pvFijos is on, roll is hidden
       setHpRolled(null);
       setIsRolling(false);
       setAsiPoints({ fue: 0, des: 0, con: 0, int: 0, sab: 0, car: 0 });
+      setChooseFeat(false);
+      setSelectedFeatId(null);
+      setFeatAsiChoices({});
       setFeatureChoices({});
 
       // Pre-populate subclass state if the character already has one
@@ -290,6 +320,8 @@ export function useLevelUpWizard(
       case "hp":
         return hpMethod === "fixed" || hpRolled !== null;
       case "asi":
+        // If user chose a feat instead of ASI, feat must be selected and its ASI distributed
+        if (chooseFeat) return selectedFeatId !== null && featAsiComplete;
         return totalASIUsed === ASI_POINTS;
       case "spells": {
         if (!summary?.spellLearning) return true;
@@ -318,8 +350,7 @@ export function useLevelUpWizard(
           );
           for (const choice of choices) {
             const selected = featureChoices[choice.id] ?? [];
-            const needed =
-              choice.tipo === "multi" ? (choice.cantidad ?? 1) : 1;
+            const needed = choice.tipo === "multi" ? (choice.cantidad ?? 1) : 1;
             if (selected.length < needed) return false;
           }
         }
@@ -367,6 +398,35 @@ export function useLevelUpWizard(
     setAsiPoints((prev) => ({ ...prev, [key]: prev[key] - 1 }));
   };
 
+  // ── Feat ASI handlers ──
+  const handleSelectFeat = (id: string | null) => {
+    setSelectedFeatId(id);
+    // Reset ASI choices when feat changes
+    setFeatAsiChoices({});
+  };
+
+  const incrementFeatASI = (key: AbilityKey) => {
+    if (featAsiUsed >= featAsiAmount) return;
+    if (!featAsiAllowedKeys.includes(key)) return;
+    if (!character) return;
+    const currentTotal =
+      character.abilityScores[key].total + (featAsiChoices[key] ?? 0);
+    if (currentTotal >= MAX_ABILITY_SCORE) return;
+    setFeatAsiChoices((prev) => ({ ...prev, [key]: (prev[key] ?? 0) + 1 }));
+  };
+
+  const decrementFeatASI = (key: AbilityKey) => {
+    if ((featAsiChoices[key] ?? 0) <= 0) return;
+    setFeatAsiChoices((prev) => {
+      const newVal = (prev[key] ?? 0) - 1;
+      if (newVal <= 0) {
+        const { [key]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [key]: newVal };
+    });
+  };
+
   // ── HP handlers ──
   const rollHPDie = () => {
     if (isRolling) return;
@@ -409,9 +469,19 @@ export function useLevelUpWizard(
         hpMethod,
         hpRolled: hpMethod === "roll" && hpRolled ? hpRolled : undefined,
         abilityImprovements:
-          summary?.hasASI && totalASIUsed > 0
+          summary?.hasASI && !chooseFeat && totalASIUsed > 0
             ? Object.fromEntries(
                 Object.entries(asiPoints).filter(([_, v]) => v > 0),
+              )
+            : undefined,
+        featChosen:
+          summary?.hasASI && chooseFeat && selectedFeatId
+            ? selectedFeatId
+            : undefined,
+        featAsiChoices:
+          summary?.hasASI && chooseFeat && selectedFeatId && featAsiUsed > 0
+            ? Object.fromEntries(
+                Object.entries(featAsiChoices).filter(([_, v]) => (v ?? 0) > 0),
               )
             : undefined,
         subclassChosen:
@@ -427,11 +497,9 @@ export function useLevelUpWizard(
                 }),
               )
             : undefined,
-        cantripsLearned:
-          newCantrips.length > 0 ? newCantrips : undefined,
+        cantripsLearned: newCantrips.length > 0 ? newCantrips : undefined,
         spellsLearned: newSpells.length > 0 ? newSpells : undefined,
-        spellbookAdded:
-          newSpellbook.length > 0 ? newSpellbook : undefined,
+        spellbookAdded: newSpellbook.length > 0 ? newSpellbook : undefined,
         spellSwapped:
           wantsToSwap && swapOldSpell && swapNewSpell
             ? [swapOldSpell, swapNewSpell]
@@ -493,6 +561,21 @@ export function useLevelUpWizard(
     totalASIUsed,
     incrementASI,
     decrementASI,
+
+    // Feats (alternative to ASI)
+    dotesActivas,
+    chooseFeat,
+    setChooseFeat,
+    selectedFeatId,
+    setSelectedFeatId: handleSelectFeat,
+    featAsiChoices,
+    featAsiEffect,
+    featAsiAmount,
+    featAsiAllowedKeys,
+    featAsiUsed,
+    featAsiComplete,
+    incrementFeatASI,
+    decrementFeatASI,
 
     // Subclass
     subclassName,

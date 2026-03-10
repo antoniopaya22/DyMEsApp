@@ -224,6 +224,7 @@ export const EXPLORADOR_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Emboscador Temible",
             descripcion:
               "Has dominado el arte de crear emboscadas aterradoras.\n\n• Salto del Emboscador: Al inicio de tu primer turno de cada combate, tu velocidad aumenta en 3 m hasta el final de ese turno.\n• Golpe Temible: Cuando atacas a una criatura y la impactas con un arma, puedes infligir 2d6 de daño psíquico extra. Puedes usar este beneficio solo una vez por turno, un número de veces igual a tu mod. SAB (mín. 1); recuperas todos los usos tras un descanso largo.\n• Bonificación a la Iniciativa: Cuando tiras iniciativa, puedes sumar tu mod. SAB al resultado.",
+            efectos: [{ kind: "initiativeBonus", abilityBonus: "sab" }],
           },
           {
             nombre: "Conjuros del Acechador Sombrío",
@@ -234,6 +235,7 @@ export const EXPLORADOR_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Visión Umbral",
             descripcion:
               "Ganas visión en la oscuridad con un alcance de 18 m. Si ya la tienes, su alcance aumenta en 18 m.\n\nAdemás, mientras estés completamente en Oscuridad, tienes la condición Invisible para cualquier criatura que dependa de la visión en la oscuridad para verte en esa Oscuridad.",
+            efectos: [{ kind: "darkvision", range: 60, additive: true }],
           },
         ],
       },
@@ -416,6 +418,13 @@ export const EXPLORADOR_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Marea Retorcida",
             descripcion:
               "Como acción adicional, ganas velocidad de vuelo de 3 m y puedes flotar. Este efecto dura 1 minuto o hasta que estés incapacitado. Usos iguales a tu bonificador de competencia por descanso largo.",
+            efectos: [
+              {
+                kind: "speedBonus",
+                fly: 10,
+                condition: "activado como acción adicional",
+              },
+            ],
           },
         ],
       },

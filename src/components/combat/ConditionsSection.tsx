@@ -16,6 +16,7 @@ import {
   Animated,
   Easing,
 } from "react-native";
+import type { LayoutAnimationConfig } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useCharacterStore } from "@/stores/characterStore";
 import { useTheme } from "@/hooks";
@@ -25,15 +26,24 @@ import { ALL_CONDITIONS } from "@/utils/combat";
 import type { DialogType } from "@/components/ui/ConfirmDialog";
 
 // Enable LayoutAnimation on Android
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const CHIP_ANIM_CONFIG: LayoutAnimation.Config = {
+const CHIP_ANIM_CONFIG: LayoutAnimationConfig = {
   duration: 250,
-  create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.scaleXY },
+  create: {
+    type: LayoutAnimation.Types.easeInEaseOut,
+    property: LayoutAnimation.Properties.scaleXY,
+  },
   update: { type: LayoutAnimation.Types.easeInEaseOut },
-  delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.scaleXY },
+  delete: {
+    type: LayoutAnimation.Types.easeInEaseOut,
+    property: LayoutAnimation.Properties.scaleXY,
+  },
 };
 
 interface ConditionsSectionProps {
@@ -83,8 +93,18 @@ export function ConditionsSection({
       pickerOpacity.setValue(0);
       pickerSlide.setValue(-10);
       Animated.parallel([
-        Animated.timing(pickerOpacity, { toValue: 1, duration: 250, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-        Animated.timing(pickerSlide, { toValue: 0, duration: 250, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(pickerOpacity, {
+          toValue: 1,
+          duration: 250,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pickerSlide, {
+          toValue: 0,
+          duration: 250,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
       ]).start();
     } else {
       setShowPicker(false);
@@ -92,15 +112,20 @@ export function ConditionsSection({
   };
 
   return (
-    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+    <View
+      className="rounded-card border p-4 mb-4"
+      style={{
+        backgroundColor: colors.bgElevated,
+        borderColor: colors.borderDefault,
+      }}
+    >
       <View className="flex-row items-center justify-between mb-3">
         <View className="flex-row items-center">
-          <Ionicons
-            name="warning-outline"
-            size={20}
-            color={colors.accentRed}
-          />
-          <Text className="text-xs font-semibold uppercase tracking-wider ml-2" style={{ color: colors.textSecondary }}>
+          <Ionicons name="warning-outline" size={20} color={colors.accentRed} />
+          <Text
+            className="text-xs font-semibold uppercase tracking-wider ml-2"
+            style={{ color: colors.textSecondary }}
+          >
             Condiciones
           </Text>
         </View>
@@ -124,7 +149,10 @@ export function ConditionsSection({
                 );
               }}
             >
-              <Text className="text-xs font-semibold" style={{ color: colors.accentDanger }}>
+              <Text
+                className="text-xs font-semibold"
+                style={{ color: colors.accentDanger }}
+              >
                 Limpiar
               </Text>
             </TouchableOpacity>
@@ -150,10 +178,16 @@ export function ConditionsSection({
             <TouchableOpacity
               key={c.condition}
               className="flex-row items-center border rounded-full px-3 py-1.5 mr-2 mb-2"
-              style={{ backgroundColor: withAlpha(colors.accentRed, 0.15), borderColor: withAlpha(colors.accentRed, 0.3) }}
+              style={{
+                backgroundColor: withAlpha(colors.accentRed, 0.15),
+                borderColor: withAlpha(colors.accentRed, 0.3),
+              }}
               onPress={() => handleRemoveCondition(c.condition)}
             >
-              <Text className="text-xs font-semibold" style={{ color: colors.accentRed }}>
+              <Text
+                className="text-xs font-semibold"
+                style={{ color: colors.accentRed }}
+              >
                 {CONDITION_NAMES[c.condition]}
               </Text>
               <Ionicons
@@ -171,9 +205,16 @@ export function ConditionsSection({
       {showPicker && (
         <Animated.View
           className="mt-3 pt-3 border-t"
-          style={{ borderColor: colors.borderDefault, opacity: pickerOpacity, transform: [{ translateY: pickerSlide }] }}
+          style={{
+            borderColor: colors.borderDefault,
+            opacity: pickerOpacity,
+            transform: [{ translateY: pickerSlide }],
+          }}
         >
-          <Text className="text-xs mb-2" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-xs mb-2"
+            style={{ color: colors.textSecondary }}
+          >
             Pulsa para añadir una condición:
           </Text>
           <View className="flex-row flex-wrap">
@@ -183,10 +224,16 @@ export function ConditionsSection({
               <TouchableOpacity
                 key={c}
                 className="border rounded-full px-3 py-1.5 mr-2 mb-2"
-                style={{ backgroundColor: colors.chipBg, borderColor: colors.chipBorder }}
+                style={{
+                  backgroundColor: colors.chipBg,
+                  borderColor: colors.chipBorder,
+                }}
                 onPress={() => handleAddCondition(c)}
               >
-                <Text className="text-xs" style={{ color: colors.textSecondary }}>
+                <Text
+                  className="text-xs"
+                  style={{ color: colors.textSecondary }}
+                >
                   {CONDITION_NAMES[c]}
                 </Text>
               </TouchableOpacity>

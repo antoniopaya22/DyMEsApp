@@ -10,24 +10,38 @@ import type {
   Personality,
   Appearance,
 } from "@/types/character";
-import {
-  calcModifier,
-  calcProficiencyBonus,
-  SKILLS,
-} from "@/types/character";
+import { SKILLS } from "@/types/character";
 import { now } from "@/utils/providers";
 import type { Inventory } from "@/types/item";
 import { createDefaultInventory } from "@/types/item";
 import type { Note, NoteTag } from "@/types/notes";
-import { STORAGE_KEYS, setItem, getItem, removeItem } from "@/utils/storage";
+import {
+  STORAGE_KEYS,
+  setItem,
+  getItem,
+  removeItem,
+  extractErrorMessage,
+} from "@/utils/storage";
 import {
   createDefaultMagicState,
   createDefaultClassResources,
   type InternalMagicState,
   type ClassResourcesState,
 } from "./helpers";
-import type { CharacterStore, CharacterCrudState, CharacterCrudActions } from "./types";
-import { useCharacterListStore, toCharacterSummary } from "@/stores/characterListStore";
+import type {
+  CharacterStore,
+  CharacterCrudState,
+  CharacterCrudActions,
+} from "./types";
+import {
+  useCharacterListStore,
+  toCharacterSummary,
+} from "@/stores/characterListStore";
+import type { ACFormulaEffect, ACBonusEffect } from "@/types/traitEffects";
+import {
+  computeInitiativeBonus,
+  computeEffectiveSpeed,
+} from "@/utils/traitEffects";
 
 type SetState = (partial: Partial<CharacterStore>) => void;
 type GetState = () => CharacterStore;
@@ -52,6 +66,12 @@ export function createCharacterCrudSlice(
         if (!character) {
           set({ loading: false, error: "Personaje no encontrado" });
           return;
+        }
+
+        // ── Data migration: tiefling sin subraza → tiefling_infernal ──
+        if (character.raza === "tiefling" && !character.subraza) {
+          character.subraza = "tiefling_infernal";
+          await setItem(charKey, character);
         }
 
         // Load inventory
@@ -99,18 +119,17 @@ export function createCharacterCrudSlice(
           loading: false,
         });
       } catch (err) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : "Error al cargar el personaje";
+        const message = extractErrorMessage(
+          err,
+          "Error al cargar el personaje",
+        );
         console.error("[CharacterCrudSlice] loadCharacter:", message);
         set({ error: message, loading: false });
       }
     },
 
     saveCharacter: async () => {
-      const { character, inventory, notes, magicState, classResources } =
-        get();
+      const { character, inventory, notes, magicState, classResources } = get();
       if (!character) return;
 
       try {
@@ -128,10 +147,7 @@ export function createCharacterCrudSlice(
           await setItem(STORAGE_KEYS.NOTES(character.id), notes);
         }
         if (magicState) {
-          await setItem(
-            STORAGE_KEYS.MAGIC_STATE(character.id),
-            magicState,
-          );
+          await setItem(STORAGE_KEYS.MAGIC_STATE(character.id), magicState);
         }
         if (classResources) {
           await setItem(
@@ -142,10 +158,11 @@ export function createCharacterCrudSlice(
 
         // Sync summary to character list store
         const summary = toCharacterSummary(updatedChar);
-        await useCharacterListStore.getState().updateCharacterSummary(character.id, summary);
+        await useCharacterListStore
+          .getState()
+          .updateCharacterSummary(character.id, summary);
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Error al guardar";
+        const message = extractErrorMessage(err, "Error al guardar");
         console.error("[CharacterCrudSlice] saveCharacter:", message);
         set({ error: message });
       }
@@ -205,8 +222,7 @@ export function createCharacterCrudSlice(
       if (!character) return 0;
 
       const skillDef = SKILLS[skill];
-      const abilityMod =
-        character.abilityScores[skillDef.habilidad].modifier;
+      const abilityMod = character.abilityScores[skillDef.habilidad].modifier;
       const proficiency = character.skillProficiencies[skill];
       const profBonus = character.proficiencyBonus;
 
@@ -239,40 +255,123 @@ export function createCharacterCrudSlice(
       if (!character) return 10;
 
       const dexMod = character.abilityScores.des.modifier;
-      let baseAC = 10 + dexMod;
 
-      if (inventory) {
-        const equippedArmor = inventory.items.find(
-          (i) =>
-            i.equipado &&
-            i.categoria === "armadura" &&
-            i.armorDetails,
-        );
-        const equippedShield = inventory.items.find(
-          (i) =>
-            i.equipado &&
-            i.categoria === "escudo" &&
-            i.armorDetails,
-        );
-
-        if (equippedArmor?.armorDetails) {
-          const armor = equippedArmor.armorDetails;
-          if (!armor.addDexModifier) {
-            baseAC = armor.baseAC;
-          } else if (armor.maxDexBonus !== null) {
-            baseAC =
-              armor.baseAC + Math.min(dexMod, armor.maxDexBonus);
-          } else {
-            baseAC = armor.baseAC + dexMod;
-          }
-        }
-
-        if (equippedShield?.armorDetails) {
-          baseAC += equippedShield.armorDetails.baseAC;
+      // ── Collect trait effects ──
+      const acFormulas: ACFormulaEffect[] = [];
+      const acBonuses: ACBonusEffect[] = [];
+      for (const trait of character.traits) {
+        if (!trait.efectos) continue;
+        for (const ef of trait.efectos) {
+          if (ef.kind === "acFormula") acFormulas.push(ef);
+          if (ef.kind === "acBonus") acBonuses.push(ef);
         }
       }
 
+      // ── Find equipped armor & shield ──
+      const equippedArmor = inventory?.items.find(
+        (i) => i.equipado && i.categoria === "armadura" && i.armorDetails,
+      );
+      const equippedShield = inventory?.items.find(
+        (i) => i.equipado && i.categoria === "escudo" && i.armorDetails,
+      );
+
+      let baseAC: number;
+      let allowShield = true;
+
+      if (equippedArmor?.armorDetails) {
+        // ── Wearing armor: use standard armor rules, formulas don't apply ──
+        const armor = equippedArmor.armorDetails;
+        if (!armor.addDexModifier) {
+          baseAC = armor.baseAC;
+        } else if (armor.maxDexBonus !== null) {
+          baseAC = armor.baseAC + Math.min(dexMod, armor.maxDexBonus);
+        } else {
+          baseAC = armor.baseAC + dexMod;
+        }
+      } else {
+        // ── Not wearing armor: evaluate all formulas and pick highest ──
+        let bestAC = 10 + dexMod; // default unarmored
+        let bestAllowShield = true;
+
+        for (const f of acFormulas) {
+          let formulaAC: number;
+          switch (f.formula.type) {
+            case "unarmoredDefense": {
+              // 10 + sum of ability modifiers (e.g., DEX+CON or DEX+WIS)
+              formulaAC = 10;
+              for (const ab of f.formula.abilities) {
+                formulaAC += character.abilityScores[ab].modifier;
+              }
+              break;
+            }
+            case "naturalArmor": {
+              // baseAC + DEX mod (e.g., 13 + DEX for Draconic Resilience)
+              formulaAC = f.formula.baseAC + dexMod;
+              break;
+            }
+            case "standard":
+            default:
+              formulaAC = 10 + dexMod;
+              break;
+          }
+
+          if (formulaAC > bestAC) {
+            bestAC = formulaAC;
+            bestAllowShield = f.allowShield;
+          }
+        }
+
+        baseAC = bestAC;
+        allowShield = bestAllowShield;
+      }
+
+      // ── Apply shield ──
+      if (allowShield && equippedShield?.armorDetails) {
+        baseAC += equippedShield.armorDetails.baseAC;
+      }
+
+      // ── Apply flat AC bonuses from traits ──
+      const isHeavyArmor = equippedArmor?.armorDetails?.armorType === "pesada";
+      for (const b of acBonuses) {
+        if (b.condition) {
+          // Evaluate known conditions
+          if (b.condition === "con armadura pesada" && !isHeavyArmor) continue;
+          if (b.condition === "sin armadura pesada" && isHeavyArmor) continue;
+          if (b.condition === "sin armadura" && equippedArmor) continue;
+        }
+        baseAC += b.bonus;
+      }
+
       return baseAC;
+    },
+
+    getInitiativeBonus: () => {
+      const { character } = get();
+      if (!character) return 0;
+      return computeInitiativeBonus(character);
+    },
+
+    getEffectiveSpeed: () => {
+      const { character, inventory } = get();
+      if (!character) return { walk: 30 };
+
+      // Determine armor state from inventory
+      const equippedArmor = inventory?.items.find(
+        (i) => i.equipado && i.categoria === "armadura" && i.armorDetails,
+      );
+      const equippedShield = inventory?.items.find(
+        (i) => i.equipado && i.categoria === "escudo" && i.armorDetails,
+      );
+      const isUnarmored = !equippedArmor;
+      const hasNoShield = !equippedShield;
+      const heavyArmor = equippedArmor?.armorDetails?.armorType === "pesada";
+
+      return computeEffectiveSpeed(
+        character,
+        isUnarmored,
+        hasNoShield,
+        heavyArmor,
+      );
     },
 
     updatePersonality: async (personality: Personality) => {

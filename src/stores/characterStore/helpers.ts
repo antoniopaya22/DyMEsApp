@@ -5,10 +5,13 @@
 
 import type { Character } from "@/types/character";
 import { getSpellSlots, getPactMagicSlots } from "@/types/spell";
-import { STORAGE_KEYS, setItem } from "@/utils/storage";
+import { STORAGE_KEYS, setItem, extractErrorMessage } from "@/utils/storage";
 import { now } from "@/utils/providers";
 import { getClassResourcesForLevel } from "./classResourceStrategies";
-import type { ClassResourceInfo, ClassResourcesState } from "./classResourceTypes";
+import type {
+  ClassResourceInfo,
+  ClassResourcesState,
+} from "./classResourceTypes";
 
 export { rollDieRaw as rollDie } from "@/utils/dice";
 
@@ -32,11 +35,10 @@ export async function safeSetItem<T>(
   try {
     await setItem(key, value);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = extractErrorMessage(err);
     console.error(`[${tag}] Error persisting ${key}: ${message}`);
   }
 }
-
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -71,14 +73,10 @@ export interface InternalMagicState {
 
 // ─── Helper Functions ────────────────────────────────────────────────
 
-/** Convert a hit die string (e.g. "d8") to its number of sides */
-export function hitDieSides(die: string): number {
-  const map: Record<string, number> = { d6: 6, d8: 8, d10: 10, d12: 12 };
-  return map[die] ?? 8;
-}
-
 /** Creates the default magic state for a character */
-export function createDefaultMagicState(character: Character): InternalMagicState {
+export function createDefaultMagicState(
+  character: Character,
+): InternalMagicState {
   const slotsData = getSpellSlots(character.clase, character.nivel);
   const pactData =
     character.clase === "brujo" ? getPactMagicSlots(character.nivel) : null;
@@ -112,8 +110,7 @@ export function createDefaultMagicState(character: Character): InternalMagicStat
             current: Math.max(0, character.nivel),
           }
         : undefined,
-    metamagicChosen:
-      character.clase === "hechicero" ? [] : undefined,
+    metamagicChosen: character.clase === "hechicero" ? [] : undefined,
   };
 }
 
@@ -121,7 +118,9 @@ export function createDefaultMagicState(character: Character): InternalMagicStat
 export function createDefaultClassResources(
   character: Character,
 ): ClassResourcesState {
-  return { resources: getClassResourcesForLevel(character.clase, character.nivel) };
+  return {
+    resources: getClassResourcesForLevel(character.clase, character.nivel),
+  };
 }
 
 /**

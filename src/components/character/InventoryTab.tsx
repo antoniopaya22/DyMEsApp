@@ -23,20 +23,28 @@ import { ConfirmDialog, Toast } from "@/components/ui";
 import { useTheme, useDialog, useToast } from "@/hooks";
 import { withAlpha } from "@/utils/theme";
 import {
+  useUnidadesActuales,
+  useEncumbranceDetallada,
+} from "@/stores/settingsStore";
+import { convertirPeso, etiquetaPeso, formatDistancia } from "@/utils/units";
+import {
   ITEM_CATEGORY_NAMES,
   COIN_ABBR,
   calcCoinWeight,
   calcInventoryWeight,
   calcCarryingCapacity,
   calcEncumbrancePercentage,
+  calcDetailedEncumbrance,
   calcTotalGoldValue,
   countActiveAttunements,
   type ItemCategory,
   type CoinType,
   type InventoryItem,
+  type EncumbranceTier,
 } from "@/types/item";
 
 import type { ThemeColors } from "@/utils/theme";
+import { COIN_ICON_COLORS, COIN_ORDER } from "@/constants/colors";
 
 // Extracted sub-components
 import {
@@ -44,19 +52,6 @@ import {
   AddItemModal,
   CoinTransactionModal,
 } from "@/components/inventory";
-
-// ─── Helpers ─────────────────────────────────────────────────────────
-
-const COIN_ORDER: CoinType[] = ["mpl", "mo", "me", "mp", "mc"];
-
-/** Metallic colors for coin icons (theme-independent) */
-const COIN_ICON_COLORS: Record<CoinType, string> = {
-  mc: "#B87333",   // copper
-  mp: "#C0C0C0",   // silver
-  me: "#5B8DBE",   // electrum (blue-silver)
-  mo: "#FFD700",   // gold
-  mpl: "#E5E4E2",  // platinum
-};
 
 function getCoinColors(colors: ThemeColors): Record<CoinType, string> {
   return {
@@ -85,16 +80,13 @@ const CATEGORY_OPTIONS: { value: ItemCategory; label: string }[] = [
 
 export default function InventoryTab() {
   const { colors } = useTheme();
+  const unidades = useUnidadesActuales();
+  const encumbranceDetallada = useEncumbranceDetallada();
   const { onScroll } = useHeaderScroll();
   const coinColors = useMemo(() => getCoinColors(colors), [colors]);
   const { toastProps, showInfo: showToast } = useToast();
-  const {
-    character,
-    inventory,
-    removeItem,
-    toggleEquipItem,
-    updateItem,
-  } = useCharacterStore();
+  const { character, inventory, removeItem, toggleEquipItem, updateItem } =
+    useCharacterStore();
 
   const [showAddItem, setShowAddItem] = useState(false);
   const [showCoinModal, setShowCoinModal] = useState(false);
@@ -117,11 +109,18 @@ export default function InventoryTab() {
 
   const strScore = character.abilityScores.fue.total;
   const totalWeight = calcInventoryWeight(inventory);
-  const maxCarry = calcCarryingCapacity(strScore);
-  const encumbrancePct = calcEncumbrancePercentage(totalWeight, strScore);
-  const isOverweight = totalWeight > maxCarry;
   const totalGold = calcTotalGoldValue(inventory.coins);
   const activeAttunements = countActiveAttunements(inventory.items);
+
+  // Encumbrance calculation — simple or detailed depending on setting
+  const detailed = encumbranceDetallada
+    ? calcDetailedEncumbrance(totalWeight, strScore)
+    : null;
+  const maxCarry = calcCarryingCapacity(strScore);
+  const encumbrancePct = detailed
+    ? detailed.percentage
+    : calcEncumbrancePercentage(totalWeight, strScore);
+  const isOverweight = totalWeight > maxCarry;
 
   // Filter items
   const filteredItems = inventory.items.filter((item) => {
@@ -157,15 +156,230 @@ export default function InventoryTab() {
   const handleToggleEquip = async (item: InventoryItem) => {
     await toggleEquipItem(item.id);
     showToast(
-      item.equipado
-        ? `${item.nombre} desequipado`
-        : `${item.nombre} equipado`,
+      item.equipado ? `${item.nombre} desequipado` : `${item.nombre} equipado`,
     );
   };
 
   // ── Render Sections ──
 
   const renderWeightBar = () => {
+    // ── Detailed encumbrance mode ──
+    if (detailed) {
+      const tierColors: Record<EncumbranceTier, string> = {
+        normal: colors.accentGreen,
+        cargado: colors.accentAmber,
+        muy_cargado: colors.accentDanger,
+        sobrecargado: colors.accentDanger,
+      };
+      const tierLabels: Record<EncumbranceTier, string> = {
+        normal: "Normal",
+        cargado: "Cargado",
+        muy_cargado: "Muy cargado",
+        sobrecargado: "Sobrecargado",
+      };
+      const tierColor = tierColors[detailed.tier];
+
+      // Convert thresholds to display units
+      const displayWeight = convertirPeso(totalWeight, unidades).valor;
+      const displayMax = convertirPeso(detailed.maxCapacity, unidades).valor;
+      const displayEncThreshold = convertirPeso(
+        detailed.encumberedThreshold,
+        unidades,
+      ).valor;
+      const displayHeavyThreshold = convertirPeso(
+        detailed.heavilyEncumberedThreshold,
+        unidades,
+      ).valor;
+      const weightUnit = etiquetaPeso(unidades);
+
+      // Marker positions as percentages on the bar
+      const encPct =
+        detailed.maxCapacity > 0
+          ? Math.round(
+              (detailed.encumberedThreshold / detailed.maxCapacity) * 100,
+            )
+          : 33;
+      const heavyPct =
+        detailed.maxCapacity > 0
+          ? Math.round(
+              (detailed.heavilyEncumberedThreshold / detailed.maxCapacity) *
+                100,
+            )
+          : 67;
+
+      return (
+        <View
+          className="rounded-card border p-4 mb-4"
+          style={{
+            backgroundColor: colors.bgElevated,
+            borderColor: colors.borderDefault,
+          }}
+        >
+          {/* Header */}
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-row items-center">
+              <Ionicons name="scale-outline" size={18} color={tierColor} />
+              <Text
+                className="text-xs font-semibold uppercase tracking-wider ml-2"
+                style={{ color: colors.textSecondary }}
+              >
+                Carga Detallada
+              </Text>
+              <View
+                className="rounded-full px-2 py-0.5 ml-2"
+                style={{ backgroundColor: withAlpha(tierColor, 0.2) }}
+              >
+                <Text
+                  className="text-[10px] font-bold uppercase"
+                  style={{ color: tierColor }}
+                >
+                  {tierLabels[detailed.tier]}
+                </Text>
+              </View>
+            </View>
+            <Text className="text-sm font-bold" style={{ color: tierColor }}>
+              {displayWeight.toFixed(1)} / {displayMax} {weightUnit}
+            </Text>
+          </View>
+
+          {/* Multi-segment bar */}
+          <View
+            className="h-3 rounded-full overflow-hidden flex-row"
+            style={{ backgroundColor: colors.bgSecondary }}
+          >
+            {/* Fill bar */}
+            <View
+              className="h-full rounded-full absolute left-0 top-0"
+              style={{
+                width: `${Math.min(100, detailed.percentage)}%`,
+                backgroundColor: tierColor,
+              }}
+            />
+            {/* Tier markers */}
+            <View
+              className="absolute top-0 h-full"
+              style={{
+                left: `${encPct}%`,
+                width: 1.5,
+                backgroundColor: withAlpha(colors.textMuted, 0.5),
+              }}
+            />
+            <View
+              className="absolute top-0 h-full"
+              style={{
+                left: `${heavyPct}%`,
+                width: 1.5,
+                backgroundColor: withAlpha(colors.textMuted, 0.5),
+              }}
+            />
+          </View>
+
+          {/* Threshold labels */}
+          <View className="flex-row justify-between mt-1.5">
+            <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+              0
+            </Text>
+            <Text
+              className="text-[10px]"
+              style={{
+                color:
+                  detailed.tier === "normal"
+                    ? colors.textMuted
+                    : colors.accentAmber,
+                left: `${encPct - 10}%`,
+              }}
+            >
+              {displayEncThreshold} {weightUnit}
+            </Text>
+            <Text
+              className="text-[10px]"
+              style={{
+                color:
+                  detailed.tier === "muy_cargado" ||
+                  detailed.tier === "sobrecargado"
+                    ? colors.accentDanger
+                    : colors.textMuted,
+              }}
+            >
+              {displayHeavyThreshold} {weightUnit}
+            </Text>
+            <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+              {displayMax} {weightUnit}
+            </Text>
+          </View>
+
+          {/* Penalty info */}
+          {detailed.tier === "cargado" && (
+            <View className="flex-row items-center mt-2">
+              <Ionicons
+                name="speedometer-outline"
+                size={14}
+                color={colors.accentAmber}
+              />
+              <Text
+                className="text-xs ml-1"
+                style={{ color: colors.accentAmber }}
+              >
+                Velocidad −
+                {formatDistancia(detailed.speedPenaltyFeet, unidades)}
+              </Text>
+            </View>
+          )}
+          {detailed.tier === "muy_cargado" && (
+            <View className="mt-2">
+              <View className="flex-row items-center">
+                <Ionicons
+                  name="speedometer-outline"
+                  size={14}
+                  color={colors.accentDanger}
+                />
+                <Text
+                  className="text-xs ml-1"
+                  style={{ color: colors.accentDanger }}
+                >
+                  Velocidad −
+                  {formatDistancia(detailed.speedPenaltyFeet, unidades)}
+                </Text>
+              </View>
+              <View className="flex-row items-center mt-1">
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={14}
+                  color={colors.accentDanger}
+                />
+                <Text
+                  className="text-xs ml-1"
+                  style={{ color: colors.accentDanger }}
+                >
+                  Desventaja en ataques, salvaciones y pruebas de FUE, DES, CON
+                </Text>
+              </View>
+            </View>
+          )}
+          {detailed.tier === "sobrecargado" && (
+            <View className="flex-row items-center mt-2">
+              <Ionicons name="warning" size={14} color={colors.accentDanger} />
+              <Text
+                className="text-xs ml-1"
+                style={{ color: colors.accentDanger }}
+              >
+                ¡No puedes moverte! Superas tu capacidad máxima.
+              </Text>
+            </View>
+          )}
+
+          {/* Attunement info */}
+          <View className="flex-row items-center mt-2">
+            <Ionicons name="link-outline" size={14} color={colors.accentRed} />
+            <Text className="text-xs ml-1" style={{ color: colors.textMuted }}>
+              Sintonizaciones: {activeAttunements}/{inventory.maxAttunements}
+            </Text>
+          </View>
+        </View>
+      );
+    }
+
+    // ── Simple encumbrance mode (default) ──
     const barColor = isOverweight
       ? colors.accentDanger
       : encumbrancePct > 75
@@ -173,20 +387,33 @@ export default function InventoryTab() {
         : colors.accentRed;
 
     return (
-      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+      <View
+        className="rounded-card border p-4 mb-4"
+        style={{
+          backgroundColor: colors.bgElevated,
+          borderColor: colors.borderDefault,
+        }}
+      >
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center">
             <Ionicons name="scale-outline" size={18} color={barColor} />
-            <Text className="text-xs font-semibold uppercase tracking-wider ml-2" style={{ color: colors.textSecondary }}>
+            <Text
+              className="text-xs font-semibold uppercase tracking-wider ml-2"
+              style={{ color: colors.textSecondary }}
+            >
               Capacidad de Carga
             </Text>
           </View>
           <Text className="text-sm font-bold" style={{ color: barColor }}>
-            {totalWeight.toFixed(1)} / {maxCarry} lb
+            {convertirPeso(totalWeight, unidades).valor.toFixed(1)} /{" "}
+            {convertirPeso(maxCarry, unidades).valor} {etiquetaPeso(unidades)}
           </Text>
         </View>
 
-        <View className="h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: colors.bgSecondary }}>
+        <View
+          className="h-2.5 rounded-full overflow-hidden"
+          style={{ backgroundColor: colors.bgSecondary }}
+        >
           <View
             className="h-full rounded-full"
             style={{
@@ -199,7 +426,10 @@ export default function InventoryTab() {
         {isOverweight && (
           <View className="flex-row items-center mt-2">
             <Ionicons name="warning" size={14} color={colors.accentDanger} />
-            <Text className="text-xs ml-1" style={{ color: colors.accentDanger }}>
+            <Text
+              className="text-xs ml-1"
+              style={{ color: colors.accentDanger }}
+            >
               ¡Sobrecargado! Velocidad reducida.
             </Text>
           </View>
@@ -217,11 +447,20 @@ export default function InventoryTab() {
   };
 
   const renderCoins = () => (
-    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+    <View
+      className="rounded-card border p-4 mb-4"
+      style={{
+        backgroundColor: colors.bgElevated,
+        borderColor: colors.borderDefault,
+      }}
+    >
       <View className="flex-row items-center justify-between mb-3">
         <View className="flex-row items-center">
           <Ionicons name="cash-outline" size={18} color={colors.accentRed} />
-          <Text className="text-xs font-semibold uppercase tracking-wider ml-2" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-xs font-semibold uppercase tracking-wider ml-2"
+            style={{ color: colors.textSecondary }}
+          >
             Monedas
           </Text>
         </View>
@@ -230,7 +469,10 @@ export default function InventoryTab() {
           style={{ backgroundColor: withAlpha(colors.accentRed, 0.2) }}
           onPress={() => setShowCoinModal(true)}
         >
-          <Text className="text-xs font-semibold" style={{ color: colors.accentRed }}>
+          <Text
+            className="text-xs font-semibold"
+            style={{ color: colors.accentRed }}
+          >
             Gestionar
           </Text>
         </TouchableOpacity>
@@ -243,7 +485,11 @@ export default function InventoryTab() {
               className="h-8 w-8 rounded-full items-center justify-center mb-0.5"
               style={{ backgroundColor: `${COIN_ICON_COLORS[type]}20` }}
             >
-              <Ionicons name="ellipse" size={18} color={COIN_ICON_COLORS[type]} />
+              <Ionicons
+                name="ellipse"
+                size={18}
+                color={COIN_ICON_COLORS[type]}
+              />
             </View>
             <Text
               className="text-lg font-bold"
@@ -251,24 +497,41 @@ export default function InventoryTab() {
             >
               {inventory.coins[type]}
             </Text>
-            <Text className="text-[10px] uppercase" style={{ color: colors.textMuted }}>
+            <Text
+              className="text-[10px] uppercase"
+              style={{ color: colors.textMuted }}
+            >
               {COIN_ABBR[type]}
             </Text>
           </View>
         ))}
       </View>
 
-      <View className="border-t pt-2" style={{ borderColor: colors.borderDefault }}>
+      <View
+        className="border-t pt-2"
+        style={{ borderColor: colors.borderDefault }}
+      >
         <View className="flex-row items-center justify-between">
-          <Text className="text-xs" style={{ color: colors.textMuted }}>Total en oro</Text>
-          <Text className="text-sm font-bold" style={{ color: colors.accentGold }}>
+          <Text className="text-xs" style={{ color: colors.textMuted }}>
+            Total en oro
+          </Text>
+          <Text
+            className="text-sm font-bold"
+            style={{ color: colors.accentGold }}
+          >
             {totalGold.toFixed(2)} MO
           </Text>
         </View>
         <View className="flex-row items-center justify-between mt-1">
-          <Text className="text-xs" style={{ color: colors.textMuted }}>Peso de monedas</Text>
+          <Text className="text-xs" style={{ color: colors.textMuted }}>
+            Peso de monedas
+          </Text>
           <Text className="text-xs" style={{ color: colors.textSecondary }}>
-            {calcCoinWeight(inventory.coins).toFixed(1)} lb
+            {convertirPeso(
+              calcCoinWeight(inventory.coins),
+              unidades,
+            ).valor.toFixed(1)}{" "}
+            {etiquetaPeso(unidades)}
           </Text>
         </View>
       </View>
@@ -303,14 +566,20 @@ export default function InventoryTab() {
             key={tab.key}
             className="rounded-full px-4 py-2 mr-2 border"
             style={{
-              backgroundColor: isActive ? withAlpha(colors.accentRed, 0.2) : colors.chipBg,
-              borderColor: isActive ? withAlpha(colors.accentRed, 0.5) : colors.chipBorder,
+              backgroundColor: isActive
+                ? withAlpha(colors.accentRed, 0.2)
+                : colors.chipBg,
+              borderColor: isActive
+                ? withAlpha(colors.accentRed, 0.5)
+                : colors.chipBorder,
             }}
             onPress={() => setFilter(tab.key)}
           >
             <Text
               className="text-xs font-semibold"
-              style={{ color: isActive ? colors.accentRed : colors.textSecondary }}
+              style={{
+                color: isActive ? colors.accentRed : colors.textSecondary,
+              }}
             >
               {tab.label} ({tab.count})
             </Text>
@@ -323,7 +592,10 @@ export default function InventoryTab() {
   const renderItemListHeader = () => (
     <View className="mb-3">
       <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+        <Text
+          className="text-xs font-semibold uppercase tracking-wider"
+          style={{ color: colors.textSecondary }}
+        >
           Objetos ({filteredItems.length})
         </Text>
         <TouchableOpacity
@@ -332,7 +604,10 @@ export default function InventoryTab() {
           onPress={() => setShowAddItem(true)}
         >
           <Ionicons name="add" size={16} color={colors.accentRed} />
-          <Text className="text-xs font-semibold ml-1" style={{ color: colors.accentRed }}>
+          <Text
+            className="text-xs font-semibold ml-1"
+            style={{ color: colors.accentRed }}
+          >
             Añadir
           </Text>
         </TouchableOpacity>
@@ -342,24 +617,33 @@ export default function InventoryTab() {
     </View>
   );
 
-  const renderInventoryItem = useCallback(({ item }: { item: InventoryItem }) => (
-    <InventoryItemCard
-      item={item}
-      isExpanded={expandedItemId === item.id}
-      onToggleExpand={() =>
-        setExpandedItemId(expandedItemId === item.id ? null : item.id)
-      }
-      onToggleEquip={() => handleToggleEquip(item)}
-      onUpdateQuantity={(delta) => handleUpdateQuantity(item, delta)}
-      onDelete={() => handleDeleteItem(item)}
-      onUpdateItem={(updates) => updateItem(item.id, updates)}
-    />
-  ), [expandedItemId, handleToggleEquip, handleDeleteItem, updateItem]);
+  const renderInventoryItem = useCallback(
+    ({ item }: { item: InventoryItem }) => (
+      <InventoryItemCard
+        item={item}
+        isExpanded={expandedItemId === item.id}
+        onToggleExpand={() =>
+          setExpandedItemId(expandedItemId === item.id ? null : item.id)
+        }
+        onToggleEquip={() => handleToggleEquip(item)}
+        onUpdateQuantity={(delta) => handleUpdateQuantity(item, delta)}
+        onDelete={() => handleDeleteItem(item)}
+        onUpdateItem={(updates) => updateItem(item.id, updates)}
+      />
+    ),
+    [expandedItemId, handleToggleEquip, handleDeleteItem, updateItem],
+  );
 
   const itemKeyExtractor = useCallback((item: InventoryItem) => item.id, []);
 
   const ListEmptyInventory = () => (
-    <View className="rounded-card border p-6 items-center" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+    <View
+      className="rounded-card border p-6 items-center"
+      style={{
+        backgroundColor: colors.bgElevated,
+        borderColor: colors.borderDefault,
+      }}
+    >
       <Ionicons name="bag-outline" size={32} color={colors.textMuted} />
       <Text className="text-sm mt-2" style={{ color: colors.textMuted }}>
         {filter === "all"
@@ -371,7 +655,10 @@ export default function InventoryTab() {
         style={{ backgroundColor: colors.accentRed }}
         onPress={() => setShowAddItem(true)}
       >
-        <Text className="text-xs font-semibold" style={{ color: colors.textInverted }}>
+        <Text
+          className="text-xs font-semibold"
+          style={{ color: colors.textInverted }}
+        >
           Añadir objeto
         </Text>
       </TouchableOpacity>

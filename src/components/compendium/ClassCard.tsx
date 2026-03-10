@@ -1,17 +1,49 @@
 /**
  * ClassCard - Expandable class detail card for the Compendium
- * Extracted from compendium.tsx
+ *
+ * Uses GlowCard for consistent styling with the rest of the app,
+ * and LayoutAnimation for smooth expand/collapse transitions.
  */
 
-import { View, Text, TouchableOpacity } from "react-native";
+import { useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { DetailBadge } from "@/components/ui";
+import { GlowCard, DetailBadge } from "@/components/ui";
 import { CLASS_ICONS } from "@/data/srd";
 import type { ClassData } from "@/data/srd";
 import { ABILITY_NAMES, type AbilityKey } from "@/types/character";
 import { useTheme } from "@/hooks";
 import { formatSkillName } from "./compendiumUtils";
-import { cardStyles as styles } from "./compendiumStyles";
+import { cardStyles as s } from "./compendiumStyles";
+
+// Enable LayoutAnimation on Android
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const COLLAPSE_ANIM = {
+  duration: 280,
+  create: {
+    type: LayoutAnimation.Types.easeInEaseOut,
+    property: LayoutAnimation.Properties.opacity,
+  },
+  update: { type: LayoutAnimation.Types.easeInEaseOut },
+  delete: {
+    type: LayoutAnimation.Types.easeInEaseOut,
+    property: LayoutAnimation.Properties.opacity,
+  },
+};
 
 interface ClassCardProps {
   data: ClassData;
@@ -23,56 +55,75 @@ export function ClassCard({ data, isExpanded, onToggle }: ClassCardProps) {
   const { colors } = useTheme();
   const icon = CLASS_ICONS[data.id as keyof typeof CLASS_ICONS] || "⚔️";
 
+  // Animated chevron rotation
+  const chevronAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
+  useEffect(() => {
+    Animated.spring(chevronAnim, {
+      toValue: isExpanded ? 1 : 0,
+      friction: 8,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  }, [isExpanded, chevronAnim]);
+
+  const chevronRotation = chevronAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "180deg"],
+  });
+
+  const handleToggle = () => {
+    LayoutAnimation.configureNext(COLLAPSE_ANIM);
+    onToggle();
+  };
+
+  const accentColor = colors.accentDanger;
+
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.cardBg, borderColor: colors.cardBorder },
-      ]}
+    <GlowCard
+      accentLine
+      accentPosition="left"
+      accentColors={[accentColor, `${accentColor}88`, `${accentColor}44`]}
+      pressScale={0.98}
+      onPress={handleToggle}
+      padding={14}
+      style={{ marginBottom: 12 }}
     >
-      <TouchableOpacity
-        onPress={onToggle}
-        style={styles.cardHeader}
-        activeOpacity={0.7}
-      >
+      {/* Header */}
+      <View style={s.cardHeader}>
         <View
           style={[
-            styles.cardIconBg,
-            { backgroundColor: `#ef4444${colors.iconBgAlpha}` },
+            s.cardIconBg,
+            { backgroundColor: `${accentColor}${colors.iconBgAlpha}` },
           ]}
         >
           <Text style={{ fontSize: 22 }}>{icon}</Text>
         </View>
-        <View style={styles.cardInfo}>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
+        <View style={s.cardInfo}>
+          <Text style={[s.cardTitle, { color: colors.textPrimary }]}>
             {data.nombre}
           </Text>
           <Text
-            style={[styles.cardSubtitle, { color: colors.textSecondary }]}
+            style={[s.cardSubtitle, { color: colors.textSecondary }]}
             numberOfLines={1}
           >
             Dado de golpe: {data.hitDie} · Salv:{" "}
             {data.savingThrows
-              .map((s) => ABILITY_NAMES[s as AbilityKey]?.slice(0, 3) || s)
+              .map((st) => ABILITY_NAMES[st as AbilityKey]?.slice(0, 3) || st)
               .join(", ")}
           </Text>
         </View>
-        <Ionicons
-          name={isExpanded ? "chevron-up" : "chevron-down"}
-          size={20}
-          color={colors.chevronColor}
-        />
-      </TouchableOpacity>
+        <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
+          <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
+        </Animated.View>
+      </View>
 
+      {/* Expanded detail */}
       {isExpanded && (
         <View
-          style={[
-            styles.cardDetail,
-            { borderTopColor: colors.borderSeparator },
-          ]}
+          style={[s.cardDetail, { borderTopColor: colors.borderSeparator }]}
         >
-          {/* Hit Die & Saving Throws */}
-          <View style={styles.detailRow}>
+          {/* Hit Die & HP */}
+          <View style={s.detailRow}>
             <DetailBadge
               label="Dado de golpe"
               value={data.hitDie}
@@ -86,63 +137,48 @@ export function ClassCard({ data, isExpanded, onToggle }: ClassCardProps) {
           </View>
 
           {/* Saving Throws */}
-          <View style={styles.detailSection}>
-            <Text style={[styles.detailLabel, { color: colors.accentGold }]}>
+          <View style={s.detailSection}>
+            <Text style={[s.detailLabel, { color: colors.accentGold }]}>
               Salvaciones competentes
             </Text>
-            <Text
-              style={[styles.detailText, { color: colors.textSecondary }]}
-            >
+            <Text style={[s.detailText, { color: colors.textSecondary }]}>
               {data.savingThrows
-                .map((s) => ABILITY_NAMES[s as AbilityKey] || s)
+                .map((st) => ABILITY_NAMES[st as AbilityKey] || st)
                 .join(", ")}
             </Text>
           </View>
 
           {/* Armor Proficiencies */}
           {data.armorProficiencies && data.armorProficiencies.length > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Armaduras
               </Text>
-              <Text
-                style={[styles.detailText, { color: colors.textSecondary }]}
-              >
+              <Text style={[s.detailText, { color: colors.textSecondary }]}>
                 {data.armorProficiencies.join(", ")}
               </Text>
             </View>
           )}
 
           {/* Weapon Proficiencies */}
-          {data.weaponProficiencies &&
-            data.weaponProficiencies.length > 0 && (
-              <View style={styles.detailSection}>
-                <Text
-                  style={[styles.detailLabel, { color: colors.accentGold }]}
-                >
-                  Armas
-                </Text>
-                <Text
-                  style={[styles.detailText, { color: colors.textSecondary }]}
-                >
-                  {data.weaponProficiencies.join(", ")}
-                </Text>
-              </View>
-            )}
+          {data.weaponProficiencies && data.weaponProficiencies.length > 0 && (
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
+                Armas
+              </Text>
+              <Text style={[s.detailText, { color: colors.textSecondary }]}>
+                {data.weaponProficiencies.join(", ")}
+              </Text>
+            </View>
+          )}
 
           {/* Tool Proficiencies */}
           {data.toolProficiencies && data.toolProficiencies.length > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Herramientas
               </Text>
-              <Text
-                style={[styles.detailText, { color: colors.textSecondary }]}
-              >
+              <Text style={[s.detailText, { color: colors.textSecondary }]}>
                 {data.toolProficiencies.join(", ")}
               </Text>
             </View>
@@ -150,18 +186,16 @@ export function ClassCard({ data, isExpanded, onToggle }: ClassCardProps) {
 
           {/* Skills */}
           {data.skillChoicePool && data.skillChoicePool.length > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Habilidades (elige {data.skillChoiceCount || 2})
               </Text>
-              <View style={styles.skillTagsRow}>
+              <View style={s.skillTagsRow}>
                 {data.skillChoicePool.map((skill) => (
                   <View
                     key={skill}
                     style={[
-                      styles.skillTag,
+                      s.skillTag,
                       {
                         backgroundColor: colors.tabBg,
                         borderColor: colors.tabBorder,
@@ -169,10 +203,7 @@ export function ClassCard({ data, isExpanded, onToggle }: ClassCardProps) {
                     ]}
                   >
                     <Text
-                      style={[
-                        styles.skillTagText,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={[s.skillTagText, { color: colors.textSecondary }]}
                     >
                       {formatSkillName(skill)}
                     </Text>
@@ -184,47 +215,33 @@ export function ClassCard({ data, isExpanded, onToggle }: ClassCardProps) {
 
           {/* Class Features (level 1) */}
           {data.level1Features && data.level1Features.length > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Rasgos de clase (nivel 1)
               </Text>
               {data.level1Features.map((feature, i) => (
-                <View key={i} style={styles.traitItem}>
-                  <View
-                    style={{ flexDirection: "row", alignItems: "center" }}
-                  >
+                <View key={i} style={s.traitItem}>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <View
                       style={[
-                        styles.levelBadge,
-                        { backgroundColor: `${colors.accentRed}30` },
+                        s.levelBadge,
+                        { backgroundColor: `${accentColor}30` },
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.levelBadgeText,
-                          { color: colors.accentRed },
-                        ]}
-                      >
+                      <Text style={[s.levelBadgeText, { color: accentColor }]}>
                         Nv.{feature.nivel}
                       </Text>
                     </View>
                     <Text
                       style={[
-                        styles.traitName,
+                        s.traitName,
                         { marginLeft: 8, color: colors.textPrimary },
                       ]}
                     >
                       {feature.nombre}
                     </Text>
                   </View>
-                  <Text
-                    style={[
-                      styles.traitDesc,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
+                  <Text style={[s.traitDesc, { color: colors.textSecondary }]}>
                     {feature.descripcion}
                   </Text>
                 </View>
@@ -234,15 +251,11 @@ export function ClassCard({ data, isExpanded, onToggle }: ClassCardProps) {
 
           {/* Subclass info */}
           {data.subclassLevel > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Subclase ({data.subclassLabel}) — Nv. {data.subclassLevel}
               </Text>
-              <Text
-                style={[styles.detailText, { color: colors.textSecondary }]}
-              >
+              <Text style={[s.detailText, { color: colors.textSecondary }]}>
                 Se elige al alcanzar el nivel {data.subclassLevel}.
               </Text>
             </View>
@@ -250,22 +263,18 @@ export function ClassCard({ data, isExpanded, onToggle }: ClassCardProps) {
 
           {/* Spellcasting */}
           {data.casterType !== "none" && data.spellcastingAbility && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
-                🔮 Lanzamiento de conjuros
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
+                Lanzamiento de conjuros
               </Text>
-              <Text
-                style={[styles.detailText, { color: colors.textSecondary }]}
-              >
+              <Text style={[s.detailText, { color: colors.textSecondary }]}>
                 Característica:{" "}
                 {ABILITY_NAMES[data.spellcastingAbility as AbilityKey] ||
                   data.spellcastingAbility}
               </Text>
               <Text
                 style={[
-                  styles.detailText,
+                  s.detailText,
                   { color: colors.textSecondary, marginTop: 2 },
                 ]}
               >
@@ -281,7 +290,7 @@ export function ClassCard({ data, isExpanded, onToggle }: ClassCardProps) {
               {data.preparesSpells && (
                 <Text
                   style={[
-                    styles.detailText,
+                    s.detailText,
                     { color: colors.textSecondary, marginTop: 2 },
                   ]}
                 >
@@ -291,7 +300,7 @@ export function ClassCard({ data, isExpanded, onToggle }: ClassCardProps) {
               {data.cantripsAtLevel1 > 0 && (
                 <Text
                   style={[
-                    styles.detailText,
+                    s.detailText,
                     { color: colors.textSecondary, marginTop: 2 },
                   ]}
                 >
@@ -302,6 +311,6 @@ export function ClassCard({ data, isExpanded, onToggle }: ClassCardProps) {
           )}
         </View>
       )}
-    </View>
+    </GlowCard>
   );
 }

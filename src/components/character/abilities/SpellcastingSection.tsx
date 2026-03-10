@@ -1,9 +1,5 @@
 import React, { useState, useMemo } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks";
 import { withAlpha } from "@/utils/theme";
@@ -17,7 +13,8 @@ import {
 import type { InternalMagicState } from "@/stores/characterStore/helpers";
 import { getSpellById } from "@/data/srd/spells";
 import { getSpellDescription } from "@/data/srd/spellDescriptions";
-
+import { useUnidadesActuales } from "@/stores/settingsStore";
+import { formatAlcanceRaw } from "@/utils/spells";
 
 // ─── Sub-components ──────────────────────────────────────────────────
 
@@ -43,23 +40,39 @@ function SpellCard({
   onTogglePrepared?: (spellId: string) => void;
 }) {
   const { colors } = useTheme();
+  const unidades = useUnidadesActuales();
   const [expanded, setExpanded] = useState(false);
   const spellLevelColors = useMemo(() => getSpellLevelColors(colors), [colors]);
-  const color = isCantrip ? (spellLevelColors[level] ?? colors.accentBlue) : colors.accentRed;
+  const color = isCantrip
+    ? (spellLevelColors[level] ?? colors.accentBlue)
+    : colors.accentRed;
 
   const castingTimeInfo = (() => {
     const desc = getSpellDescription(spellId);
     if (!desc?.tiempo) return null;
     const t = desc.tiempo.toLowerCase();
-    if (t.includes('acción adicional')) return { icon: 'flash' as const, color: colors.accentGreen, label: 'Adicional' };
-    if (t.includes('reacción')) return { icon: 'arrow-undo' as const, color: colors.accentPurple, label: 'Reacción' };
+    if (t.includes("acción adicional"))
+      return {
+        icon: "flash" as const,
+        color: colors.accentGreen,
+        label: "Adicional",
+      };
+    if (t.includes("reacción"))
+      return {
+        icon: "arrow-undo" as const,
+        color: colors.accentPurple,
+        label: "Reacción",
+      };
     return null;
   })();
 
   return (
     <TouchableOpacity
       className="rounded-lg p-3 mb-2 border"
-      style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}
+      style={{
+        backgroundColor: colors.bgCard,
+        borderColor: colors.borderDefault,
+      }}
       onPress={() => setExpanded(!expanded)}
       activeOpacity={0.7}
     >
@@ -78,13 +91,23 @@ function SpellCard({
         </View>
 
         <View className="flex-1">
-          <Text className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
+          <Text
+            className="text-sm font-semibold"
+            style={{ color: colors.textPrimary }}
+          >
             {name}
           </Text>
           <View className="flex-row items-center mt-0.5">
             {isCantrip && (
-              <Text className="text-[10px] mr-2" style={{ color: colors.textMuted }}>
-                Truco{(() => { const s = getSpellById(spellId); return s ? ` · ${s.escuela}` : ""; })()}
+              <Text
+                className="text-[10px] mr-2"
+                style={{ color: colors.textMuted }}
+              >
+                Truco
+                {(() => {
+                  const s = getSpellById(spellId);
+                  return s ? ` · ${s.escuela}` : "";
+                })()}
               </Text>
             )}
             {!isCantrip && prepared && (
@@ -94,7 +117,10 @@ function SpellCard({
                   size={10}
                   color={colors.accentGreen}
                 />
-                <Text className="text-[10px] ml-0.5" style={{ color: colors.accentGreen }}>
+                <Text
+                  className="text-[10px] ml-0.5"
+                  style={{ color: colors.accentGreen }}
+                >
                   Preparado
                 </Text>
               </View>
@@ -102,16 +128,30 @@ function SpellCard({
             {showSpellbook && inSpellbook && (
               <View className="flex-row items-center mr-2">
                 <Ionicons name="book" size={10} color={colors.accentGold} />
-                <Text className="text-[10px] ml-0.5" style={{ color: colors.accentGold }}>
+                <Text
+                  className="text-[10px] ml-0.5"
+                  style={{ color: colors.accentGold }}
+                >
                   En libro
                 </Text>
               </View>
             )}
             {castingTimeInfo && (
-              <View className="flex-row items-center mr-2 rounded-full px-1.5"
-                style={{ backgroundColor: withAlpha(castingTimeInfo.color, 0.15) }}>
-                <Ionicons name={castingTimeInfo.icon} size={9} color={castingTimeInfo.color} />
-                <Text className="text-[9px] font-semibold ml-0.5" style={{ color: castingTimeInfo.color }}>
+              <View
+                className="flex-row items-center mr-2 rounded-full px-1.5"
+                style={{
+                  backgroundColor: withAlpha(castingTimeInfo.color, 0.15),
+                }}
+              >
+                <Ionicons
+                  name={castingTimeInfo.icon}
+                  size={9}
+                  color={castingTimeInfo.color}
+                />
+                <Text
+                  className="text-[9px] font-semibold ml-0.5"
+                  style={{ color: castingTimeInfo.color }}
+                >
                   {castingTimeInfo.label}
                 </Text>
               </View>
@@ -152,19 +192,35 @@ function SpellCard({
       </View>
 
       {expanded && (
-        <View className="mt-2 pt-2 border-t" style={{ borderColor: colors.borderDefault }}>
+        <View
+          className="mt-2 pt-2 border-t"
+          style={{ borderColor: colors.borderDefault }}
+        >
           {(() => {
             const srdSpell = getSpellById(spellId);
             const desc = getSpellDescription(spellId);
             return (
               <View>
                 {srdSpell && (
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: desc ? 8 : 0 }}>
-                    <Text className="text-xs" style={{ color: colors.textSecondary }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                      gap: 8,
+                      marginBottom: desc ? 8 : 0,
+                    }}
+                  >
+                    <Text
+                      className="text-xs"
+                      style={{ color: colors.textSecondary }}
+                    >
                       {srdSpell.escuela}
                     </Text>
                     {!isCantrip && (
-                      <Text className="text-xs" style={{ color: colors.textMuted }}>
+                      <Text
+                        className="text-xs"
+                        style={{ color: colors.textMuted }}
+                      >
                         · Nivel {srdSpell.nivel}
                       </Text>
                     )}
@@ -173,36 +229,77 @@ function SpellCard({
                 {desc && (
                   <View>
                     {/* Casting properties */}
-                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        flexWrap: "wrap",
+                        gap: 4,
+                        marginBottom: 6,
+                      }}
+                    >
                       {desc.tiempo ? (
                         <View className="flex-row items-center">
-                          <Ionicons name="time-outline" size={10} color={colors.textMuted} />
-                          <Text className="text-[10px] ml-0.5" style={{ color: colors.textMuted }}>
+                          <Ionicons
+                            name="time-outline"
+                            size={10}
+                            color={colors.textMuted}
+                          />
+                          <Text
+                            className="text-[10px] ml-0.5"
+                            style={{ color: colors.textMuted }}
+                          >
                             {desc.tiempo}
                           </Text>
                         </View>
                       ) : null}
                       {desc.alcance ? (
                         <View className="flex-row items-center">
-                          <Text className="text-[10px]" style={{ color: colors.textMuted }}>· </Text>
-                          <Ionicons name="locate-outline" size={10} color={colors.textMuted} />
-                          <Text className="text-[10px] ml-0.5" style={{ color: colors.textMuted }}>
-                            {desc.alcance}
+                          <Text
+                            className="text-[10px]"
+                            style={{ color: colors.textMuted }}
+                          >
+                            ·{" "}
+                          </Text>
+                          <Ionicons
+                            name="locate-outline"
+                            size={10}
+                            color={colors.textMuted}
+                          />
+                          <Text
+                            className="text-[10px] ml-0.5"
+                            style={{ color: colors.textMuted }}
+                          >
+                            {formatAlcanceRaw(desc.alcance, unidades)}
                           </Text>
                         </View>
                       ) : null}
                       {desc.duracion ? (
                         <View className="flex-row items-center">
-                          <Text className="text-[10px]" style={{ color: colors.textMuted }}>· </Text>
-                          <Ionicons name="hourglass-outline" size={10} color={colors.textMuted} />
-                          <Text className="text-[10px] ml-0.5" style={{ color: colors.textMuted }}>
+                          <Text
+                            className="text-[10px]"
+                            style={{ color: colors.textMuted }}
+                          >
+                            ·{" "}
+                          </Text>
+                          <Ionicons
+                            name="hourglass-outline"
+                            size={10}
+                            color={colors.textMuted}
+                          />
+                          <Text
+                            className="text-[10px] ml-0.5"
+                            style={{ color: colors.textMuted }}
+                          >
                             {desc.duracion}
                           </Text>
                         </View>
                       ) : null}
                     </View>
                     {desc.componentes ? (
-                      <Text className="text-[10px] mb-1" style={{ color: colors.textMuted }}>
+                      <Text
+                        className="text-[10px] mb-1"
+                        style={{ color: colors.textMuted }}
+                      >
                         Componentes: {desc.componentes}
                       </Text>
                     ) : null}
@@ -220,7 +317,10 @@ function SpellCard({
                   </View>
                 )}
                 {!desc && !srdSpell && (
-                  <Text className="text-xs leading-5" style={{ color: colors.textSecondary }}>
+                  <Text
+                    className="text-xs leading-5"
+                    style={{ color: colors.textSecondary }}
+                  >
                     ID: {spellId}
                   </Text>
                 )}
@@ -255,6 +355,8 @@ export interface SpellcastingSectionProps {
   onTogglePrepared?: (spellId: string) => void;
   maxPreparedSpells?: number;
   currentPreparedCount?: number;
+  /** true para lanzadores preparados puros (Clérigo, Druida, Paladín) */
+  isPreparedCaster?: boolean;
 }
 
 // ─── Component ───────────────────────────────────────────────────────
@@ -279,6 +381,7 @@ export default function SpellcastingSection({
   onTogglePrepared,
   maxPreparedSpells,
   currentPreparedCount,
+  isPreparedCaster,
 }: SpellcastingSectionProps) {
   const { colors } = useTheme();
   const spellLevelColors = useMemo(() => getSpellLevelColors(colors), [colors]);
@@ -290,10 +393,19 @@ export default function SpellcastingSection({
     : "—";
 
   const renderSpellcastingInfo = () => (
-    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+    <View
+      className="rounded-card border p-4 mb-4"
+      style={{
+        backgroundColor: colors.bgElevated,
+        borderColor: colors.borderDefault,
+      }}
+    >
       <View className="flex-row items-center mb-1">
         <Ionicons name="flame" size={20} color={colors.accentDanger} />
-        <Text className="text-base font-bold ml-2" style={{ color: colors.textPrimary }}>
+        <Text
+          className="text-base font-bold ml-2"
+          style={{ color: colors.textPrimary }}
+        >
           Magia
         </Text>
       </View>
@@ -314,14 +426,24 @@ export default function SpellcastingSection({
             borderColor: withAlpha(colors.accentRed, 0.25),
           }}
         >
-          <Text className="text-2xl font-bold" style={{ color: colors.accentRed }}>
+          <Text
+            className="text-2xl font-bold"
+            style={{ color: colors.accentRed }}
+          >
             {spellSaveDC}
           </Text>
-          <Text className="text-xs font-bold mt-0.5" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-xs font-bold mt-0.5"
+            style={{ color: colors.textSecondary }}
+          >
             CD de Salvación
           </Text>
-          <Text className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>
-            8 + {profBonus} (comp.) + {abilityMod} ({abilityName?.slice(0, 3).toLowerCase()}.)
+          <Text
+            className="text-[10px] mt-0.5"
+            style={{ color: colors.textMuted }}
+          >
+            8 + {profBonus} (comp.) + {abilityMod} (
+            {abilityName?.slice(0, 3).toLowerCase()}.)
           </Text>
         </View>
 
@@ -333,19 +455,32 @@ export default function SpellcastingSection({
             borderColor: withAlpha(colors.accentRed, 0.25),
           }}
         >
-          <Text className="text-2xl font-bold" style={{ color: colors.accentRed }}>
+          <Text
+            className="text-2xl font-bold"
+            style={{ color: colors.accentRed }}
+          >
             {formatModifier(spellAttackBonus)}
           </Text>
-          <Text className="text-xs font-bold mt-0.5" style={{ color: colors.textSecondary }}>
+          <Text
+            className="text-xs font-bold mt-0.5"
+            style={{ color: colors.textSecondary }}
+          >
             Mod. de Ataque
           </Text>
-          <Text className="text-[10px] mt-0.5" style={{ color: colors.textMuted }}>
-            {profBonus} (comp.) + {abilityMod} ({abilityName?.slice(0, 3).toLowerCase()}.)
+          <Text
+            className="text-[10px] mt-0.5"
+            style={{ color: colors.textMuted }}
+          >
+            {profBonus} (comp.) + {abilityMod} (
+            {abilityName?.slice(0, 3).toLowerCase()}.)
           </Text>
         </View>
       </View>
 
-      <View className="mt-3 pt-3 border-t" style={{ borderColor: colors.borderDefault }}>
+      <View
+        className="mt-3 pt-3 border-t"
+        style={{ borderColor: colors.borderDefault }}
+      >
         <View className="flex-row items-center">
           <Ionicons
             name="information-circle-outline"
@@ -374,9 +509,11 @@ export default function SpellcastingSection({
     const sectionTitle =
       preparationType === "spellbook"
         ? "Libro de Hechizos"
-        : preparationType === "prepared"
-          ? "Conjuros Preparados"
-          : "Conjuros Conocidos";
+        : isPreparedCaster
+          ? "Lista de Conjuros de Clase"
+          : preparationType === "prepared"
+            ? "Conjuros Preparados"
+            : "Conjuros Conocidos";
 
     const levelLabel = (lvl: number) =>
       lvl === 1
@@ -388,14 +525,34 @@ export default function SpellcastingSection({
             : `Nivel ${lvl}`;
 
     return (
-      <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+      <View
+        className="rounded-card border p-4 mb-4"
+        style={{
+          backgroundColor: colors.bgElevated,
+          borderColor: colors.borderDefault,
+        }}
+      >
         <View className="flex-row items-center mb-3">
           <Ionicons name="book" size={20} color={colors.accentGold} />
-          <Text className="text-sm font-semibold flex-1 ml-2" style={{ color: colors.textPrimary }}>
+          <Text
+            className="text-sm font-semibold flex-1 ml-2"
+            style={{ color: colors.textPrimary }}
+          >
             {sectionTitle}
           </Text>
-          {maxPreparedSpells != null && currentPreparedCount != null && (preparationType === "prepared" || preparationType === "spellbook") ? (
-            <Text className="text-xs" style={{ color: currentPreparedCount >= maxPreparedSpells ? colors.accentRed : colors.textMuted }}>
+          {maxPreparedSpells != null &&
+          currentPreparedCount != null &&
+          (preparationType === "prepared" ||
+            preparationType === "spellbook") ? (
+            <Text
+              className="text-xs"
+              style={{
+                color:
+                  currentPreparedCount >= maxPreparedSpells
+                    ? colors.accentRed
+                    : colors.textMuted,
+              }}
+            >
               {currentPreparedCount}/{maxPreparedSpells} preparados
             </Text>
           ) : (
@@ -409,9 +566,24 @@ export default function SpellcastingSection({
           const spellsAtLevel = spellsByLevel[lvl];
           const lvlColor = colors.accentRed;
           return (
-            <View key={lvl} style={{ marginBottom: lvl !== sortedSpellLevels[sortedSpellLevels.length - 1] ? 12 : 0 }}>
+            <View
+              key={lvl}
+              style={{
+                marginBottom:
+                  lvl !== sortedSpellLevels[sortedSpellLevels.length - 1]
+                    ? 12
+                    : 0,
+              }}
+            >
               {/* Level sub-header */}
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6, gap: 6 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 6,
+                  gap: 6,
+                }}
+              >
                 <View
                   style={{
                     width: 24,
@@ -422,12 +594,29 @@ export default function SpellcastingSection({
                     justifyContent: "center",
                   }}
                 >
-                  <Text style={{ color: lvlColor, fontSize: 11, fontWeight: "700" }}>{lvl}</Text>
+                  <Text
+                    style={{ color: lvlColor, fontSize: 11, fontWeight: "700" }}
+                  >
+                    {lvl}
+                  </Text>
                 </View>
-                <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: "600" }}>
+                <Text
+                  style={{
+                    color: colors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: "600",
+                  }}
+                >
                   {levelLabel(lvl)}
                 </Text>
-                <View style={{ flex: 1, height: 1, backgroundColor: colors.borderSubtle, marginLeft: 4 }} />
+                <View
+                  style={{
+                    flex: 1,
+                    height: 1,
+                    backgroundColor: colors.borderSubtle,
+                    marginLeft: 4,
+                  }}
+                />
               </View>
 
               {spellsAtLevel.map((spellId) => {
@@ -435,7 +624,8 @@ export default function SpellcastingSection({
                 const isCantrip = spellLevel === 0;
                 const canToggle =
                   !isCantrip &&
-                  (preparationType === "prepared" || preparationType === "spellbook");
+                  (preparationType === "prepared" ||
+                    preparationType === "spellbook");
                 return (
                   <SpellCard
                     key={spellId}
@@ -462,14 +652,29 @@ export default function SpellcastingSection({
     if (levelSpells.length > 0) return null;
 
     return (
-      <View className="rounded-card border p-6 mb-4 items-center" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
-        <View className="h-16 w-16 rounded-full items-center justify-center mb-4" style={{ backgroundColor: colors.bgSecondary }}>
+      <View
+        className="rounded-card border p-6 mb-4 items-center"
+        style={{
+          backgroundColor: colors.bgElevated,
+          borderColor: colors.borderDefault,
+        }}
+      >
+        <View
+          className="h-16 w-16 rounded-full items-center justify-center mb-4"
+          style={{ backgroundColor: colors.bgSecondary }}
+        >
           <Ionicons name="book-outline" size={32} color={colors.textMuted} />
         </View>
-        <Text className="text-base font-semibold text-center mb-1" style={{ color: colors.textPrimary }}>
+        <Text
+          className="text-base font-semibold text-center mb-1"
+          style={{ color: colors.textPrimary }}
+        >
           Sin conjuros
         </Text>
-        <Text className="text-sm text-center leading-5" style={{ color: colors.textSecondary }}>
+        <Text
+          className="text-sm text-center leading-5"
+          style={{ color: colors.textSecondary }}
+        >
           No tienes conjuros conocidos ni preparados todavía. Los conjuros se
           seleccionan durante la creación del personaje.
         </Text>

@@ -9,7 +9,9 @@ import {
   type LevelUpSummary,
   type LevelFeature,
 } from "@/data/srd/leveling";
-import type { Character } from "@/types/character";
+import { SPELLS_KNOWN } from "@/constants/spells";
+import { SPELL_LEVEL_NAMES, type SpellLevel } from "@/types/spell";
+import type { Character, ClassId } from "@/types/character";
 
 interface SummaryStepProps {
   summary: LevelUpSummary;
@@ -281,7 +283,13 @@ export default function SummaryStep({
             >
               {classData?.subclassLabel ?? "Subclase"}
             </Text>
-            <Text style={{ color: colors.accentRed, fontSize: 13, fontWeight: "500" }}>
+            <Text
+              style={{
+                color: colors.accentRed,
+                fontSize: 13,
+                fontWeight: "500",
+              }}
+            >
               ¡Debes elegir tu especialización!
             </Text>
           </View>
@@ -289,52 +297,88 @@ export default function SummaryStep({
       )}
 
       {/* Spell learning notification */}
-      {summary.spellLearning && (() => {
-        const sl = summary.spellLearning;
-        const parts: string[] = [];
-        if (sl.newCantrips > 0) parts.push(`${sl.newCantrips} truco${sl.newCantrips > 1 ? "s" : ""}`);
-        if (sl.newSpellsKnown > 0) parts.push(`${sl.newSpellsKnown} hechizo${sl.newSpellsKnown > 1 ? "s" : ""}`);
-        if (sl.newSpellbookSpells > 0) parts.push(`${sl.newSpellbookSpells} hechizo${sl.newSpellbookSpells > 1 ? "s" : ""} al libro`);
-        if (sl.canSwapSpell) parts.push("intercambiar 1 hechizo");
-        if (parts.length === 0) return null;
-        return (
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              backgroundColor: withAlpha(colors.accentRed, 0.12),
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: withAlpha(colors.accentRed, 0.3),
-              padding: 12,
-              marginBottom: 12,
-              gap: 10,
-            }}
-          >
-            <Ionicons name="sparkles" size={20} color={colors.accentRed} />
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  color: colors.textPrimary,
-                  fontSize: 14,
-                  fontWeight: "700",
-                }}
-              >
-                Hechizos
-              </Text>
-              <Text
-                style={{
-                  color: colors.accentRed,
-                  fontSize: 13,
-                  fontWeight: "500",
-                }}
-              >
-                Puedes aprender: {parts.join(", ")}
-              </Text>
+      {summary.spellLearning &&
+        (() => {
+          const sl = summary.spellLearning;
+          const isPreparedCaster =
+            sl.preparationType === "prepared" &&
+            !SPELLS_KNOWN[character.clase as ClassId];
+          const parts: string[] = [];
+          if (sl.newCantrips > 0)
+            parts.push(
+              `${sl.newCantrips} truco${sl.newCantrips > 1 ? "s" : ""}`,
+            );
+          if (sl.newSpellsKnown > 0)
+            parts.push(
+              `${sl.newSpellsKnown} hechizo${sl.newSpellsKnown > 1 ? "s" : ""}`,
+            );
+          if (sl.newSpellbookSpells > 0)
+            parts.push(
+              `${sl.newSpellbookSpells} hechizo${sl.newSpellbookSpells > 1 ? "s" : ""} al libro`,
+            );
+          if (sl.canSwapSpell) parts.push("intercambiar 1 hechizo");
+
+          // For prepared casters gaining a new spell level, show info even without other changes
+          if (
+            parts.length === 0 &&
+            !(isPreparedCaster && sl.gainsNewSpellLevel)
+          )
+            return null;
+
+          return (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: withAlpha(colors.accentRed, 0.12),
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: withAlpha(colors.accentRed, 0.3),
+                padding: 12,
+                marginBottom: 12,
+                gap: 10,
+              }}
+            >
+              <Ionicons name="sparkles" size={20} color={colors.accentRed} />
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    color: colors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: "700",
+                  }}
+                >
+                  Hechizos
+                </Text>
+                {parts.length > 0 && (
+                  <Text
+                    style={{
+                      color: colors.accentRed,
+                      fontSize: 13,
+                      fontWeight: "500",
+                    }}
+                  >
+                    Puedes aprender: {parts.join(", ")}
+                  </Text>
+                )}
+                {isPreparedCaster && sl.gainsNewSpellLevel && (
+                  <Text
+                    style={{
+                      color: colors.accentRed,
+                      fontSize: 13,
+                      fontWeight: "500",
+                      marginTop: parts.length > 0 ? 2 : 0,
+                    }}
+                  >
+                    Desbloqueas conjuros de{" "}
+                    {SPELL_LEVEL_NAMES[sl.maxSpellLevel as SpellLevel]}. Ve a la
+                    pestaña Habilidades para preparar tus conjuros.
+                  </Text>
+                )}
+              </View>
             </View>
-          </View>
-        );
-      })()}
+          );
+        })()}
 
       {/* Features */}
       {summary.features.length > 0 && (

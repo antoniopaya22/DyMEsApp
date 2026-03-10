@@ -52,7 +52,7 @@ export interface WizardStepLayoutProps {
   /** Label to show while loading (replaces nextLabel) */
   loadingLabel?: string;
   /** Ref for the scroll view (from useScrollToTop) */
-  scrollRef?: RefObject<ScrollView>;
+  scrollRef?: RefObject<ScrollView | null>;
   /** Extra bottom padding for scroll content (default: 40) */
   scrollPaddingBottom?: number;
   /** Extra content rendered after the subtitle inside the title section */
@@ -97,7 +97,7 @@ export default function WizardStepLayout({
   return (
     <View style={[s.container, { backgroundColor: colors.bgPrimary }]}>
       <ScrollView
-        ref={scrollRef as any}
+        ref={scrollRef}
         style={s.scroll}
         contentContainerStyle={{ paddingBottom: scrollPaddingBottom }}
         showsVerticalScrollIndicator={false}
@@ -117,7 +117,11 @@ export default function WizardStepLayout({
               ]}
               onPress={onBack}
             >
-              <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+              <Ionicons
+                name="arrow-back"
+                size={22}
+                color={colors.textPrimary}
+              />
             </TouchableOpacity>
             <Text style={[s.stepText, { color: colors.textSecondary }]}>
               Paso {currentStep} de {TOTAL_STEPS}
@@ -146,7 +150,11 @@ export default function WizardStepLayout({
               { backgroundColor: withAlpha(colors.accentRed, 0.15) },
             ]}
           >
-            <Ionicons name={iconName as any} size={40} color={colors.accentRed} />
+            <Ionicons
+              name={iconName as any}
+              size={40}
+              color={colors.accentRed}
+            />
           </View>
           <Text style={[s.title, { color: colors.textPrimary }]}>{title}</Text>
           <Text style={[s.subtitle, { color: colors.textSecondary }]}>

@@ -38,6 +38,13 @@ export const HECHICERO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Defensas Psiquicas",
             descripcion:
               "Tienes resistencia al dano psiquico y ventaja en salvaciones para evitar o terminar las condiciones de Hechizado y Asustado.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "psiquico",
+                modifier: "resistance",
+              },
+            ],
           },
         ],
       },
@@ -131,6 +138,17 @@ export const HECHICERO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Resiliencia Draconica",
             descripcion:
               "Tu maximo de PG aumenta en 3, y aumenta en 1 por cada nivel de hechicero posterior. Ademas, partes de tu cuerpo estan cubiertas de escamas dragonicas: mientras no lleves armadura, tu CA base es 10 + mod. DES + mod. CAR.",
+            efectos: [
+              {
+                kind: "acFormula",
+                formula: {
+                  type: "unarmoredDefense",
+                  abilities: ["des", "car"],
+                },
+                allowShield: true,
+              },
+              { kind: "hpBonus", perLevel: 1 },
+            ],
           },
           {
             nombre: "Conjuros Draconicos",
@@ -246,11 +264,31 @@ export const HECHICERO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
                 instruccion: "Elige tu afinidad divina:",
                 tipo: "single",
                 opciones: [
-                  { id: "buena", nombre: "Buena", descripcion: "Aprendes Cura de Heridas." },
-                  { id: "mala", nombre: "Mala", descripcion: "Aprendes Infligir Heridas." },
-                  { id: "legal", nombre: "Legal", descripcion: "Aprendes Bendicion." },
-                  { id: "caotica", nombre: "Caotica", descripcion: "Aprendes Perdicion." },
-                  { id: "neutral", nombre: "Neutral", descripcion: "Aprendes Proteccion contra el Bien y el Mal." },
+                  {
+                    id: "buena",
+                    nombre: "Buena",
+                    descripcion: "Aprendes Cura de Heridas.",
+                  },
+                  {
+                    id: "mala",
+                    nombre: "Mala",
+                    descripcion: "Aprendes Infligir Heridas.",
+                  },
+                  {
+                    id: "legal",
+                    nombre: "Legal",
+                    descripcion: "Aprendes Bendicion.",
+                  },
+                  {
+                    id: "caotica",
+                    nombre: "Caotica",
+                    descripcion: "Aprendes Perdicion.",
+                  },
+                  {
+                    id: "neutral",
+                    nombre: "Neutral",
+                    descripcion: "Aprendes Proteccion contra el Bien y el Mal.",
+                  },
                 ],
               },
             ],
@@ -308,6 +346,7 @@ export const HECHICERO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Ojos del Oscuro",
             descripcion:
               "Ganas vision en la oscuridad a 36 m. Ademas, puedes lanzar Oscuridad gastando 2 PH o un espacio de conjuro. Si la lanzas con PH, puedes ver a traves de la oscuridad creada por ese conjuro.",
+            efectos: [{ kind: "darkvision", range: 120 }],
           },
           {
             nombre: "Fuerza de la Tumba",
@@ -377,6 +416,18 @@ export const HECHICERO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Corazon de la Tormenta",
             descripcion:
               "Ganas resistencia al dano de relampago y trueno. Ademas, cada vez que empieces a lanzar un conjuro de nivel 1+ que inflija dano de relampago o trueno, una magia tormentosa brota de ti: criaturas de tu eleccion que puedas ver a 3 m reciben dano de relampago o trueno (tu eliges) igual a la mitad de tu nivel de hechicero.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "relampago",
+                modifier: "resistance",
+              },
+              {
+                kind: "damageModifier",
+                damageType: "trueno",
+                modifier: "resistance",
+              },
+            ],
           },
           {
             nombre: "Guia de la Tormenta",

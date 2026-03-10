@@ -27,6 +27,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { DndLogo } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
 import { useTheme } from "@/hooks";
+import { withAlpha } from "@/utils/theme";
 
 type AuthTab = "login" | "register";
 
@@ -115,7 +116,10 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { backgroundColor: colors.bgPrimary }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { backgroundColor: colors.bgPrimary },
+        ]}
         keyboardShouldPersistTaps="handled"
         bounces={false}
       >
@@ -135,9 +139,7 @@ export default function LoginScreen() {
             <DndLogo size="lg" animated showRunicRing />
           </View>
 
-          <Text style={[styles.title, { color: colors.accentRed }]}>
-            DyMEs
-          </Text>
+          <Text style={[styles.title, { color: colors.accentRed }]}>DyMEs</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Gestiona tus partidas y personajes
           </Text>
@@ -147,17 +149,37 @@ export default function LoginScreen() {
 
           {/* ─── Messages ─── */}
           {error ? (
-            <MessageBox message={error} variant="error" onDismiss={clearError} />
+            <MessageBox
+              message={error}
+              variant="error"
+              onDismiss={clearError}
+            />
           ) : null}
           {successMessage ? (
-            <MessageBox message={successMessage} variant="success" onDismiss={clearSuccess} />
+            <MessageBox
+              message={successMessage}
+              variant="success"
+              onDismiss={clearSuccess}
+            />
           ) : null}
 
           {/* ─── Email form ─── */}
           <View style={styles.form}>
             {tab === "register" && (
-              <View style={[styles.inputBox, { backgroundColor: colors.bgInput, borderColor: colors.borderSubtle }]}>
-                <Ionicons name="person-outline" size={18} color={colors.textMuted} />
+              <View
+                style={[
+                  styles.inputBox,
+                  {
+                    backgroundColor: colors.bgInput,
+                    borderColor: colors.borderSubtle,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="person-outline"
+                  size={18}
+                  color={colors.textMuted}
+                />
                 <TextInput
                   style={[styles.input, { color: colors.textPrimary }]}
                   placeholder="Nombre (opcional)"
@@ -171,8 +193,20 @@ export default function LoginScreen() {
                 />
               </View>
             )}
-            <View style={[styles.inputBox, { backgroundColor: colors.bgInput, borderColor: colors.borderSubtle }]}>
-              <Ionicons name="mail-outline" size={18} color={colors.textMuted} />
+            <View
+              style={[
+                styles.inputBox,
+                {
+                  backgroundColor: colors.bgInput,
+                  borderColor: colors.borderSubtle,
+                },
+              ]}
+            >
+              <Ionicons
+                name="mail-outline"
+                size={18}
+                color={colors.textMuted}
+              />
               <TextInput
                 style={[styles.input, { color: colors.textPrimary }]}
                 placeholder="Correo electrónico"
@@ -190,8 +224,20 @@ export default function LoginScreen() {
               />
             </View>
 
-            <View style={[styles.inputBox, { backgroundColor: colors.bgInput, borderColor: colors.borderSubtle }]}>
-              <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />
+            <View
+              style={[
+                styles.inputBox,
+                {
+                  backgroundColor: colors.bgInput,
+                  borderColor: colors.borderSubtle,
+                },
+              ]}
+            >
+              <Ionicons
+                name="lock-closed-outline"
+                size={18}
+                color={colors.textMuted}
+              />
               <TextInput
                 style={[styles.input, { color: colors.textPrimary }]}
                 placeholder="Contraseña (mín. 6 caracteres)"
@@ -200,13 +246,22 @@ export default function LoginScreen() {
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
-                autoComplete={tab === "register" ? "new-password" : "current-password"}
+                autoComplete={
+                  tab === "register" ? "new-password" : "current-password"
+                }
                 ref={passwordRef}
                 returnKeyType="done"
-                onSubmitEditing={() => { if (canSubmit) handleEmailSubmit(); }}
-                textContentType={tab === "register" ? "newPassword" : "password"}
+                onSubmitEditing={() => {
+                  if (canSubmit) handleEmailSubmit();
+                }}
+                textContentType={
+                  tab === "register" ? "newPassword" : "password"
+                }
               />
-              <TouchableOpacity onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
+              <TouchableOpacity
+                onPress={() => setShowPassword((v) => !v)}
+                hitSlop={8}
+              >
                 <Ionicons
                   name={showPassword ? "eye-off-outline" : "eye-outline"}
                   size={18}
@@ -219,6 +274,13 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={[
                 styles.submitButton,
+                {
+                  shadowColor: colors.accentShadow,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 10,
+                  elevation: 6,
+                },
                 (!canSubmit || loading) && styles.submitButtonDisabled,
               ]}
               onPress={handleEmailSubmit}
@@ -228,7 +290,11 @@ export default function LoginScreen() {
               <LinearGradient
                 colors={
                   canSubmit && !loading
-                    ? ["#00D4E8", colors.accentRed, "#0097A7"]
+                    ? [
+                        colors.gradientButtonStart,
+                        colors.gradientButtonMid,
+                        colors.gradientButtonEnd,
+                      ]
                     : [colors.bgElevated, colors.bgCard, colors.bgSecondary]
                 }
                 start={{ x: 0, y: 0 }}
@@ -236,9 +302,18 @@ export default function LoginScreen() {
                 style={styles.submitGradient}
               >
                 {loading ? (
-                  <ActivityIndicator size="small" color="#FFF" />
+                  <ActivityIndicator size="small" color={colors.textInverted} />
                 ) : (
-                  <Text style={[styles.submitText, { color: canSubmit ? "#FFFFFF" : colors.textMuted }]}>
+                  <Text
+                    style={[
+                      styles.submitText,
+                      {
+                        color: canSubmit
+                          ? colors.textInverted
+                          : colors.textMuted,
+                      },
+                    ]}
+                  >
                     {tab === "login" ? "Entrar" : "Crear cuenta"}
                   </Text>
                 )}
@@ -248,9 +323,21 @@ export default function LoginScreen() {
 
           {/* ─── Divider ─── */}
           <View style={styles.dividerRow}>
-            <View style={[styles.dividerLine, { backgroundColor: colors.borderSubtle }]} />
-            <Text style={[styles.dividerText, { color: colors.textMuted }]}>o</Text>
-            <View style={[styles.dividerLine, { backgroundColor: colors.borderSubtle }]} />
+            <View
+              style={[
+                styles.dividerLine,
+                { backgroundColor: colors.borderSubtle },
+              ]}
+            />
+            <Text style={[styles.dividerText, { color: colors.textMuted }]}>
+              o
+            </Text>
+            <View
+              style={[
+                styles.dividerLine,
+                { backgroundColor: colors.borderSubtle },
+              ]}
+            />
           </View>
 
           {/* ─── Google button ─── */}
@@ -258,7 +345,8 @@ export default function LoginScreen() {
 
           {/* Privacy note */}
           <Text style={[styles.privacyText, { color: colors.textMuted }]}>
-            Al continuar, aceptas los términos de uso{"\n"}y la política de privacidad.
+            Al continuar, aceptas los términos de uso{"\n"}y la política de
+            privacidad.
           </Text>
         </Animated.View>
       </ScrollView>
@@ -364,11 +452,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: "hidden",
     marginTop: 4,
-    shadowColor: "#00BCD4",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 6,
   },
   submitButtonDisabled: {
     shadowOpacity: 0,
@@ -412,9 +495,9 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 14,
     elevation: 2,
-    shadowColor: "#000",
+    shadowColor: "#000", // static: theme-independent
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 6,
     gap: 10,
   },
@@ -452,10 +535,15 @@ const TAB_LABELS: Record<AuthTab, string> = {
   register: "Registrarse",
 };
 
-function AuthTabBar({ tab, onSwitch }: Readonly<{ tab: AuthTab; onSwitch: (t: AuthTab) => void }>) {
+function AuthTabBar({
+  tab,
+  onSwitch,
+}: Readonly<{ tab: AuthTab; onSwitch: (t: AuthTab) => void }>) {
   const { colors } = useTheme();
   const tabs: AuthTab[] = ["login", "register"];
-  const indicatorAnim = useRef(new Animated.Value(tab === "login" ? 0 : 1)).current;
+  const indicatorAnim = useRef(
+    new Animated.Value(tab === "login" ? 0 : 1),
+  ).current;
   const containerWidth = useRef(0);
 
   useEffect(() => {
@@ -482,12 +570,14 @@ function AuthTabBar({ tab, onSwitch }: Readonly<{ tab: AuthTab; onSwitch: (t: Au
           styles.tabIndicator,
           {
             backgroundColor: colors.accentRed,
-            transform: [{
-              translateX: indicatorAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, halfWidth],
-              }),
-            }],
+            transform: [
+              {
+                translateX: indicatorAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, halfWidth],
+                }),
+              },
+            ],
           },
         ]}
       />
@@ -503,8 +593,10 @@ function AuthTabBar({ tab, onSwitch }: Readonly<{ tab: AuthTab; onSwitch: (t: Au
             <Text
               style={[
                 styles.tabText,
-                { color: active ? colors.accentRed : colors.textMuted,
-                  fontWeight: active ? "700" : "500" },
+                {
+                  color: active ? colors.accentRed : colors.textMuted,
+                  fontWeight: active ? "700" : "500",
+                },
               ]}
             >
               {TAB_LABELS[t]}
@@ -533,7 +625,9 @@ function MessageBox({
   const icon = isError ? "alert-circle" : "checkmark-circle";
 
   return (
-    <View style={[styles.messageBox, { backgroundColor: bg, borderColor: border }]}>
+    <View
+      style={[styles.messageBox, { backgroundColor: bg, borderColor: border }]}
+    >
       <Ionicons name={icon} size={16} color={fg} />
       <Text style={[styles.messageText, { color: fg }]}>{message}</Text>
       <TouchableOpacity onPress={onDismiss} hitSlop={8}>
@@ -543,7 +637,10 @@ function MessageBox({
   );
 }
 
-function GoogleSignInButton({ loading, onPress }: Readonly<{ loading: boolean; onPress: () => void }>) {
+function GoogleSignInButton({
+  loading,
+  onPress,
+}: Readonly<{ loading: boolean; onPress: () => void }>) {
   const { colors, isDark } = useTheme();
   return (
     <TouchableOpacity
@@ -567,7 +664,12 @@ function GoogleSignInButton({ loading, onPress }: Readonly<{ loading: boolean; o
           <View style={styles.googleIconContainer}>
             <Text style={styles.googleIcon}>G</Text>
           </View>
-          <Text style={[styles.googleButtonText, { color: isDark ? colors.textPrimary : "#333333" }]}>
+          <Text
+            style={[
+              styles.googleButtonText,
+              { color: isDark ? colors.textPrimary : "#333333" },
+            ]}
+          >
             Continuar con Google
           </Text>
         </>

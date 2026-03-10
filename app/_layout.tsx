@@ -88,7 +88,12 @@ function ErrorScreen({ error }: { error: Error | null }) {
       >
         {/* Error icon with glow ring */}
         <View style={styles.errorIconOuter}>
-          <View style={styles.errorIconRing} />
+          <View
+            style={[
+              styles.errorIconRing,
+              { borderColor: c.emptyIconRingBorder },
+            ]}
+          />
           <View
             style={[
               styles.errorIconBg,
@@ -321,7 +326,7 @@ const styles = StyleSheet.create({
     height: 88,
     borderRadius: 44,
     borderWidth: 1,
-    borderColor: "rgba(0,229,255,0.15)",
+    borderColor: "rgba(0,229,255,0.15)", // fallback; overridden dynamically
   },
   errorIconBg: {
     width: 68,

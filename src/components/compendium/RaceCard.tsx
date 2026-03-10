@@ -1,21 +1,51 @@
 /**
  * RaceCard - Expandable race detail card for the Compendium
- * Extracted from compendium.tsx
+ *
+ * Uses GlowCard for consistent styling with the rest of the app,
+ * and LayoutAnimation for smooth expand/collapse transitions.
  */
 
-import { View, Text, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { DetailBadge } from "@/components/ui";
+import { useRef, useEffect } from "react";
 import {
-  getSubraceData,
-  getAllRaceTraits,
-  RACE_ICONS,
-} from "@/data/srd";
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { GlowCard, DetailBadge } from "@/components/ui";
+import { getSubraceData, getAllRaceTraits, RACE_ICONS } from "@/data/srd";
 import type { RaceData } from "@/data/srd";
 import type { RaceId, SubraceId } from "@/types/character";
 import { useTheme } from "@/hooks";
+import { useUnidadesActuales } from "@/stores/settingsStore";
+import { formatDistancia } from "@/utils/units";
 import { formatAbilityBonuses } from "./compendiumUtils";
-import { cardStyles as styles } from "./compendiumStyles";
+import { cardStyles as s } from "./compendiumStyles";
+
+// Enable LayoutAnimation on Android
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const COLLAPSE_ANIM = {
+  duration: 280,
+  create: {
+    type: LayoutAnimation.Types.easeInEaseOut,
+    property: LayoutAnimation.Properties.opacity,
+  },
+  update: { type: LayoutAnimation.Types.easeInEaseOut },
+  delete: {
+    type: LayoutAnimation.Types.easeInEaseOut,
+    property: LayoutAnimation.Properties.opacity,
+  },
+};
 
 interface RaceCardProps {
   data: RaceData;
@@ -25,59 +55,80 @@ interface RaceCardProps {
 
 export function RaceCard({ data, isExpanded, onToggle }: RaceCardProps) {
   const { colors } = useTheme();
-  const iconName = RACE_ICONS[data.id as keyof typeof RACE_ICONS] || "person-outline";
+  const unidades = useUnidadesActuales();
+  const iconName =
+    RACE_ICONS[data.id as keyof typeof RACE_ICONS] || "person-outline";
   const bonusStr = formatAbilityBonuses(data.abilityBonuses || {});
   const traits = getAllRaceTraits(data.id as RaceId, null);
 
+  // Animated chevron rotation
+  const chevronAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
+  useEffect(() => {
+    Animated.spring(chevronAnim, {
+      toValue: isExpanded ? 1 : 0,
+      friction: 8,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  }, [isExpanded, chevronAnim]);
+
+  const chevronRotation = chevronAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "180deg"],
+  });
+
+  const handleToggle = () => {
+    LayoutAnimation.configureNext(COLLAPSE_ANIM);
+    onToggle();
+  };
+
+  const accentColor = colors.accentAmber;
+
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.cardBg, borderColor: colors.cardBorder },
-      ]}
+    <GlowCard
+      accentLine
+      accentPosition="left"
+      accentColors={[accentColor, `${accentColor}88`, `${accentColor}44`]}
+      pressScale={0.98}
+      onPress={handleToggle}
+      padding={14}
+      style={{ marginBottom: 12 }}
     >
-      <TouchableOpacity
-        onPress={onToggle}
-        style={styles.cardHeader}
-        activeOpacity={0.7}
-      >
+      {/* Header */}
+      <View style={s.cardHeader}>
         <View
           style={[
-            styles.cardIconBg,
-            { backgroundColor: `#f59e0b${colors.iconBgAlpha}` },
+            s.cardIconBg,
+            { backgroundColor: `${accentColor}${colors.iconBgAlpha}` },
           ]}
         >
-          <Ionicons name={iconName as any} size={22} color={colors.textSecondary} />
+          <Ionicons name={iconName as any} size={22} color={accentColor} />
         </View>
-        <View style={styles.cardInfo}>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
+        <View style={s.cardInfo}>
+          <Text style={[s.cardTitle, { color: colors.textPrimary }]}>
             {data.nombre}
           </Text>
           <Text
-            style={[styles.cardSubtitle, { color: colors.textSecondary }]}
+            style={[s.cardSubtitle, { color: colors.textSecondary }]}
             numberOfLines={1}
           >
             {bonusStr || "Sin bonificadores fijos"}
             {" · "}
-            Vel. {data.speed} pies
+            Vel. {formatDistancia(data.speed, unidades)}
           </Text>
         </View>
-        <Ionicons
-          name={isExpanded ? "chevron-up" : "chevron-down"}
-          size={20}
-          color={colors.chevronColor}
-        />
-      </TouchableOpacity>
+        <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
+          <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
+        </Animated.View>
+      </View>
 
+      {/* Expanded detail */}
       {isExpanded && (
         <View
-          style={[
-            styles.cardDetail,
-            { borderTopColor: colors.borderSeparator },
-          ]}
+          style={[s.cardDetail, { borderTopColor: colors.borderSeparator }]}
         >
-          {/* Size & Speed */}
-          <View style={styles.detailRow}>
+          {/* Size & Speed badges */}
+          <View style={s.detailRow}>
             <DetailBadge
               label="Tamaño"
               value={
@@ -93,13 +144,13 @@ export function RaceCard({ data, isExpanded, onToggle }: RaceCardProps) {
             />
             <DetailBadge
               label="Velocidad"
-              value={`${data.speed} pies`}
+              value={formatDistancia(data.speed, unidades)}
               color={colors.accentGreen}
             />
             {data.darkvision && (
               <DetailBadge
                 label="Visión oscura"
-                value={`${data.darkvisionRange || 60} pies`}
+                value={formatDistancia(data.darkvisionRange || 60, unidades)}
                 color={colors.accentDeepPurple}
               />
             )}
@@ -107,15 +158,11 @@ export function RaceCard({ data, isExpanded, onToggle }: RaceCardProps) {
 
           {/* Ability Bonuses */}
           {bonusStr && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Bonificadores de característica
               </Text>
-              <Text
-                style={[styles.detailText, { color: colors.textSecondary }]}
-              >
+              <Text style={[s.detailText, { color: colors.textSecondary }]}>
                 {bonusStr}
               </Text>
             </View>
@@ -123,15 +170,11 @@ export function RaceCard({ data, isExpanded, onToggle }: RaceCardProps) {
 
           {/* Languages */}
           {data.languages && data.languages.length > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Idiomas
               </Text>
-              <Text
-                style={[styles.detailText, { color: colors.textSecondary }]}
-              >
+              <Text style={[s.detailText, { color: colors.textSecondary }]}>
                 {data.languages.join(", ")}
               </Text>
             </View>
@@ -139,25 +182,16 @@ export function RaceCard({ data, isExpanded, onToggle }: RaceCardProps) {
 
           {/* Racial traits */}
           {traits && traits.length > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Rasgos raciales
               </Text>
               {traits.map((trait, i) => (
-                <View key={i} style={styles.traitItem}>
-                  <Text
-                    style={[styles.traitName, { color: colors.textPrimary }]}
-                  >
+                <View key={i} style={s.traitItem}>
+                  <Text style={[s.traitName, { color: colors.textPrimary }]}>
                     {trait.nombre}
                   </Text>
-                  <Text
-                    style={[
-                      styles.traitDesc,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
+                  <Text style={[s.traitDesc, { color: colors.textSecondary }]}>
                     {trait.descripcion}
                   </Text>
                 </View>
@@ -167,14 +201,15 @@ export function RaceCard({ data, isExpanded, onToggle }: RaceCardProps) {
 
           {/* Subraces */}
           {data.subraces && data.subraces.length > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Subrazas
               </Text>
               {data.subraces.map((sr) => {
-                const srData = getSubraceData(data.id as RaceId, sr.id as SubraceId);
+                const srData = getSubraceData(
+                  data.id as RaceId,
+                  sr.id as SubraceId,
+                );
                 const srBonuses = srData?.abilityBonuses
                   ? formatAbilityBonuses(srData.abilityBonuses)
                   : "";
@@ -182,25 +217,20 @@ export function RaceCard({ data, isExpanded, onToggle }: RaceCardProps) {
                   <View
                     key={sr.id}
                     style={[
-                      styles.subraceBlock,
+                      s.subraceBlock,
                       {
                         backgroundColor: colors.bgSubtle,
                         borderColor: colors.borderSubtle,
                       },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.subraceName,
-                        { color: colors.accentGold },
-                      ]}
-                    >
+                    <Text style={[s.subraceName, { color: accentColor }]}>
                       {sr.nombre}
                     </Text>
                     {srBonuses ? (
                       <Text
                         style={[
-                          styles.subraceDetail,
+                          s.subraceDetail,
                           { color: colors.textSecondary },
                         ]}
                       >
@@ -210,10 +240,10 @@ export function RaceCard({ data, isExpanded, onToggle }: RaceCardProps) {
                     {srData?.traits && srData.traits.length > 0 && (
                       <>
                         {srData.traits.map((srt, si) => (
-                          <View key={si} style={styles.traitItem}>
+                          <View key={si} style={s.traitItem}>
                             <Text
                               style={[
-                                styles.traitName,
+                                s.traitName,
                                 { fontSize: 12, color: colors.textPrimary },
                               ]}
                             >
@@ -221,7 +251,7 @@ export function RaceCard({ data, isExpanded, onToggle }: RaceCardProps) {
                             </Text>
                             <Text
                               style={[
-                                styles.traitDesc,
+                                s.traitDesc,
                                 { fontSize: 11, color: colors.textSecondary },
                               ]}
                             >
@@ -238,6 +268,6 @@ export function RaceCard({ data, isExpanded, onToggle }: RaceCardProps) {
           )}
         </View>
       )}
-    </View>
+    </GlowCard>
   );
 }

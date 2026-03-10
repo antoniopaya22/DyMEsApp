@@ -18,10 +18,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import {
-  DragonDivider,
-  MinimalD20Logo,
-} from "@/components/ui";
+import { DragonDivider, MinimalD20Logo } from "@/components/ui";
 import { useTheme } from "@/hooks";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -93,8 +90,8 @@ export function HomeEmptyState({ onCreateFirst }: HomeEmptyStateProps) {
           ¡Bienvenido, aventurero!
         </Text>
         <Text style={[styles.emptySubtitle, { color: colors.emptySubtitle }]}>
-          No tienes ningún personaje todavía.{"\n"}Crea tu primer personaje
-          para empezar a jugar.
+          No tienes ningún personaje todavía.{"\n"}Crea tu primer personaje para
+          empezar a jugar.
         </Text>
 
         <DragonDivider
@@ -105,18 +102,26 @@ export function HomeEmptyState({ onCreateFirst }: HomeEmptyStateProps) {
         />
 
         <TouchableOpacity
-          style={styles.emptyButton}
+          style={[styles.emptyButton, { shadowColor: colors.accentShadow }]}
           onPress={onCreateFirst}
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={["#00D4E8", colors.accentRed, "#0097A7"]}
+            colors={[
+              colors.gradientButtonStart,
+              colors.gradientButtonMid,
+              colors.gradientButtonEnd,
+            ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.emptyButtonGradient}
           >
             <Ionicons name="add" size={22} color={colors.textInverted} />
-            <Text style={[styles.emptyButtonText, { color: colors.textInverted }]}>Crear primer personaje</Text>
+            <Text
+              style={[styles.emptyButtonText, { color: colors.textInverted }]}
+            >
+              Crear primer personaje
+            </Text>
           </LinearGradient>
         </TouchableOpacity>
 
@@ -167,7 +172,7 @@ const styles = StyleSheet.create({
   emptyButton: {
     borderRadius: 14,
     overflow: "hidden",
-    shadowColor: "#00BCD4",
+    shadowColor: "#000", // static: theme-independent
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -181,7 +186,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   emptyButtonText: {
-    color: "#0B1221",
     fontWeight: "800",
     fontSize: 16,
     marginLeft: 8,

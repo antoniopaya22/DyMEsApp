@@ -3,22 +3,21 @@
  * Handles all combat-related state management for the character store.
  */
 
-import type { Character, HitPoints, DeathSaves, Condition } from "@/types/character";
+import type {
+  Character,
+  HitPoints,
+  DeathSaves,
+  Condition,
+} from "@/types/character";
 import type { CharacterStore, CombatActions } from "./types";
 import { now } from "@/utils/providers";
-import {
-  rollDie,
-  hitDieSides,
-  updateCharacterAndPersist,
-} from "./helpers";
+import { hitDieValue } from "@/utils/character";
+import { rollDie, updateCharacterAndPersist } from "./helpers";
 
 type SetState = (partial: Partial<CharacterStore>) => void;
 type GetState = () => CharacterStore;
 
-export function createCombatSlice(
-  set: SetState,
-  get: GetState,
-): CombatActions {
+export function createCombatSlice(set: SetState, get: GetState): CombatActions {
   return {
     takeDamage: async (amount: number, description?: string) => {
       const { character } = get();
@@ -106,7 +105,7 @@ export function createCombatSlice(
       const { character } = get();
       if (!character || character.hitDice.remaining <= 0) return null;
 
-      const sides = hitDieSides(character.hitDice.die);
+      const sides = hitDieValue(character.hitDice.die);
       const rolled = rollDie(sides);
       const conMod = character.abilityScores.con.modifier;
       const healed = Math.max(1, rolled + conMod);
@@ -208,7 +207,9 @@ export function createCombatSlice(
       if (!character) return;
 
       await updateCharacterAndPersist(get, set, {
-        conditions: character.conditions.filter((c) => c.condition !== condition),
+        conditions: character.conditions.filter(
+          (c) => c.condition !== condition,
+        ),
       });
     },
 

@@ -68,6 +68,7 @@ export const MONJE_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Artes de las Sombras",
             descripcion:
               "Has aprendido a canalizar el poder del Shadowfell:\n\n• Oscuridad: Puedes gastar 1 PC para lanzar Oscuridad sin componentes. Puedes ver dentro del área. Mientras persista, puedes mover el área hasta 18 m (60 pies) de ti al inicio de cada turno.\n• Visión en la Oscuridad: Obtienes Visión en la Oscuridad a 18 m (60 pies). Si ya la tienes, su alcance aumenta en 18 m.\n• Figuras Sombrías: Conoces el truco Ilusión Menor. SAB es tu aptitud mágica.",
+            efectos: [{ kind: "darkvision", range: 60, additive: true }],
           },
         ],
       },
@@ -142,6 +143,18 @@ export const MONJE_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Zancada Elemental",
             descripcion:
               "Mientras tu Sintonía Elemental esté activa, también tienes velocidad de Vuelo y de Nado iguales a tu velocidad.",
+            efectos: [
+              {
+                kind: "speedBonus",
+                fly: "walk",
+                condition: "durante Sintonía Elemental",
+              },
+              {
+                kind: "speedBonus",
+                swim: "walk",
+                condition: "durante Sintonía Elemental",
+              },
+            ],
           },
         ],
       },
@@ -263,6 +276,13 @@ export const MONJE_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Yo Astral Despierto",
             descripcion:
               "Como acción adicional, puedes gastar 5 PC para invocar los brazos, rostro y cuerpo de tu yo astral y despertar su poder durante 10 minutos (termina prematuramente si quedas incapacitado o mueres). Mientras esté despierto:\n\n• Armadura del Espíritu: +2 a CA.\n• Bombardeo Astral: Cuando uses Ataque Extra para atacar dos veces, puedes en su lugar atacar tres veces si todos los ataques se realizan con los brazos astrales.",
+            efectos: [
+              {
+                kind: "acBonus",
+                bonus: 2,
+                condition: "durante Yo Astral Despierto",
+              },
+            ],
           },
         ],
       },
@@ -346,11 +366,31 @@ export const MONJE_SUBCLASS_FEATURES: SubclassFeatureData[] = [
                 instruccion: "Elige tu arma kensei cuerpo a cuerpo:",
                 tipo: "single",
                 opciones: [
-                  { id: "espada_larga", nombre: "Espada Larga", descripcion: "1d8 (1d10 a dos manos) cortante." },
-                  { id: "espada_corta", nombre: "Espada Corta", descripcion: "1d6 cortante, ligera, finura." },
-                  { id: "hacha_guerra", nombre: "Hacha de Guerra", descripcion: "1d8 (1d10 a dos manos) cortante." },
-                  { id: "latigo", nombre: "Látigo", descripcion: "1d4 cortante, finura, alcance." },
-                  { id: "cimitarra", nombre: "Cimitarra", descripcion: "1d6 cortante, ligera, finura." },
+                  {
+                    id: "espada_larga",
+                    nombre: "Espada Larga",
+                    descripcion: "1d8 (1d10 a dos manos) cortante.",
+                  },
+                  {
+                    id: "espada_corta",
+                    nombre: "Espada Corta",
+                    descripcion: "1d6 cortante, ligera, finura.",
+                  },
+                  {
+                    id: "hacha_guerra",
+                    nombre: "Hacha de Guerra",
+                    descripcion: "1d8 (1d10 a dos manos) cortante.",
+                  },
+                  {
+                    id: "latigo",
+                    nombre: "Látigo",
+                    descripcion: "1d4 cortante, finura, alcance.",
+                  },
+                  {
+                    id: "cimitarra",
+                    nombre: "Cimitarra",
+                    descripcion: "1d6 cortante, ligera, finura.",
+                  },
                 ],
               },
               {
@@ -359,9 +399,23 @@ export const MONJE_SUBCLASS_FEATURES: SubclassFeatureData[] = [
                 instruccion: "Elige tu arma kensei a distancia:",
                 tipo: "single",
                 opciones: [
-                  { id: "arco_largo", nombre: "Arco Largo", descripcion: "1d8 perforante, pesada (excepción kensei), munición, distancia (45/180 m)." },
-                  { id: "arco_corto", nombre: "Arco Corto", descripcion: "1d6 perforante, munición, distancia (24/96 m)." },
-                  { id: "dardo", nombre: "Dardo", descripcion: "1d4 perforante, finura, arrojadiza (6/18 m)." },
+                  {
+                    id: "arco_largo",
+                    nombre: "Arco Largo",
+                    descripcion:
+                      "1d8 perforante, pesada (excepción kensei), munición, distancia (45/180 m).",
+                  },
+                  {
+                    id: "arco_corto",
+                    nombre: "Arco Corto",
+                    descripcion:
+                      "1d6 perforante, munición, distancia (24/96 m).",
+                  },
+                  {
+                    id: "dardo",
+                    nombre: "Dardo",
+                    descripcion: "1d4 perforante, finura, arrojadiza (6/18 m).",
+                  },
                 ],
               },
             ],

@@ -16,10 +16,21 @@ import type {
   AbilityScoreDetail,
   SkillKey,
   SkillProficiencies,
+  SavingThrowProficiencies,
   Proficiencies,
+  DamageModifier,
   Trait,
+  ClassId,
+  Character,
 } from "@/types/character";
-import { calcModifier, SKILLS } from "@/types/character";
+import { calcModifier, calcProficiencyBonus, SKILLS } from "@/types/character";
+import { resolveLimitedUse } from "@/utils/character";
+import { CLASS_SPELL_PREPARATION, SPELLS_KNOWN } from "@/constants/spells";
+import type { TraitEffect } from "@/types/traitEffects";
+import type { TraitEffectMutations } from "@/utils/traitEffects";
+import type { CustomRaceConfig } from "@/types/creation";
+import type { RaceId, SubraceId } from "@/types/character";
+import { getRacialSpellsForLevel } from "@/data/srd/races";
 
 // ─── Parameter interfaces ────────────────────────────────────────────
 
@@ -34,6 +45,7 @@ export interface SkillDataSources {
 export interface TraitSource {
   nombre: string;
   descripcion: string;
+  efectos?: TraitEffect[];
 }
 
 /** Sources used by {@link buildCharacterTraits}. */
@@ -180,49 +192,62 @@ export function buildSkillProficiencies(
  *                background.
  * @returns An array of {@link Trait} objects ready to be stored on the character.
  */
-export function buildCharacterTraits(
-  sources: TraitDataSources,
-): Trait[] {
+export function buildCharacterTraits(sources: TraitDataSources): Trait[] {
   const traits: Trait[] = [];
 
   // Rasgos de raza
   for (const trait of sources.raceTraits) {
+    const { maxUses, currentUses, recharge } = resolveLimitedUse(
+      trait.efectos,
+      1,
+    );
     traits.push({
       id: randomUUID(),
       nombre: trait.nombre,
       descripcion: trait.descripcion,
       origen: "raza",
-      maxUses: null,
-      currentUses: null,
-      recharge: null,
+      maxUses,
+      currentUses,
+      recharge,
+      efectos: trait.efectos?.length ? trait.efectos : undefined,
     });
   }
 
   // Rasgos de subraza
   if (sources.subraceTraits) {
     for (const trait of sources.subraceTraits) {
+      const { maxUses, currentUses, recharge } = resolveLimitedUse(
+        trait.efectos,
+        1,
+      );
       traits.push({
         id: randomUUID(),
         nombre: trait.nombre,
         descripcion: trait.descripcion,
         origen: "raza",
-        maxUses: null,
-        currentUses: null,
-        recharge: null,
+        maxUses,
+        currentUses,
+        recharge,
+        efectos: trait.efectos?.length ? trait.efectos : undefined,
       });
     }
   }
 
   // Rasgos de clase (nivel 1)
   for (const feature of sources.classLevel1Features) {
+    const { maxUses, currentUses, recharge } = resolveLimitedUse(
+      feature.efectos,
+      1,
+    );
     traits.push({
       id: randomUUID(),
       nombre: feature.nombre,
       descripcion: feature.descripcion,
       origen: "clase",
-      maxUses: null,
-      currentUses: null,
-      recharge: null,
+      maxUses,
+      currentUses,
+      recharge,
+      efectos: feature.efectos?.length ? feature.efectos : undefined,
     });
   }
 
@@ -269,9 +294,7 @@ export function buildProficiencies(
       ...(sources.raceTools ?? []),
       ...(sources.raceToolChoice ? [sources.raceToolChoice] : []),
     ],
-    languages: [
-      ...sources.raceLanguages,
-    ],
+    languages: [...sources.raceLanguages],
   };
 }
 
@@ -309,24 +332,210 @@ export function buildInitialSpells(
   }
 
   if (spellChoices) {
-    // Añadir conjuros de clase (evitando duplicados con raciales)
-    for (const spellId of [
-      ...(spellChoices.cantrips ?? []),
-      ...(spellChoices.spells ?? []),
-    ]) {
+    // Determinar si es lanzador preparado puro (Clérigo, Druida, Paladín)
+    // Estos lanzadores tienen acceso a toda su lista de clase y no almacenan
+    // conjuros de nivel 1+ en knownSpellIds — solo en preparedSpellIds.
+    const isPreparedCaster =
+      CLASS_SPELL_PREPARATION[clase as ClassId] === "prepared" &&
+      !SPELLS_KNOWN[clase as ClassId];
+
+    // Trucos: siempre a knownSpellIds (evitando duplicados con raciales)
+    for (const spellId of spellChoices.cantrips ?? []) {
       if (!knownSpellIds.includes(spellId)) {
         knownSpellIds.push(spellId);
       }
+    }
+
+    if (isPreparedCaster) {
+      // Lanzadores preparados: conjuros nivel 1+ solo a preparedSpellIds
+      preparedSpellIds.push(...(spellChoices.spells ?? []));
+    } else {
+      // Otros lanzadores: conjuros a knownSpellIds + preparedSpellIds
+      for (const spellId of spellChoices.spells ?? []) {
+        if (!knownSpellIds.includes(spellId)) {
+          knownSpellIds.push(spellId);
+        }
+      }
+      // Los conjuros conocidos se preparan automáticamente a nivel 1
+      preparedSpellIds.push(...(spellChoices.spells ?? []));
     }
 
     // Para magos, también llenar el libro de hechizos
     if (clase === "mago" && spellChoices.spellbook) {
       spellbookIds.push(...spellChoices.spellbook);
     }
-
-    // Los conjuros conocidos se preparan automáticamente a nivel 1
-    preparedSpellIds.push(...(spellChoices.spells ?? []));
   }
 
   return { knownSpellIds, preparedSpellIds, spellbookIds };
+}
+
+// ─── Phase 6a: Additional helpers extracted from buildCharacter() ────
+
+/**
+ * Build the initial saving-throw proficiency map from class data.
+ *
+ * @param classSavingThrows Array of ability keys the class is proficient in.
+ * @returns A complete {@link SavingThrowProficiencies} record.
+ */
+export function buildSavingThrows(
+  classSavingThrows: AbilityKey[],
+): SavingThrowProficiencies {
+  const abilityKeys: AbilityKey[] = ["fue", "des", "con", "int", "sab", "car"];
+  const savingThrows = {} as SavingThrowProficiencies;
+  for (const key of abilityKeys) {
+    savingThrows[key] = {
+      proficient: classSavingThrows.includes(key),
+      source: classSavingThrows.includes(key) ? "clase" : undefined,
+    };
+  }
+  return savingThrows;
+}
+
+/**
+ * Apply trait-effect mutations to an existing saving-throw map.
+ *
+ * Traits can grant saving-throw proficiency (e.g. gnome Cunning).
+ * Only applies if the character isn't already proficient in that save.
+ *
+ * @param savingThrows The saving-throw map to mutate in place.
+ * @param mutations    Trait-effect mutations (may contain `savingThrowChanges`).
+ */
+export function applySavingThrowMutations(
+  savingThrows: SavingThrowProficiencies,
+  mutations: TraitEffectMutations,
+): void {
+  if (!mutations.savingThrowChanges) return;
+  for (const change of mutations.savingThrowChanges) {
+    if (!savingThrows[change.ability].proficient) {
+      savingThrows[change.ability] = {
+        proficient: change.proficient,
+        source: "rasgo",
+      };
+    }
+  }
+}
+
+/**
+ * Resolve the base darkvision distance before trait-effect mutations.
+ *
+ * Custom races get 60 ft if darkvision is enabled, 0 otherwise.
+ * SRD races use their racial/subracial data.
+ *
+ * @param isCustomRace  Whether the race is "personalizada".
+ * @param customRaceData Custom race configuration (if custom).
+ * @param raceData       SRD race data (needs `.darkvision`, `.darkvisionRange`).
+ * @param subraceData    SRD subrace data (optional, for `.darkvisionOverride`).
+ * @returns Darkvision distance in feet.
+ */
+export function buildBaseDarkvision(
+  isCustomRace: boolean,
+  customRaceData: CustomRaceConfig | undefined,
+  raceData: { darkvision?: boolean; darkvisionRange?: number },
+  subraceData: { darkvisionOverride?: number } | null,
+): number {
+  if (isCustomRace) {
+    return customRaceData?.darkvision ? 60 : 0;
+  }
+  return raceData.darkvision
+    ? (subraceData?.darkvisionOverride ?? raceData.darkvisionRange ?? 60)
+    : 0;
+}
+
+/**
+ * Resolve the final darkvision after applying trait mutations.
+ *
+ * Takes the max of base darkvision and any trait-granted darkvision.
+ *
+ * @param baseDarkvision Base darkvision from race/subrace.
+ * @param mutations      Trait-effect mutations.
+ * @returns Final darkvision distance in feet.
+ */
+export function resolveFinalDarkvision(
+  baseDarkvision: number,
+  mutations: TraitEffectMutations,
+): number {
+  return mutations.darkvisionUpdate !== undefined
+    ? Math.max(baseDarkvision, mutations.darkvisionUpdate)
+    : baseDarkvision;
+}
+
+/**
+ * Build the damage modifiers (resistances/immunities/vulnerabilities) array.
+ *
+ * Custom races use player-configured resistances.
+ * SRD races derive them from trait-effect mutations.
+ *
+ * @param isCustomRace    Whether the race is "personalizada".
+ * @param customRaceData  Custom race configuration (if custom).
+ * @param traitMutations  Trait-effect mutations.
+ * @returns Array of {@link DamageModifier}.
+ */
+export function buildDamageModifiers(
+  isCustomRace: boolean,
+  customRaceData: CustomRaceConfig | undefined,
+  traitMutations: TraitEffectMutations,
+): DamageModifier[] {
+  if (isCustomRace && customRaceData?.damageResistances) {
+    return customRaceData.damageResistances.map((type) => ({
+      type,
+      modifier: "resistance" as const,
+      source: customRaceData.nombre || "Raza personalizada",
+    }));
+  }
+  return traitMutations.newDamageModifiers ?? [];
+}
+
+/**
+ * Resolve racial spell IDs available at level 1.
+ *
+ * Custom races pull from their configured `racialSpells` array.
+ * SRD races use `getRacialSpellsForLevel()`.
+ *
+ * @param isCustomRace    Whether the race is "personalizada".
+ * @param customRaceData  Custom race configuration (if custom).
+ * @param raza            Race ID.
+ * @param subraza         Subrace ID (or null/undefined).
+ * @returns Array of spell ID strings.
+ */
+export function resolveRacialSpellIdsForLevel1(
+  isCustomRace: boolean,
+  customRaceData: CustomRaceConfig | undefined,
+  raza: RaceId,
+  subraza: SubraceId | null | undefined,
+): string[] {
+  if (isCustomRace && customRaceData?.racialSpells) {
+    return customRaceData.racialSpells
+      .filter((s) => s.minLevel <= 1)
+      .map((s) => s.nombre.toLowerCase().replace(/\s+/g, "_"));
+  }
+  if (!isCustomRace) {
+    return getRacialSpellsForLevel(raza, subraza ?? null, 1).map(
+      (s) => s.spellId,
+    );
+  }
+  return [];
+}
+
+/**
+ * Build the initial level-history entry for a freshly created character.
+ *
+ * @param timestamp     Creation timestamp (ISO-8601 string from `now()`).
+ * @param maxHP         Max HP at level 1.
+ * @param knownSpellIds Known spell IDs at level 1 (empty if non-caster).
+ * @returns A single-element level-history array.
+ */
+export function buildInitialLevelHistory(
+  timestamp: string,
+  maxHP: number,
+  knownSpellIds: string[],
+): Character["levelHistory"] {
+  return [
+    {
+      level: 1,
+      date: timestamp,
+      hpGained: maxHP,
+      hpMethod: "fixed",
+      spellsLearned: knownSpellIds.length > 0 ? [...knownSpellIds] : undefined,
+    },
+  ];
 }

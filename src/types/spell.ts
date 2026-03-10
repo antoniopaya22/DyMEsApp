@@ -34,6 +34,8 @@ export {
   formatSpellDuration,
   formatCastingTime,
   formatSpellRange,
+  parseAlcance,
+  formatAlcanceRaw,
 } from "@/utils/spells";
 
 // ─── Escuelas de magia ───────────────────────────────────────────────

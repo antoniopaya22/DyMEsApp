@@ -6,21 +6,29 @@
 import type {
   Character,
   AbilityKey,
+  AbilityScores,
   AbilityScoresDetailed,
   LevelUpRecord,
   Trait,
+  Proficiencies,
 } from "@/types/character";
-import { calcModifier } from "@/types/character";
+import {
+  calcModifier,
+  calcProficiencyBonus,
+  ABILITY_ABBR,
+} from "@/types/character";
+import { ABILITY_KEYS } from "@/constants/abilities";
 import { now } from "@/utils/providers";
 import type { LevelUpSummary } from "@/data/srd/leveling";
 import { getSubclassOptions } from "@/data/srd/subclasses";
-import {
-  getSubclassFeaturesForLevel,
-} from "@/data/srd/subclassFeatures";
+import { getSubclassFeaturesForLevel } from "@/data/srd/subclassFeatures";
 import { getRacialSpellsUnlockedAtLevel } from "@/data/srd/races";
-import { rollDie, hitDieSides, createDefaultMagicState } from "./helpers";
+import { getFeatById, type Feat } from "@/data/srd/feats";
+import { hitDieValue, resolveLimitedUse } from "@/utils/character";
+import { rollDie, createDefaultMagicState } from "./helpers";
 import type { InternalMagicState } from "./helpers";
 import type { LevelUpOptions } from "./types";
+import type { TraitEffectMutations } from "@/utils/traitEffects";
 
 // ─── Return types ────────────────────────────────────────────────────
 
@@ -56,6 +64,7 @@ export function applyHPGain(
   character: Character,
   options: Pick<LevelUpOptions, "hpMethod" | "hpRolled">,
   dieSides: number,
+  hpBonusPerLevel: number = 0,
 ): HPGainResult {
   let hpRoll: number;
   if (options.hpMethod === "fixed") {
@@ -64,7 +73,7 @@ export function applyHPGain(
     hpRoll = options.hpRolled ?? rollDie(dieSides);
   }
   const conMod = calcModifier(character.abilityScores.con.total);
-  const hpGained = Math.max(1, hpRoll + conMod);
+  const hpGained = Math.max(1, hpRoll + conMod) + hpBonusPerLevel;
 
   return { hpRoll, hpGained, conMod };
 }
@@ -84,29 +93,41 @@ export function applyHPGain(
 export function applyASI(
   abilityScores: AbilityScoresDetailed,
   summary: Pick<LevelUpSummary, "hasASI">,
-  options: Pick<LevelUpOptions, "abilityImprovements">,
+  options: Pick<
+    LevelUpOptions,
+    "abilityImprovements" | "featChosen" | "featAsiChoices"
+  >,
   currentConMod: number,
   currentLevel: number,
 ): ASIResult {
   const updatedScores = { ...abilityScores };
 
-  if (summary.hasASI && options.abilityImprovements) {
-    for (const [key, value] of Object.entries(options.abilityImprovements)) {
-      const abilityKey = key as AbilityKey;
-      if (updatedScores[abilityKey] && value) {
-        const currentDetail = { ...updatedScores[abilityKey] };
-        currentDetail.improvement += value;
-        currentDetail.total =
-          currentDetail.base +
-          currentDetail.racial +
-          currentDetail.improvement +
-          currentDetail.misc;
-        if (currentDetail.override !== null) {
-          currentDetail.total = currentDetail.override;
+  if (summary.hasASI) {
+    // Determine which ability improvements to apply:
+    // - Standard ASI: abilityImprovements (when no feat chosen)
+    // - Feat ASI: featAsiChoices (when a feat is chosen that grants ASI)
+    const improvements = options.featChosen
+      ? options.featAsiChoices
+      : options.abilityImprovements;
+
+    if (improvements) {
+      for (const [key, value] of Object.entries(improvements)) {
+        const abilityKey = key as AbilityKey;
+        if (updatedScores[abilityKey] && value) {
+          const currentDetail = { ...updatedScores[abilityKey] };
+          currentDetail.improvement += value;
+          currentDetail.total =
+            currentDetail.base +
+            currentDetail.racial +
+            currentDetail.improvement +
+            currentDetail.misc;
+          if (currentDetail.override !== null) {
+            currentDetail.total = currentDetail.override;
+          }
+          currentDetail.total = Math.min(20, currentDetail.total);
+          currentDetail.modifier = calcModifier(currentDetail.total);
+          updatedScores[abilityKey] = currentDetail;
         }
-        currentDetail.total = Math.min(20, currentDetail.total);
-        currentDetail.modifier = calcModifier(currentDetail.total);
-        updatedScores[abilityKey] = currentDetail;
       }
     }
   }
@@ -161,15 +182,22 @@ export function buildNewTraits(
       // Custom subclass or no detailed data → keep generic placeholder as fallback
       return true;
     })
-    .map((f) => ({
-      id: `${character.clase}_${f.nombre.toLowerCase().replace(/\s+/g, "_")}_nv${newLevel}`,
-      nombre: f.nombre,
-      descripcion: f.descripcion,
-      origen: (f.esSubclase ? "subclase" : "clase") as Trait["origen"],
-      maxUses: null,
-      currentUses: null,
-      recharge: null,
-    }));
+    .map((f) => {
+      const { maxUses, currentUses, recharge } = resolveLimitedUse(
+        f.efectos,
+        newLevel,
+      );
+      return {
+        id: `${character.clase}_${f.nombre.toLowerCase().replace(/\s+/g, "_")}_nv${newLevel}`,
+        nombre: f.nombre,
+        descripcion: f.descripcion,
+        origen: (f.esSubclase ? "subclase" : "clase") as Trait["origen"],
+        maxUses,
+        currentUses,
+        recharge,
+        efectos: f.efectos?.length ? f.efectos : undefined,
+      };
+    });
 }
 
 // ─── 4. buildSubclassTraits ─────────────────────────────────────────
@@ -234,14 +262,19 @@ export function buildSubclassTraits(
       }
     }
 
+    const { maxUses, currentUses, recharge } = resolveLimitedUse(
+      rasgo.efectos,
+      newLevel,
+    );
     traits.push({
       id: `${character.clase}_sub_${rasgo.nombre.toLowerCase().replace(/\s+/g, "_")}_nv${newLevel}`,
       nombre: rasgo.nombre,
       descripcion: descripcionFinal,
       origen: "subclase" as Trait["origen"],
-      maxUses: null,
-      currentUses: null,
-      recharge: null,
+      maxUses,
+      currentUses,
+      recharge,
+      efectos: rasgo.efectos?.length ? rasgo.efectos : undefined,
     });
   }
 
@@ -251,8 +284,7 @@ export function buildSubclassTraits(
     const compParts: string[] = [];
     if (comp.armaduras)
       compParts.push(`Armaduras: ${comp.armaduras.join(", ")}`);
-    if (comp.armas)
-      compParts.push(`Armas: ${comp.armas.join(", ")}`);
+    if (comp.armas) compParts.push(`Armas: ${comp.armas.join(", ")}`);
     if (comp.herramientas)
       compParts.push(`Herramientas: ${comp.herramientas.join(", ")}`);
     if (compParts.length > 0) {
@@ -264,6 +296,14 @@ export function buildSubclassTraits(
         maxUses: null,
         currentUses: null,
         recharge: null,
+        efectos: [
+          {
+            kind: "proficiency" as const,
+            armors: comp.armaduras,
+            weapons: comp.armas,
+            tools: comp.herramientas,
+          },
+        ],
       });
     }
   }
@@ -271,7 +311,108 @@ export function buildSubclassTraits(
   return traits;
 }
 
-// ─── 5. buildLevelRecord ────────────────────────────────────────────
+// ─── 5. buildFeatTrait ──────────────────────────────────────────────
+
+/**
+ * Builds a Trait from a chosen Feat, to be added to the character's trait list.
+ *
+ * @param featId         - The ID of the chosen feat.
+ * @param newLevel       - The level at which the feat was chosen.
+ * @param featAsiChoices - The actual ASI distribution the player chose (optional).
+ * @returns A Trait object representing the feat, or null if the feat was not found.
+ */
+export function buildFeatTrait(
+  featId: string,
+  newLevel: number,
+  featAsiChoices?: Partial<AbilityScores>,
+): Trait | null {
+  const feat = getFeatById(featId);
+  if (!feat) return null;
+
+  // Collect all trait descriptions from the feat's effects
+  const traitDescriptions = feat.efectos
+    .filter((e) => e.type === "trait" && e.traitDescription)
+    .map((e) => e.traitDescription!);
+
+  // Build a summary of mechanical effects for the description
+  const mechanicalParts: string[] = [];
+  for (const e of feat.efectos) {
+    switch (e.type) {
+      case "asi":
+        // Show actual choices if available, otherwise show options
+        if (featAsiChoices && Object.keys(featAsiChoices).length > 0) {
+          const chosenStr = Object.entries(featAsiChoices)
+            .filter(([_, v]) => (v ?? 0) > 0)
+            .map(([k, v]) => `${ABILITY_ABBR[k as AbilityKey]} +${v}`)
+            .join(", ");
+          mechanicalParts.push(chosenStr);
+        } else {
+          mechanicalParts.push(
+            `+${e.asiAmount ?? 1} a ${e.asiChoices?.map((k) => ABILITY_ABBR[k]).join("/") ?? "una característica a elegir"}`,
+          );
+        }
+        break;
+      case "proficiency":
+        mechanicalParts.push(
+          `Competencia: ${e.proficiencyValues?.join(", ") ?? e.proficiencyType}`,
+        );
+        break;
+      case "spell":
+        mechanicalParts.push(
+          `Conjuro${e.spellIds && e.spellIds.length > 1 ? "s" : ""}: ${e.spellIds?.join(", ") ?? "a elegir"}`,
+        );
+        break;
+      case "hp_max":
+        if (e.hpBonusPerLevel)
+          mechanicalParts.push(`+${e.hpBonusPerLevel} PV por nivel`);
+        else if (e.hpBonus) mechanicalParts.push(`+${e.hpBonus} PV máximos`);
+        break;
+      case "speed":
+        mechanicalParts.push(`+${e.speedBonus} pies de velocidad`);
+        break;
+      case "sense":
+        mechanicalParts.push(`${e.senseType} ${e.senseRange} pies`);
+        break;
+    }
+  }
+
+  const fullDescription = [
+    feat.descripcion,
+    ...(mechanicalParts.length > 0
+      ? [`\nEfectos: ${mechanicalParts.join(". ")}.`]
+      : []),
+    ...(traitDescriptions.length > 0
+      ? [`\n${traitDescriptions.join("\n")}`]
+      : []),
+  ].join("");
+
+  return {
+    id: `dote_${featId}_nv${newLevel}`,
+    nombre: feat.nombre,
+    descripcion: fullDescription,
+    origen: "dote",
+    maxUses: null,
+    currentUses: null,
+    recharge: null,
+  };
+}
+
+/**
+ * Extracts HP bonus per level from a feat's effects (e.g., Tough feat).
+ */
+export function getFeatHpBonusPerLevel(featId: string): number {
+  const feat = getFeatById(featId);
+  if (!feat) return 0;
+  let bonus = 0;
+  for (const e of feat.efectos) {
+    if (e.type === "hp_max" && e.hpBonusPerLevel) {
+      bonus += e.hpBonusPerLevel;
+    }
+  }
+  return bonus;
+}
+
+// ─── 6. buildLevelRecord ────────────────────────────────────────────
 
 /**
  * Creates the LevelUpRecord for this level-up.
@@ -294,6 +435,8 @@ export function buildLevelRecord(
     hpGained,
     hpMethod: options.hpMethod,
     abilityImprovements: options.abilityImprovements,
+    featChosen: options.featChosen,
+    featAsiChoices: options.featAsiChoices,
     subclassChosen: options.subclassChosen,
     subclassFeatureChoices: options.subclassFeatureChoices,
     spellsLearned: [
@@ -301,14 +444,12 @@ export function buildLevelRecord(
       ...(options.spellsLearned ?? []),
       ...(options.spellbookAdded ?? []),
     ].filter(Boolean),
-    spellsSwapped: options.spellSwapped
-      ? [options.spellSwapped]
-      : undefined,
+    spellsSwapped: options.spellSwapped ? [options.spellSwapped] : undefined,
     traitsGained: summary.features.map((f) => f.nombre),
   };
 }
 
-// ─── 6. applyMagicProgression ───────────────────────────────────────
+// ─── 7. applyMagicProgression ───────────────────────────────────────
 
 /**
  * Updates magic state with new spells, metamagic, and swaps from level-up.
@@ -376,7 +517,10 @@ export function applyMagicProgression(
   }
 
   // Hechizos raciales desbloqueados en este nivel
-  if (character.raza === "personalizada" && character.customRaceData?.racialSpells) {
+  if (
+    character.raza === "personalizada" &&
+    character.customRaceData?.racialSpells
+  ) {
     // Custom race: check racialSpells from the persisted config
     for (const rs of character.customRaceData.racialSpells) {
       if (rs.minLevel === character.nivel) {
@@ -400,4 +544,299 @@ export function applyMagicProgression(
   }
 
   return newMagicState;
+}
+
+// ─── Phase 6b: Trait-effect & feat mutation helpers ──────────────────
+
+/**
+ * Merge proficiency arrays without duplicates.
+ */
+function mergeProficiencies(
+  existing: Proficiencies,
+  additions: Partial<Proficiencies>,
+): Proficiencies {
+  return {
+    armors: [...new Set([...existing.armors, ...(additions.armors ?? [])])],
+    weapons: [...new Set([...existing.weapons, ...(additions.weapons ?? [])])],
+    tools: [...new Set([...existing.tools, ...(additions.tools ?? [])])],
+    languages: [
+      ...new Set([...existing.languages, ...(additions.languages ?? [])]),
+    ],
+  };
+}
+
+/**
+ * Apply trait-effect mutations to a character (immutably).
+ *
+ * Handles speed updates, damage modifiers, proficiencies, saving throws,
+ * darkvision, and HP bonuses from traits gained at level-up.
+ *
+ * @param character The character before mutations.
+ * @param mutations The mutations computed by `computeTraitEffectMutations()`.
+ * @returns A new Character with all mutations applied.
+ */
+export function applyTraitEffectMutations(
+  character: Character,
+  mutations: TraitEffectMutations,
+): Character {
+  let result = character;
+
+  // Speed
+  if (mutations.speedUpdates) {
+    const s = result.speed;
+    result = {
+      ...result,
+      speed: {
+        walk: s.walk + (mutations.speedUpdates.walk ?? 0),
+        ...(mutations.speedUpdates.swim !== undefined || s.swim !== undefined
+          ? { swim: mutations.speedUpdates.swim ?? s.swim }
+          : {}),
+        ...(mutations.speedUpdates.climb !== undefined || s.climb !== undefined
+          ? { climb: mutations.speedUpdates.climb ?? s.climb }
+          : {}),
+        ...(mutations.speedUpdates.fly !== undefined || s.fly !== undefined
+          ? { fly: mutations.speedUpdates.fly ?? s.fly }
+          : {}),
+      },
+    };
+  }
+
+  // Damage modifiers
+  if (mutations.newDamageModifiers?.length) {
+    result = {
+      ...result,
+      damageModifiers: [
+        ...result.damageModifiers,
+        ...mutations.newDamageModifiers,
+      ],
+    };
+  }
+
+  // Proficiencies (merge without duplicates)
+  if (mutations.newProficiencies) {
+    result = {
+      ...result,
+      proficiencies: mergeProficiencies(
+        result.proficiencies,
+        mutations.newProficiencies,
+      ),
+    };
+  }
+
+  // Saving throws
+  if (mutations.savingThrowChanges?.length) {
+    const st = { ...result.savingThrows };
+    for (const change of mutations.savingThrowChanges) {
+      st[change.ability] = {
+        ...st[change.ability],
+        proficient: change.proficient,
+        source: "clase",
+      };
+    }
+    result = { ...result, savingThrows: st };
+  }
+
+  // Darkvision
+  if (mutations.darkvisionUpdate !== undefined) {
+    result = {
+      ...result,
+      darkvision: Math.max(result.darkvision, mutations.darkvisionUpdate),
+    };
+  }
+
+  // HP bonus from traits (e.g. Draconic Resilience +1/level retroactive)
+  if (mutations.hpBonusFromTraits) {
+    result = {
+      ...result,
+      hp: {
+        ...result.hp,
+        max: result.hp.max + mutations.hpBonusFromTraits,
+        current: result.hp.current + mutations.hpBonusFromTraits,
+      },
+    };
+  }
+
+  return result;
+}
+
+/**
+ * Apply feat effects to a character (immutably).
+ *
+ * Handles speed bonuses, HP bonuses, sense upgrades, and proficiency
+ * grants from a chosen feat.
+ *
+ * @param character  The character before feat effects.
+ * @param featId     ID of the chosen feat.
+ * @param newLevel   The character's new level (for per-level HP bonuses).
+ * @returns A new Character with feat effects applied, or the same character
+ *          if the feat was not found.
+ */
+export function applyFeatEffects(
+  character: Character,
+  featId: string,
+  newLevel: number,
+): Character {
+  const chosenFeat = getFeatById(featId);
+  if (!chosenFeat) return character;
+
+  let result = character;
+
+  for (const effect of chosenFeat.efectos) {
+    switch (effect.type) {
+      case "speed":
+        if (effect.speedBonus) {
+          result = {
+            ...result,
+            speed: {
+              ...result.speed,
+              walk: result.speed.walk + effect.speedBonus,
+            },
+          };
+        }
+        break;
+
+      case "hp_max":
+        if (effect.hpBonusPerLevel) {
+          const hpBonus = effect.hpBonusPerLevel * newLevel;
+          result = {
+            ...result,
+            hp: {
+              ...result.hp,
+              max: result.hp.max + hpBonus,
+              current: result.hp.current + hpBonus,
+            },
+          };
+        } else if (effect.hpBonus) {
+          result = {
+            ...result,
+            hp: {
+              ...result.hp,
+              max: result.hp.max + effect.hpBonus,
+              current: result.hp.current + effect.hpBonus,
+            },
+          };
+        }
+        break;
+
+      case "sense":
+        if (effect.senseType === "darkvision" && effect.senseRange) {
+          result = {
+            ...result,
+            darkvision: Math.max(result.darkvision, effect.senseRange),
+          };
+        }
+        break;
+
+      case "proficiency":
+        if (effect.proficiencyValues) {
+          const p = result.proficiencies;
+          switch (effect.proficiencyType) {
+            case "armor":
+              result = {
+                ...result,
+                proficiencies: {
+                  ...p,
+                  armors: [
+                    ...new Set([...p.armors, ...effect.proficiencyValues]),
+                  ],
+                },
+              };
+              break;
+            case "weapon":
+              result = {
+                ...result,
+                proficiencies: {
+                  ...p,
+                  weapons: [
+                    ...new Set([...p.weapons, ...effect.proficiencyValues]),
+                  ],
+                },
+              };
+              break;
+            case "tool":
+              result = {
+                ...result,
+                proficiencies: {
+                  ...p,
+                  tools: [
+                    ...new Set([...p.tools, ...effect.proficiencyValues]),
+                  ],
+                },
+              };
+              break;
+          }
+        }
+        break;
+      // "asi" effects are handled by applyASI() via featAsiChoices
+      // "spell", "trait" effects are player-choice or descriptive
+    }
+  }
+
+  return result;
+}
+
+// ─── Phase 6d: resetToLevel1 helpers ─────────────────────────────────
+
+/** Trait sources to keep when resetting to level 1. */
+const LEVEL1_KEEP_ORIGINS = new Set<string>([
+  "raza",
+  "trasfondo",
+  "dote",
+  "manual",
+]);
+
+/**
+ * Reset ability scores to level 1 by removing all improvements.
+ *
+ * Recalculates totals and modifiers with improvement = 0.
+ *
+ * @param abilityScores Current detailed ability scores.
+ * @returns New ability scores with improvements zeroed out.
+ */
+export function resetAbilityScoresToLevel1(
+  abilityScores: AbilityScoresDetailed,
+): AbilityScoresDetailed {
+  const result = { ...abilityScores };
+  for (const key of ABILITY_KEYS) {
+    const detail = { ...result[key] };
+    detail.improvement = 0;
+    detail.total =
+      detail.override !== null
+        ? detail.override
+        : Math.min(20, detail.base + detail.racial + detail.misc);
+    detail.modifier = calcModifier(detail.total);
+    result[key] = detail;
+  }
+  return result;
+}
+
+/**
+ * Filter character traits to only those appropriate for level 1.
+ *
+ * Keeps race, background, feat, and manual traits.
+ * For class traits, only keeps those from level 1 (determined by the
+ * level-history record or fallback to the class's level-1 features).
+ *
+ * @param traits         All current traits.
+ * @param level1Features Class's level-1 feature names (fallback source).
+ * @param levelHistory   Character's level history (to find level-1 traits).
+ * @returns Filtered trait array for a level-1 character.
+ */
+export function filterTraitsForLevel1(
+  traits: Trait[],
+  level1Features: { nombre: string }[],
+  levelHistory: Character["levelHistory"],
+): Trait[] {
+  const level1Record = levelHistory.find((r) => r.level === 1);
+
+  const traitsToKeep = traits.filter((t) => LEVEL1_KEEP_ORIGINS.has(t.origen));
+
+  const level1TraitNames = new Set(
+    level1Record?.traitsGained ?? level1Features.map((f) => f.nombre),
+  );
+  const level1ClassTraits = traits.filter(
+    (t) => t.origen === "clase" && level1TraitNames.has(t.nombre),
+  );
+
+  return [...traitsToKeep, ...level1ClassTraits];
 }

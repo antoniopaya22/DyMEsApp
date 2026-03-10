@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks";
+import { withAlpha } from "@/utils/theme";
 
 interface AnimatedPressableProps {
   onPress?: () => void;
@@ -148,8 +149,8 @@ function getVariantStyles(
       glow: colors.accentDanger,
     },
     gold: {
-      bg: "rgba(0,229,255,0.15)",
-      border: "rgba(0,229,255,0.3)",
+      bg: withAlpha(colors.accentRed, 0.15),
+      border: withAlpha(colors.accentRed, 0.3),
       text: colors.accentGold,
       glow: colors.accentGold,
     },

@@ -13,7 +13,7 @@
  * ✅ Theme-aware: adapts to light/dark mode via useTheme()
  */
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useCallback } from "react";
 import {
   View,
   TextInput,
@@ -25,7 +25,7 @@ import {
   TextInputProps,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/hooks";
+import { useTheme, useEntranceAnimation } from "@/hooks";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -49,7 +49,10 @@ export interface SearchBarProps {
   /** Whether to auto-focus on mount (default: false) */
   autoFocus?: boolean;
   /** Additional TextInput props */
-  inputProps?: Omit<TextInputProps, "value" | "onChangeText" | "placeholder" | "placeholderTextColor" | "style">;
+  inputProps?: Omit<
+    TextInputProps,
+    "value" | "onChangeText" | "placeholder" | "placeholderTextColor" | "style"
+  >;
   /** Custom outer container style */
   style?: ViewStyle;
   /** Whether the search bar is disabled */
@@ -113,19 +116,10 @@ export default function SearchBar({
   // Focus animation (border + bg transition)
   const focusAnim = useRef(new Animated.Value(0)).current;
   // Entrance fade-in
-  const entranceAnim = useRef(new Animated.Value(animated ? 0 : 1)).current;
-
-  // ── Entrance animation ──
-  useEffect(() => {
-    if (!animated) return;
-    Animated.timing(entranceAnim, {
-      toValue: 1,
-      duration: 400,
-      delay: entranceDelay,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  }, [animated, entranceDelay, entranceAnim]);
+  const { opacity: entranceAnim } = useEntranceAnimation({
+    active: animated,
+    delay: entranceDelay,
+  });
 
   // ── Focus handlers ──
   const handleFocus = useCallback(() => {
@@ -195,66 +189,69 @@ export default function SearchBar({
           },
         ]}
       >
-      {/* Search icon */}
-      <Animated.View style={{ opacity: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }}>
-        <Ionicons
-          name={icon}
-          size={preset.iconSize}
-          color={iconColor}
-        />
-      </Animated.View>
-
-      {/* Text input */}
-      <TextInput
-        style={[
-          styles.input,
-          {
-            color: colors.searchText,
-            fontSize: preset.fontSize,
-          },
-        ]}
-        placeholder={placeholder}
-        placeholderTextColor={colors.searchPlaceholder}
-        defaultValue={value}
-        onChangeText={onChangeText}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        autoCorrect={false}
-        autoCapitalize="none"
-        autoFocus={autoFocus}
-        editable={!disabled}
-        returnKeyType="search"
-        {...inputProps}
-      />
-
-      {/* Clear button */}
-      {value.length > 0 && !disabled && (
-        <TouchableOpacity
-          onPress={handleClear}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          activeOpacity={0.6}
+        {/* Search icon */}
+        <Animated.View
+          style={{
+            opacity: focusAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0.6, 1],
+            }),
+          }}
         >
-          <View
-            style={[
-              styles.clearButton,
-              {
-                width: preset.clearButtonSize,
-                height: preset.clearButtonSize,
-                borderRadius: preset.clearButtonSize / 2,
-                backgroundColor: isDark
-                  ? "rgba(255,255,255,0.08)"
-                  : "rgba(0,0,0,0.06)",
-              },
-            ]}
+          <Ionicons name={icon} size={preset.iconSize} color={iconColor} />
+        </Animated.View>
+
+        {/* Text input */}
+        <TextInput
+          style={[
+            styles.input,
+            {
+              color: colors.searchText,
+              fontSize: preset.fontSize,
+            },
+          ]}
+          placeholder={placeholder}
+          placeholderTextColor={colors.searchPlaceholder}
+          defaultValue={value}
+          onChangeText={onChangeText}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          autoCorrect={false}
+          autoCapitalize="none"
+          autoFocus={autoFocus}
+          editable={!disabled}
+          returnKeyType="search"
+          {...inputProps}
+        />
+
+        {/* Clear button */}
+        {value.length > 0 && !disabled && (
+          <TouchableOpacity
+            onPress={handleClear}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.6}
           >
-            <Ionicons
-              name="close"
-              size={preset.clearSize}
-              color={colors.textMuted}
-            />
-          </View>
-        </TouchableOpacity>
-      )}
+            <View
+              style={[
+                styles.clearButton,
+                {
+                  width: preset.clearButtonSize,
+                  height: preset.clearButtonSize,
+                  borderRadius: preset.clearButtonSize / 2,
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.08)"
+                    : "rgba(0,0,0,0.06)",
+                },
+              ]}
+            >
+              <Ionicons
+                name="close"
+                size={preset.clearSize}
+                color={colors.textMuted}
+              />
+            </View>
+          </TouchableOpacity>
+        )}
       </Animated.View>
     </Animated.View>
   );

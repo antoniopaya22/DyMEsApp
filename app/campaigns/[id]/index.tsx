@@ -331,8 +331,6 @@ export default function CampaignDetailScreen() {
   const [editDescripcion, setEditDescripcion] = useState("");
   const [editSaving, setEditSaving] = useState(false);
 
-
-
   useFocusEffect(
     useCallback(() => {
       const load = async () => {
@@ -425,9 +423,16 @@ export default function CampaignDetailScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.bgPrimary }}>
+      <View
+        style={[
+          detailStyles.centeredContainer,
+          { backgroundColor: colors.bgPrimary },
+        ]}
+      >
         <ActivityIndicator size="large" color={colors.accentRed} />
-        <Text className="text-base mt-4" style={{ color: colors.textSecondary }}>
+        <Text
+          style={[detailStyles.loadingText, { color: colors.textSecondary }]}
+        >
           Cargando partida...
         </Text>
       </View>
@@ -436,26 +441,45 @@ export default function CampaignDetailScreen() {
 
   if (!campaign) {
     return (
-      <View className="flex-1 items-center justify-center px-8" style={{ backgroundColor: colors.bgPrimary }}>
-        <View className="h-20 w-20 rounded-full items-center justify-center mb-6" style={{ backgroundColor: colors.bgSecondary }}>
+      <View
+        style={[
+          detailStyles.centeredContainer,
+          { backgroundColor: colors.bgPrimary, paddingHorizontal: 32 },
+        ]}
+      >
+        <View
+          style={[
+            detailStyles.errorIconCircle,
+            { backgroundColor: colors.bgSecondary },
+          ]}
+        >
           <Ionicons
             name="alert-circle-outline"
             size={44}
             color={colors.dangerText}
           />
         </View>
-        <Text className="text-xl font-bold text-center mb-2" style={{ color: colors.textPrimary }}>
+        <Text style={[detailStyles.errorTitle, { color: colors.textPrimary }]}>
           Partida no encontrada
         </Text>
-        <Text className="text-base text-center mb-8" style={{ color: colors.textSecondary }}>
+        <Text
+          style={[detailStyles.errorSubtitle, { color: colors.textSecondary }]}
+        >
           La partida que buscas no existe o ha sido eliminada.
         </Text>
         <TouchableOpacity
-          className="rounded-xl px-8 py-3.5"
-          style={{ backgroundColor: colors.accentRed }}
+          style={[
+            detailStyles.errorButton,
+            { backgroundColor: colors.accentRed },
+          ]}
           onPress={() => router.replace("/")}
         >
-          <Text className="font-bold text-base" style={{ color: colors.textInverted }}>
+          <Text
+            style={[
+              detailStyles.errorButtonText,
+              { color: colors.textInverted },
+            ]}
+          >
             Volver al inicio
           </Text>
         </TouchableOpacity>
@@ -489,18 +513,30 @@ export default function CampaignDetailScreen() {
       onRequestClose={() => setShowEditModal(false)}
     >
       <KeyboardAvoidingView
-        className="flex-1 justify-end"
+        style={detailStyles.modalOverlay}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View className="rounded-t-3xl border-t" style={{ backgroundColor: colors.bgCard, borderColor: colors.borderDefault }}>
+        <View
+          style={[
+            detailStyles.modalSheet,
+            {
+              backgroundColor: colors.bgCard,
+              borderColor: colors.borderDefault,
+            },
+          ]}
+        >
           {/* Header */}
-          <View className="flex-row items-center justify-between px-5 pt-5 pb-3">
-            <Text className="text-lg font-bold" style={{ color: colors.textPrimary }}>
+          <View style={detailStyles.modalHeader}>
+            <Text
+              style={[detailStyles.modalTitle, { color: colors.textPrimary }]}
+            >
               Editar Partida
             </Text>
             <TouchableOpacity
-              className="h-8 w-8 rounded-full items-center justify-center"
-              style={{ backgroundColor: colors.bgSecondary }}
+              style={[
+                detailStyles.modalCloseBtn,
+                { backgroundColor: colors.bgSecondary },
+              ]}
               onPress={() => setShowEditModal(false)}
             >
               <Ionicons name="close" size={18} color={colors.textPrimary} />
@@ -508,17 +544,29 @@ export default function CampaignDetailScreen() {
           </View>
 
           <ScrollView
-            className="px-5 pb-8"
+            style={detailStyles.modalBody}
             contentContainerStyle={{ paddingBottom: 40 }}
             keyboardShouldPersistTaps="handled"
           >
             {/* Nombre */}
-            <Text className="text-sm font-semibold mb-2 uppercase tracking-wider mt-2" style={{ color: colors.textSecondary }}>
-              Nombre de la partida <Text style={{ color: colors.accentRed }}>*</Text>
+            <Text
+              style={[
+                detailStyles.fieldLabel,
+                { color: colors.textSecondary, marginTop: 8 },
+              ]}
+            >
+              Nombre de la partida{" "}
+              <Text style={{ color: colors.accentRed }}>*</Text>
             </Text>
             <TextInput
-              className="rounded-xl px-4 py-3.5 text-base border mb-4"
-              style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+              style={[
+                detailStyles.textInput,
+                {
+                  backgroundColor: colors.bgInput,
+                  color: colors.textPrimary,
+                  borderColor: colors.borderDefault,
+                },
+              ]}
               placeholder="Nombre de la partida"
               placeholderTextColor={colors.textMuted}
               value={editNombre}
@@ -527,17 +575,26 @@ export default function CampaignDetailScreen() {
               autoFocus
               returnKeyType="next"
             />
-            <Text className="text-xs -mt-2 mb-4 text-right" style={{ color: colors.textMuted }}>
+            <Text style={[detailStyles.charCount, { color: colors.textMuted }]}>
               {editNombre.length}/100
             </Text>
 
             {/* Descripción */}
-            <Text className="text-sm font-semibold mb-2 uppercase tracking-wider" style={{ color: colors.textSecondary }}>
+            <Text
+              style={[detailStyles.fieldLabel, { color: colors.textSecondary }]}
+            >
               Descripción (opcional)
             </Text>
             <TextInput
-              className="rounded-xl px-4 py-3.5 text-base border min-h-[120px] mb-4"
-              style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+              style={[
+                detailStyles.textInput,
+                detailStyles.textArea,
+                {
+                  backgroundColor: colors.bgInput,
+                  color: colors.textPrimary,
+                  borderColor: colors.borderDefault,
+                },
+              ]}
               placeholder="Descripción de la campaña..."
               placeholderTextColor={colors.textMuted}
               value={editDescripcion}
@@ -547,32 +604,50 @@ export default function CampaignDetailScreen() {
               maxLength={500}
               textAlignVertical="top"
             />
-            <Text className="text-xs -mt-2 mb-6 text-right" style={{ color: colors.textMuted }}>
+            <Text
+              style={[
+                detailStyles.charCount,
+                { color: colors.textMuted, marginBottom: 24 },
+              ]}
+            >
               {editDescripcion.length}/500
             </Text>
 
             {/* Botón guardar */}
             <TouchableOpacity
-              className="rounded-xl py-4 items-center"
-              style={{
-                backgroundColor: editNombre.trim() && !editSaving
-                  ? colors.accentRed
-                  : colors.bgSecondary,
-                opacity: editNombre.trim() && !editSaving ? 1 : 0.5,
-              }}
+              style={[
+                detailStyles.modalPrimaryBtn,
+                {
+                  backgroundColor:
+                    editNombre.trim() && !editSaving
+                      ? colors.accentRed
+                      : colors.bgSecondary,
+                  opacity: editNombre.trim() && !editSaving ? 1 : 0.5,
+                },
+              ]}
               onPress={handleSaveEdit}
               disabled={!editNombre.trim() || editSaving}
             >
-              <Text className="font-bold text-base" style={{ color: colors.textInverted }}>
+              <Text
+                style={[
+                  detailStyles.modalPrimaryBtnText,
+                  { color: colors.textInverted },
+                ]}
+              >
                 {editSaving ? "Guardando..." : "Guardar Cambios"}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="mt-3 rounded-xl py-3.5 items-center"
+              style={detailStyles.modalCancelBtn}
               onPress={() => setShowEditModal(false)}
             >
-              <Text className="font-semibold text-base" style={{ color: colors.textSecondary }}>
+              <Text
+                style={[
+                  detailStyles.modalCancelBtnText,
+                  { color: colors.textSecondary },
+                ]}
+              >
                 Cancelar
               </Text>
             </TouchableOpacity>
@@ -582,10 +657,10 @@ export default function CampaignDetailScreen() {
     </Modal>
   );
 
-
-
   return (
-    <View style={[detailStyles.container, { backgroundColor: colors.bgPrimary }]}>
+    <View
+      style={[detailStyles.container, { backgroundColor: colors.bgPrimary }]}
+    >
       {/* Themed backdrop */}
       <DndBackdrop />
 
@@ -661,7 +736,10 @@ export default function CampaignDetailScreen() {
             <Text
               style={[
                 detailStyles.heroLabel,
-                { color: colors.headerLabelColor },
+                {
+                  color: colors.headerLabelColor,
+                  textShadowColor: withAlpha(colors.accentRed, 0.2),
+                },
               ]}
             >
               Partida
@@ -770,60 +848,86 @@ export default function CampaignDetailScreen() {
             />
 
             {/* Character portrait card */}
-            {character && character.campaignId === campaign.id && (() => {
-              const avatarSource = getCharacterAvatar(character.clase, character.raza, character.sexo);
-              const rData = getRaceData(character.raza);
-              const cData = getClassData(character.clase);
-              return (
-                <TouchableOpacity
-                  activeOpacity={0.85}
-                  onPress={handleOpenCharacterSheet}
-                  style={[
-                    detailStyles.characterCard,
-                    { backgroundColor: colors.bgCard, borderColor: colors.borderDefault },
-                  ]}
-                >
-                  {avatarSource ? (
-                    <Image
-                      source={avatarSource}
-                      style={detailStyles.characterAvatar}
-                      contentFit="cover"
-                      contentPosition="top"
-                      transition={200}
-                    />
-                  ) : (
-                    <View
-                      style={[
-                        detailStyles.characterAvatarFallback,
-                        { backgroundColor: withAlpha(colors.accentRed, 0.15) },
-                      ]}
-                    >
-                      <Ionicons name="person" size={32} color={colors.accentRed} />
+            {character &&
+              character.campaignId === campaign.id &&
+              (() => {
+                const avatarSource = getCharacterAvatar(
+                  character.clase,
+                  character.raza,
+                  character.sexo,
+                );
+                const rData = getRaceData(character.raza);
+                const cData = getClassData(character.clase);
+                return (
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={handleOpenCharacterSheet}
+                    style={[
+                      detailStyles.characterCard,
+                      {
+                        backgroundColor: colors.bgCard,
+                        borderColor: colors.borderDefault,
+                      },
+                    ]}
+                  >
+                    {avatarSource ? (
+                      <Image
+                        source={avatarSource}
+                        style={detailStyles.characterAvatar}
+                        contentFit="cover"
+                        contentPosition="top"
+                        transition={200}
+                      />
+                    ) : (
+                      <View
+                        style={[
+                          detailStyles.characterAvatarFallback,
+                          {
+                            backgroundColor: withAlpha(colors.accentRed, 0.15),
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name="person"
+                          size={32}
+                          color={colors.accentRed}
+                        />
+                      </View>
+                    )}
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={[
+                          detailStyles.characterName,
+                          { color: colors.textPrimary },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {character.nombre}
+                      </Text>
+                      <Text
+                        style={[
+                          detailStyles.characterSubtitle,
+                          { color: colors.textSecondary },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {character.customRaceName ?? rData.nombre} ·{" "}
+                        {cData.nombre} Nv. {character.nivel}
+                      </Text>
                     </View>
-                  )}
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={[detailStyles.characterName, { color: colors.textPrimary }]}
-                      numberOfLines={1}
-                    >
-                      {character.nombre}
-                    </Text>
-                    <Text
-                      style={[detailStyles.characterSubtitle, { color: colors.textSecondary }]}
-                      numberOfLines={1}
-                    >
-                      {character.customRaceName ?? rData.nombre} · {cData.nombre} Nv. {character.nivel}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-              );
-            })()}
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color={colors.textMuted}
+                    />
+                  </TouchableOpacity>
+                );
+              })()}
 
             <ActionCard
               icon="shield-half-sharp"
               iconColor={colors.accentRed}
-              iconBg="rgba(0,188,212,0.15)"
+              iconBg={withAlpha(colors.accentShadow, 0.15)}
               title="Ver Hoja de Personaje"
               subtitle="Estadísticas, habilidades, inventario y más"
               onPress={handleOpenCharacterSheet}
@@ -844,7 +948,7 @@ export default function CampaignDetailScreen() {
               <QuickActionItem
                 icon="heart"
                 iconColor={colors.accentGreen}
-                iconBg="rgba(34,197,94,0.15)"
+                iconBg={withAlpha(colors.accentGreen, 0.15)}
                 label="Combate"
                 sublabel="Vida y ataques"
                 onPress={handleOpenCombat}
@@ -854,7 +958,7 @@ export default function CampaignDetailScreen() {
               <QuickActionItem
                 icon="star"
                 iconColor={colors.accentDanger}
-                iconBg="rgba(239,68,68,0.15)"
+                iconBg={withAlpha(colors.accentDanger, 0.15)}
                 label="Habilidades"
                 sublabel="Clase y magia"
                 onPress={handleOpenSpells}
@@ -866,7 +970,7 @@ export default function CampaignDetailScreen() {
               <QuickActionItem
                 icon="bag-handle"
                 iconColor={colors.accentGold}
-                iconBg="rgba(0,229,255,0.15)"
+                iconBg={withAlpha(colors.accentRed, 0.15)}
                 label="Inventario"
                 sublabel="Objetos y oro"
                 onPress={handleOpenInventory}
@@ -876,7 +980,7 @@ export default function CampaignDetailScreen() {
               <QuickActionItem
                 icon="document-text"
                 iconColor={colors.accentBlue}
-                iconBg="rgba(59,130,246,0.15)"
+                iconBg={withAlpha(colors.accentBlue, 0.15)}
                 label="Notas"
                 sublabel="Diario y apuntes"
                 onPress={handleOpenNotes}
@@ -966,19 +1070,33 @@ export default function CampaignDetailScreen() {
                   {
                     backgroundColor: colors.bgCard,
                     borderColor: colors.borderDefault,
+                    shadowColor: colors.accentShadow,
                   },
                 ]}
                 onPress={handleCreateCharacter}
                 activeOpacity={0.85}
               >
                 <LinearGradient
-                  colors={["#00D4E8", colors.accentRed, "#0097A7"]}
+                  colors={[
+                    colors.gradientButtonStart,
+                    colors.gradientButtonMid,
+                    colors.gradientButtonEnd,
+                  ]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={detailStyles.createButtonGradient}
                 >
-                  <Ionicons name="sparkles" size={20} color={colors.textInverted} />
-                  <Text style={[detailStyles.createButtonText, { color: colors.textInverted }]}>
+                  <Ionicons
+                    name="sparkles"
+                    size={20}
+                    color={colors.textInverted}
+                  />
+                  <Text
+                    style={[
+                      detailStyles.createButtonText,
+                      { color: colors.textInverted },
+                    ]}
+                  >
                     Crear Personaje
                   </Text>
                 </LinearGradient>
@@ -1116,7 +1234,7 @@ const detailStyles = StyleSheet.create({
     letterSpacing: 2,
     textTransform: "uppercase",
     marginBottom: 4,
-    textShadowColor: "rgba(0,229,255,0.2)",
+    textShadowColor: withAlpha("#00E5FF", 0.2), // overridden inline via withAlpha(colors.accentRed, 0.2)
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 6,
   },
@@ -1324,7 +1442,7 @@ const detailStyles = StyleSheet.create({
     borderRadius: 14,
     overflow: "hidden",
     width: "100%",
-    shadowColor: "#00BCD4", // overridden inline via colors.accentRed
+    shadowColor: "#00BCD4", // overridden inline via colors.accentShadow
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -1414,5 +1532,121 @@ const detailStyles = StyleSheet.create({
   characterSubtitle: {
     fontSize: 13,
     fontWeight: "500",
+  },
+
+  // ── Loading & Error States ──
+  centeredContainer: {
+    flex: 1,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 16,
+  },
+  errorIconCircle: {
+    height: 80,
+    width: 80,
+    borderRadius: 40,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    marginBottom: 24,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: "700" as const,
+    textAlign: "center" as const,
+    marginBottom: 8,
+  },
+  errorSubtitle: {
+    fontSize: 16,
+    textAlign: "center" as const,
+    marginBottom: 32,
+  },
+  errorButton: {
+    borderRadius: 12,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+  },
+  errorButtonText: {
+    fontWeight: "700" as const,
+    fontSize: 16,
+  },
+
+  // ── Edit Modal ──
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end" as const,
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderTopWidth: 1,
+  },
+  modalHeader: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700" as const,
+  },
+  modalCloseBtn: {
+    height: 32,
+    width: 32,
+    borderRadius: 16,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  modalBody: {
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: "600" as const,
+    marginBottom: 8,
+    textTransform: "uppercase" as const,
+    letterSpacing: 0.8,
+  },
+  textInput: {
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  textArea: {
+    minHeight: 120,
+  },
+  charCount: {
+    fontSize: 12,
+    marginTop: -8,
+    marginBottom: 16,
+    textAlign: "right" as const,
+  },
+  modalPrimaryBtn: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center" as const,
+  },
+  modalPrimaryBtnText: {
+    fontWeight: "700" as const,
+    fontSize: 16,
+  },
+  modalCancelBtn: {
+    marginTop: 12,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center" as const,
+  },
+  modalCancelBtnText: {
+    fontWeight: "600" as const,
+    fontSize: 16,
   },
 });

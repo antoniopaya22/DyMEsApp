@@ -9,9 +9,15 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import { useTheme } from "@/hooks";
 
 const RULES: {
-  key: "dotesActivas" | "multiclase" | "pvFijos" | "compraPuntos" | "encumbranceDetallada";
+  key:
+    | "dotesActivas"
+    | "multiclase"
+    | "pvFijos"
+    | "compraPuntos"
+    | "encumbranceDetallada";
   label: string;
   desc: string;
+  comingSoon?: boolean;
 }[] = [
   {
     key: "dotesActivas",
@@ -22,6 +28,7 @@ const RULES: {
     key: "multiclase",
     label: "Multiclase",
     desc: "Permite subir de nivel en una clase diferente.",
+    comingSoon: true,
   },
   {
     key: "pvFijos",
@@ -58,8 +65,8 @@ export function RulesSection({ onResetRules }: RulesSectionProps) {
       <Text
         style={[styles.sectionDescription, { color: colors.sectionDescColor }]}
       >
-        Activa o desactiva reglas opcionales de D&D 5e. Estos ajustes se
-        aplican a todos los personajes.
+        Activa o desactiva reglas opcionales de D&D 5e. Estos ajustes se aplican
+        a todos los personajes.
       </Text>
 
       {RULES.map((rule) => (
@@ -68,27 +75,59 @@ export function RulesSection({ onResetRules }: RulesSectionProps) {
           style={[
             styles.ruleRow,
             { borderBottomColor: colors.borderSeparator },
+            rule.comingSoon && { opacity: 0.5 },
           ]}
         >
           <View style={styles.ruleInfo}>
-            <Text style={[styles.ruleLabel, { color: colors.textPrimary }]}>
-              {rule.label}
-            </Text>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
+              <Text style={[styles.ruleLabel, { color: colors.textPrimary }]}>
+                {rule.label}
+              </Text>
+              {rule.comingSoon && (
+                <View
+                  style={{
+                    backgroundColor: colors.bgSecondary,
+                    borderRadius: 6,
+                    paddingHorizontal: 8,
+                    paddingVertical: 2,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.textMuted,
+                      fontSize: 10,
+                      fontWeight: "700",
+                      textTransform: "uppercase",
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    Próximamente
+                  </Text>
+                </View>
+              )}
+            </View>
             <Text style={[styles.ruleDesc, { color: colors.textMuted }]}>
               {rule.desc}
             </Text>
           </View>
           <Switch
-            value={settings.reglasOpcionales[rule.key]}
+            value={
+              rule.comingSoon ? false : settings.reglasOpcionales[rule.key]
+            }
             onValueChange={() => toggleOptionalRule(rule.key)}
+            disabled={rule.comingSoon}
             trackColor={{
               false: colors.switchTrackOff,
               true: colors.switchTrackOn,
             }}
             thumbColor={
-              settings.reglasOpcionales[rule.key]
-                ? colors.switchThumbOn
-                : colors.switchThumbOff
+              rule.comingSoon
+                ? colors.switchThumbOff
+                : settings.reglasOpcionales[rule.key]
+                  ? colors.switchThumbOn
+                  : colors.switchThumbOff
             }
           />
         </View>

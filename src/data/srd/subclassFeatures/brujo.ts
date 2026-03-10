@@ -87,6 +87,13 @@ export const BRUJO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Alma Radiante",
             descripcion:
               "Tu vínculo con tu patrón te permite servir de conducto para la energía radiante. Tienes resistencia al daño radiante. Una vez por turno, cuando un conjuro que lances inflija daño radiante o de fuego, puedes sumar tu mod. CAR al daño contra uno de los objetivos.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "radiante",
+                modifier: "resistance",
+              },
+            ],
           },
         ],
       },
@@ -254,6 +261,7 @@ export const BRUJO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Don del Mar",
             descripcion:
               "Ganas velocidad de nado de 12 m y puedes respirar bajo el agua.",
+            efectos: [{ kind: "speedBonus", swim: 40 }],
           },
         ],
       },
@@ -264,6 +272,13 @@ export const BRUJO_SUBCLASS_FEATURES: SubclassFeatureData[] = [
             nombre: "Alma Oceánica",
             descripcion:
               "Ganas resistencia al daño de frío. Cuando estás completamente sumergido, cualquier criatura también sumergida puede entender tu habla y tú la suya.",
+            efectos: [
+              {
+                kind: "damageModifier",
+                damageType: "frio",
+                modifier: "resistance",
+              },
+            ],
           },
           {
             nombre: "Custodia de las Profundidades",

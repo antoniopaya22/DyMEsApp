@@ -6,7 +6,12 @@
  */
 
 import { create } from "zustand";
-import { STORAGE_KEYS, setItem, getItem } from "@/utils/storage";
+import {
+  STORAGE_KEYS,
+  setItem,
+  getItem,
+  extractErrorMessage,
+} from "@/utils/storage";
 
 // ─── Tipos ───────────────────────────────────────────────────────────
 
@@ -79,6 +84,9 @@ interface SettingsActions {
   /** Guarda los ajustes actuales en AsyncStorage */
   saveSettings: () => Promise<void>;
 
+  /** Actualiza uno o más campos de ajustes y persiste (helper interno) */
+  _updateSettings: (patch: Partial<AppSettings>) => Promise<void>;
+
   // ── Tema ──
   /** Cambia el tema visual */
   setTheme: (tema: ThemeMode) => Promise<void>;
@@ -121,7 +129,7 @@ async function persistSettings(settings: AppSettings): Promise<void> {
   try {
     await setItem(STORAGE_KEYS.SETTINGS, settings);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = extractErrorMessage(err);
     console.error(`[SettingsStore] Error persisting settings: ${message}`);
   }
 }
@@ -155,11 +163,14 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       } else {
         // Primera ejecución: guardar defaults
         await persistSettings(DEFAULT_SETTINGS);
-        set({ settings: { ...DEFAULT_SETTINGS }, loading: false, loaded: true });
+        set({
+          settings: { ...DEFAULT_SETTINGS },
+          loading: false,
+          loaded: true,
+        });
       }
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error al cargar los ajustes";
+      const message = extractErrorMessage(err, "Error al cargar los ajustes");
       console.error("[SettingsStore] loadSettings:", message);
       set({ error: message, loading: false, loaded: true });
     }
@@ -170,87 +181,57 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       const { settings } = get();
       await persistSettings(settings);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error al guardar los ajustes";
+      const message = extractErrorMessage(err, "Error al guardar los ajustes");
       console.error("[SettingsStore] saveSettings:", message);
       set({ error: message });
     }
   },
 
-  setTheme: async (tema: ThemeMode) => {
-    const { settings } = get();
-    const updated = { ...settings, tema };
+  // Helper interno: actualiza settings parcialmente y persiste
+  _updateSettings: async (patch) => {
+    const updated = { ...get().settings, ...patch };
     set({ settings: updated });
     await persistSettings(updated);
   },
 
-  setUnits: async (unidades: UnitSystem) => {
-    const { settings } = get();
-    const updated = { ...settings, unidades };
-    set({ settings: updated });
-    await persistSettings(updated);
+  setTheme: (tema) => get()._updateSettings({ tema }),
+  setUnits: (unidades) => get()._updateSettings({ unidades }),
+  setNotificaciones: (activas) =>
+    get()._updateSettings({ notificacionesActivas: activas }),
+  setUltimoBackup: (fecha) => get()._updateSettings({ ultimoBackup: fecha }),
+
+  setRecordatorioAnticipacion: async (minutos) => {
+    const clamped = Math.max(0, Math.min(1440, minutos)); // 0 a 24h
+    await get()._updateSettings({ recordatorioAnticipacion: clamped });
   },
 
-  toggleOptionalRule: async (rule: keyof OptionalRules) => {
-    const { settings } = get();
-    const updated: AppSettings = {
-      ...settings,
+  toggleOptionalRule: async (rule) => {
+    const current = get().settings.reglasOpcionales[rule];
+    await get()._updateSettings({
       reglasOpcionales: {
-        ...settings.reglasOpcionales,
-        [rule]: !settings.reglasOpcionales[rule],
+        ...get().settings.reglasOpcionales,
+        [rule]: !current,
       },
-    };
-    set({ settings: updated });
-    await persistSettings(updated);
+    });
   },
 
-  setOptionalRule: async (rule: keyof OptionalRules, value: boolean) => {
-    const { settings } = get();
-    const updated: AppSettings = {
-      ...settings,
-      reglasOpcionales: {
-        ...settings.reglasOpcionales,
-        [rule]: value,
-      },
-    };
-    set({ settings: updated });
-    await persistSettings(updated);
+  setOptionalRule: async (rule, value) => {
+    await get()._updateSettings({
+      reglasOpcionales: { ...get().settings.reglasOpcionales, [rule]: value },
+    });
   },
 
   resetOptionalRules: async () => {
-    const { settings } = get();
-    const updated: AppSettings = {
-      ...settings,
+    await get()._updateSettings({
       reglasOpcionales: { ...DEFAULT_OPTIONAL_RULES },
-    };
-    set({ settings: updated });
-    await persistSettings(updated);
-  },
-
-  setNotificaciones: async (activas: boolean) => {
-    const { settings } = get();
-    const updated = { ...settings, notificacionesActivas: activas };
-    set({ settings: updated });
-    await persistSettings(updated);
-  },
-
-  setRecordatorioAnticipacion: async (minutos: number) => {
-    const { settings } = get();
-    const clamped = Math.max(0, Math.min(1440, minutos)); // 0 a 24h
-    const updated = { ...settings, recordatorioAnticipacion: clamped };
-    set({ settings: updated });
-    await persistSettings(updated);
-  },
-
-  setUltimoBackup: async (fecha: string) => {
-    const { settings } = get();
-    const updated = { ...settings, ultimoBackup: fecha };
-    set({ settings: updated });
-    await persistSettings(updated);
+    });
   },
 
   resetAllSettings: async () => {
-    const defaults = { ...DEFAULT_SETTINGS, reglasOpcionales: { ...DEFAULT_OPTIONAL_RULES } };
+    const defaults = {
+      ...DEFAULT_SETTINGS,
+      reglasOpcionales: { ...DEFAULT_OPTIONAL_RULES },
+    };
     set({ settings: defaults, error: null });
     await persistSettings(defaults);
   },
@@ -264,17 +245,35 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
 /** Devuelve true si las dotes están activadas como regla opcional */
 export function useDotesActivas(): boolean {
-  return useSettingsStore((state) => state.settings.reglasOpcionales.dotesActivas);
+  return useSettingsStore(
+    (state) => state.settings.reglasOpcionales.dotesActivas,
+  );
 }
 
 /** Devuelve true si la multiclase está activada */
 export function useMulticlaseActiva(): boolean {
-  return useSettingsStore((state) => state.settings.reglasOpcionales.multiclase);
+  return useSettingsStore(
+    (state) => state.settings.reglasOpcionales.multiclase,
+  );
 }
 
 /** Devuelve true si se usan PV fijos al subir de nivel */
 export function usePvFijos(): boolean {
   return useSettingsStore((state) => state.settings.reglasOpcionales.pvFijos);
+}
+
+/** Devuelve true si la compra de puntos está activada */
+export function useCompraPuntos(): boolean {
+  return useSettingsStore(
+    (state) => state.settings.reglasOpcionales.compraPuntos,
+  );
+}
+
+/** Devuelve true si la carga detallada está activada */
+export function useEncumbranceDetallada(): boolean {
+  return useSettingsStore(
+    (state) => state.settings.reglasOpcionales.encumbranceDetallada,
+  );
 }
 
 /** Devuelve el tema actual */

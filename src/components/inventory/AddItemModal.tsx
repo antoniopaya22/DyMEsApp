@@ -31,6 +31,8 @@ import {
 import type { DamageType } from "@/types/character";
 import { useTheme } from "@/hooks";
 import { withAlpha } from "@/utils/theme";
+import { useUnidadesActuales } from "@/stores/settingsStore";
+import { etiquetaPeso } from "@/utils/units";
 
 const CATEGORY_OPTIONS: { value: ItemCategory; label: string }[] = [
   { value: "arma", label: "Arma" },
@@ -95,6 +97,7 @@ export function AddItemModal({
   onShowToast,
 }: AddItemModalProps) {
   const { colors } = useTheme();
+  const unidades = useUnidadesActuales();
   const { addItem } = useCharacterStore();
 
   const [name, setName] = useState("");
@@ -200,10 +203,19 @@ export function AddItemModal({
         className="flex-1 justify-end"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View className="rounded-t-3xl border-t" style={{ backgroundColor: colors.bgPrimary, borderColor: colors.borderDefault }}>
+        <View
+          className="rounded-t-3xl border-t"
+          style={{
+            backgroundColor: colors.bgPrimary,
+            borderColor: colors.borderDefault,
+          }}
+        >
           {/* Header */}
           <View className="flex-row items-center justify-between px-5 pt-5 pb-3">
-            <Text className="text-lg font-bold" style={{ color: colors.textPrimary }}>
+            <Text
+              className="text-lg font-bold"
+              style={{ color: colors.textPrimary }}
+            >
               Añadir Objeto
             </Text>
             <TouchableOpacity
@@ -221,14 +233,27 @@ export function AddItemModal({
             keyboardShouldPersistTaps="handled"
           >
             {/* ── Card: Información básica ── */}
-            <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+            <View
+              className="rounded-card border p-4 mb-4"
+              style={{
+                backgroundColor: colors.bgElevated,
+                borderColor: colors.borderDefault,
+              }}
+            >
               {/* Name */}
-              <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+              <Text
+                className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+                style={{ color: colors.textSecondary }}
+              >
                 Nombre <Text style={{ color: colors.accentRed }}>*</Text>
               </Text>
               <TextInput
                 className="rounded-xl px-4 py-3 text-sm border mb-4"
-                style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+                style={{
+                  backgroundColor: colors.bgInput,
+                  color: colors.textPrimary,
+                  borderColor: colors.borderDefault,
+                }}
                 placeholder="Ej: Espada larga"
                 placeholderTextColor={colors.textMuted}
                 value={name}
@@ -238,13 +263,13 @@ export function AddItemModal({
               />
 
               {/* Category */}
-              <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+              <Text
+                className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+                style={{ color: colors.textSecondary }}
+              >
                 Categoría
               </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-              >
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {CATEGORY_OPTIONS.map((opt) => {
                   const isSelected = category === opt.value;
                   return (
@@ -252,8 +277,12 @@ export function AddItemModal({
                       key={opt.value}
                       className="rounded-full px-3.5 py-2 mr-2 border"
                       style={{
-                        backgroundColor: isSelected ? withAlpha(colors.accentRed, 0.2) : colors.bgSecondary,
-                        borderColor: isSelected ? withAlpha(colors.accentRed, 0.5) : colors.borderDefault,
+                        backgroundColor: isSelected
+                          ? withAlpha(colors.accentRed, 0.2)
+                          : colors.bgSecondary,
+                        borderColor: isSelected
+                          ? withAlpha(colors.accentRed, 0.5)
+                          : colors.borderDefault,
                       }}
                       onPress={() => setCategory(opt.value)}
                     >
@@ -261,11 +290,17 @@ export function AddItemModal({
                         <Ionicons
                           name={ITEM_CATEGORY_ICONS[opt.value] as any}
                           size={14}
-                          color={isSelected ? colors.accentRed : colors.textSecondary}
+                          color={
+                            isSelected ? colors.accentRed : colors.textSecondary
+                          }
                         />
                         <Text
                           className="text-xs font-medium ml-1.5"
-                          style={{ color: isSelected ? colors.accentRed : colors.textSecondary }}
+                          style={{
+                            color: isSelected
+                              ? colors.accentRed
+                              : colors.textSecondary,
+                          }}
                         >
                           {opt.label}
                         </Text>
@@ -277,16 +312,29 @@ export function AddItemModal({
             </View>
 
             {/* ── Card: Detalles ── */}
-            <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+            <View
+              className="rounded-card border p-4 mb-4"
+              style={{
+                backgroundColor: colors.bgElevated,
+                borderColor: colors.borderDefault,
+              }}
+            >
               {/* Quantity & Weight row */}
               <View className="flex-row mb-4">
                 <View className="flex-1 mr-2">
-                  <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                  <Text
+                    className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+                    style={{ color: colors.textSecondary }}
+                  >
                     Cantidad
                   </Text>
                   <TextInput
                     className="rounded-xl px-4 py-3 text-sm border"
-                    style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+                    style={{
+                      backgroundColor: colors.bgInput,
+                      color: colors.textPrimary,
+                      borderColor: colors.borderDefault,
+                    }}
                     placeholder="1"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="numeric"
@@ -295,12 +343,19 @@ export function AddItemModal({
                   />
                 </View>
                 <View className="flex-1 mx-1">
-                  <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
-                    Peso (lb)
+                  <Text
+                    className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+                    style={{ color: colors.textSecondary }}
+                  >
+                    {`Peso (${etiquetaPeso(unidades)})`}
                   </Text>
                   <TextInput
                     className="rounded-xl px-4 py-3 text-sm border"
-                    style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+                    style={{
+                      backgroundColor: colors.bgInput,
+                      color: colors.textPrimary,
+                      borderColor: colors.borderDefault,
+                    }}
                     placeholder="0"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="decimal-pad"
@@ -309,12 +364,19 @@ export function AddItemModal({
                   />
                 </View>
                 <View className="flex-1 ml-2">
-                  <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                  <Text
+                    className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+                    style={{ color: colors.textSecondary }}
+                  >
                     Valor (MO)
                   </Text>
                   <TextInput
                     className="rounded-xl px-4 py-3 text-sm border"
-                    style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+                    style={{
+                      backgroundColor: colors.bgInput,
+                      color: colors.textPrimary,
+                      borderColor: colors.borderDefault,
+                    }}
                     placeholder="—"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="decimal-pad"
@@ -325,12 +387,19 @@ export function AddItemModal({
               </View>
 
               {/* Description */}
-              <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+              <Text
+                className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+                style={{ color: colors.textSecondary }}
+              >
                 Descripción (opcional)
               </Text>
               <TextInput
                 className="rounded-xl px-4 py-3 text-sm border min-h-[80px]"
-                style={{ backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+                style={{
+                  backgroundColor: colors.bgInput,
+                  color: colors.textPrimary,
+                  borderColor: colors.borderDefault,
+                }}
                 placeholder="Añade una descripción..."
                 placeholderTextColor={colors.textMuted}
                 multiline
@@ -366,7 +435,10 @@ export function AddItemModal({
                 </View>
 
                 {/* Weapon Type */}
-                <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                <Text
+                  className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+                  style={{ color: colors.textSecondary }}
+                >
                   Tipo de arma
                 </Text>
                 <ScrollView
@@ -381,14 +453,22 @@ export function AddItemModal({
                         key={opt.value}
                         className="rounded-full px-3 py-1.5 mr-2 border"
                         style={{
-                          backgroundColor: isSelected ? withAlpha(colors.accentRed, 0.2) : colors.bgSecondary,
-                          borderColor: isSelected ? withAlpha(colors.accentRed, 0.5) : colors.borderDefault,
+                          backgroundColor: isSelected
+                            ? withAlpha(colors.accentRed, 0.2)
+                            : colors.bgSecondary,
+                          borderColor: isSelected
+                            ? withAlpha(colors.accentRed, 0.5)
+                            : colors.borderDefault,
                         }}
                         onPress={() => setWeaponType(opt.value)}
                       >
                         <Text
                           className="text-[11px] font-medium"
-                          style={{ color: isSelected ? colors.accentRed : colors.textSecondary }}
+                          style={{
+                            color: isSelected
+                              ? colors.accentRed
+                              : colors.textSecondary,
+                          }}
                         >
                           {opt.label}
                         </Text>
@@ -398,7 +478,10 @@ export function AddItemModal({
                 </ScrollView>
 
                 {/* Damage Dice */}
-                <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                <Text
+                  className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+                  style={{ color: colors.textSecondary }}
+                >
                   Dados de daño
                 </Text>
                 <View className="flex-row items-center mb-3">
@@ -414,14 +497,22 @@ export function AddItemModal({
                           key={d}
                           className="rounded-full px-3 py-1.5 mr-2 border"
                           style={{
-                            backgroundColor: isSelected ? withAlpha(colors.accentRed, 0.2) : colors.bgSecondary,
-                            borderColor: isSelected ? withAlpha(colors.accentRed, 0.5) : colors.borderDefault,
+                            backgroundColor: isSelected
+                              ? withAlpha(colors.accentRed, 0.2)
+                              : colors.bgSecondary,
+                            borderColor: isSelected
+                              ? withAlpha(colors.accentRed, 0.5)
+                              : colors.borderDefault,
                           }}
                           onPress={() => setDamageDice(d)}
                         >
                           <Text
                             className="text-xs font-bold"
-                            style={{ color: isSelected ? colors.accentRed : colors.textSecondary }}
+                            style={{
+                              color: isSelected
+                                ? colors.accentRed
+                                : colors.textSecondary,
+                            }}
                           >
                             {d}
                           </Text>
@@ -431,17 +522,28 @@ export function AddItemModal({
                   </ScrollView>
                   <TextInput
                     className="rounded-lg px-3 py-1.5 text-xs border ml-2"
-                    style={{ width: 64, textAlign: "center", backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+                    style={{
+                      width: 64,
+                      textAlign: "center",
+                      backgroundColor: colors.bgInput,
+                      color: colors.textPrimary,
+                      borderColor: colors.borderDefault,
+                    }}
                     placeholder="Otro"
                     placeholderTextColor={colors.textMuted}
                     value={COMMON_DICE.includes(damageDice) ? "" : damageDice}
-                    onChangeText={(t) => { if (t.trim()) setDamageDice(t.trim()); }}
+                    onChangeText={(t) => {
+                      if (t.trim()) setDamageDice(t.trim());
+                    }}
                     maxLength={10}
                   />
                 </View>
 
                 {/* Damage Type */}
-                <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                <Text
+                  className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+                  style={{ color: colors.textSecondary }}
+                >
                   Tipo de daño
                 </Text>
                 <ScrollView
@@ -456,14 +558,22 @@ export function AddItemModal({
                         key={opt.value}
                         className="rounded-full px-3 py-1.5 mr-2 border"
                         style={{
-                          backgroundColor: isSelected ? withAlpha(colors.accentRed, 0.2) : colors.bgSecondary,
-                          borderColor: isSelected ? withAlpha(colors.accentRed, 0.5) : colors.borderDefault,
+                          backgroundColor: isSelected
+                            ? withAlpha(colors.accentRed, 0.2)
+                            : colors.bgSecondary,
+                          borderColor: isSelected
+                            ? withAlpha(colors.accentRed, 0.5)
+                            : colors.borderDefault,
                         }}
                         onPress={() => setDamageType(opt.value)}
                       >
                         <Text
                           className="text-[11px] font-medium"
-                          style={{ color: isSelected ? colors.accentRed : colors.textSecondary }}
+                          style={{
+                            color: isSelected
+                              ? colors.accentRed
+                              : colors.textSecondary,
+                          }}
                         >
                           {opt.label}
                         </Text>
@@ -473,7 +583,10 @@ export function AddItemModal({
                 </ScrollView>
 
                 {/* Weapon Properties */}
-                <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                <Text
+                  className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+                  style={{ color: colors.textSecondary }}
+                >
                   Propiedades
                 </Text>
                 <View className="flex-row flex-wrap">
@@ -484,16 +597,25 @@ export function AddItemModal({
                         key={opt.value}
                         className="rounded-full px-3 py-1.5 mr-2 mb-2 border"
                         style={{
-                          backgroundColor: isSelected ? withAlpha(colors.accentRed, 0.2) : colors.bgSecondary,
-                          borderColor: isSelected ? withAlpha(colors.accentRed, 0.5) : colors.borderDefault,
+                          backgroundColor: isSelected
+                            ? withAlpha(colors.accentRed, 0.2)
+                            : colors.bgSecondary,
+                          borderColor: isSelected
+                            ? withAlpha(colors.accentRed, 0.5)
+                            : colors.borderDefault,
                         }}
                         onPress={() => toggleWeaponProp(opt.value)}
                       >
                         <Text
                           className="text-[11px] font-medium"
-                          style={{ color: isSelected ? colors.accentRed : colors.textSecondary }}
+                          style={{
+                            color: isSelected
+                              ? colors.accentRed
+                              : colors.textSecondary,
+                          }}
                         >
-                          {isSelected ? "✓ " : ""}{opt.label}
+                          {isSelected ? "✓ " : ""}
+                          {opt.label}
                         </Text>
                       </TouchableOpacity>
                     );
@@ -504,19 +626,29 @@ export function AddItemModal({
                 <TouchableOpacity
                   className="flex-row items-center rounded-lg px-3 py-2 mt-1 mb-2 border"
                   style={{
-                    backgroundColor: hasBonusDamage ? withAlpha(colors.accentRed, 0.15) : colors.bgSecondary,
-                    borderColor: hasBonusDamage ? withAlpha(colors.accentRed, 0.4) : colors.borderDefault,
+                    backgroundColor: hasBonusDamage
+                      ? withAlpha(colors.accentRed, 0.15)
+                      : colors.bgSecondary,
+                    borderColor: hasBonusDamage
+                      ? withAlpha(colors.accentRed, 0.4)
+                      : colors.borderDefault,
                   }}
                   onPress={() => setHasBonusDamage(!hasBonusDamage)}
                 >
                   <Ionicons
                     name={hasBonusDamage ? "checkbox" : "square-outline"}
                     size={16}
-                    color={hasBonusDamage ? colors.accentAmber : colors.textMuted}
+                    color={
+                      hasBonusDamage ? colors.accentAmber : colors.textMuted
+                    }
                   />
                   <Text
                     className="text-xs font-semibold ml-2"
-                    style={{ color: hasBonusDamage ? colors.accentAmber : colors.textSecondary }}
+                    style={{
+                      color: hasBonusDamage
+                        ? colors.accentAmber
+                        : colors.textSecondary,
+                    }}
                   >
                     Bonificador de daño adicional
                   </Text>
@@ -533,7 +665,10 @@ export function AddItemModal({
                     }}
                   >
                     {/* Bonus Dice */}
-                    <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                    <Text
+                      className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+                      style={{ color: colors.textSecondary }}
+                    >
                       Dados de bonificación
                     </Text>
                     <View className="flex-row items-center mb-3">
@@ -549,14 +684,22 @@ export function AddItemModal({
                               key={d}
                               className="rounded-full px-3 py-1.5 mr-2 border"
                               style={{
-                                backgroundColor: isSelected ? withAlpha(colors.accentRed, 0.2) : colors.bgSecondary,
-                                borderColor: isSelected ? withAlpha(colors.accentRed, 0.5) : colors.borderDefault,
+                                backgroundColor: isSelected
+                                  ? withAlpha(colors.accentRed, 0.2)
+                                  : colors.bgSecondary,
+                                borderColor: isSelected
+                                  ? withAlpha(colors.accentRed, 0.5)
+                                  : colors.borderDefault,
                               }}
                               onPress={() => setBonusDice(d)}
                             >
                               <Text
                                 className="text-xs font-bold"
-                                style={{ color: isSelected ? colors.accentRed : colors.textSecondary }}
+                                style={{
+                                  color: isSelected
+                                    ? colors.accentRed
+                                    : colors.textSecondary,
+                                }}
                               >
                                 {d}
                               </Text>
@@ -566,17 +709,28 @@ export function AddItemModal({
                       </ScrollView>
                       <TextInput
                         className="rounded-lg px-3 py-1.5 text-xs border ml-2"
-                        style={{ width: 64, textAlign: "center", backgroundColor: colors.bgInput, color: colors.textPrimary, borderColor: colors.borderDefault }}
+                        style={{
+                          width: 64,
+                          textAlign: "center",
+                          backgroundColor: colors.bgInput,
+                          color: colors.textPrimary,
+                          borderColor: colors.borderDefault,
+                        }}
                         placeholder="Otro"
                         placeholderTextColor={colors.textMuted}
                         value={COMMON_DICE.includes(bonusDice) ? "" : bonusDice}
-                        onChangeText={(t) => { if (t.trim()) setBonusDice(t.trim()); }}
+                        onChangeText={(t) => {
+                          if (t.trim()) setBonusDice(t.trim());
+                        }}
                         maxLength={10}
                       />
                     </View>
 
                     {/* Bonus Damage Type */}
-                    <Text className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: colors.textSecondary }}>
+                    <Text
+                      className="text-xs font-semibold uppercase tracking-wider mb-1.5"
+                      style={{ color: colors.textSecondary }}
+                    >
                       Tipo de daño del bonificador
                     </Text>
                     <ScrollView
@@ -590,14 +744,22 @@ export function AddItemModal({
                             key={opt.value}
                             className="rounded-full px-3 py-1.5 mr-2 border"
                             style={{
-                              backgroundColor: isSelected ? withAlpha(colors.accentRed, 0.2) : colors.bgSecondary,
-                              borderColor: isSelected ? withAlpha(colors.accentRed, 0.5) : colors.borderDefault,
+                              backgroundColor: isSelected
+                                ? withAlpha(colors.accentRed, 0.2)
+                                : colors.bgSecondary,
+                              borderColor: isSelected
+                                ? withAlpha(colors.accentRed, 0.5)
+                                : colors.borderDefault,
                             }}
                             onPress={() => setBonusDamageType(opt.value)}
                           >
                             <Text
                               className="text-[11px] font-medium"
-                              style={{ color: isSelected ? colors.accentRed : colors.textSecondary }}
+                              style={{
+                                color: isSelected
+                                  ? colors.accentRed
+                                  : colors.textSecondary,
+                              }}
                             >
                               {opt.label}
                             </Text>
@@ -613,11 +775,18 @@ export function AddItemModal({
             {/* Submit */}
             <TouchableOpacity
               className={`rounded-xl py-4 items-center ${name.trim() ? "" : "opacity-50"}`}
-              style={{ backgroundColor: name.trim() ? colors.accentRed : colors.bgSecondary }}
+              style={{
+                backgroundColor: name.trim()
+                  ? colors.accentRed
+                  : colors.bgSecondary,
+              }}
               onPress={handleSubmit}
               disabled={!name.trim()}
             >
-              <Text className="font-bold text-base" style={{ color: colors.textInverted }}>
+              <Text
+                className="font-bold text-base"
+                style={{ color: colors.textInverted }}
+              >
                 Añadir al Inventario
               </Text>
             </TouchableOpacity>
@@ -626,7 +795,10 @@ export function AddItemModal({
               className="mt-3 rounded-xl py-3 items-center"
               onPress={onClose}
             >
-              <Text className="font-semibold text-sm" style={{ color: colors.textSecondary }}>
+              <Text
+                className="font-semibold text-sm"
+                style={{ color: colors.textSecondary }}
+              >
                 Cancelar
               </Text>
             </TouchableOpacity>

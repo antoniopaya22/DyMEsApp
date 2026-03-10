@@ -1,15 +1,48 @@
 /**
  * BackgroundCard - Expandable background detail card for the Compendium
- * Extracted from compendium.tsx
+ *
+ * Uses GlowCard for consistent styling with the rest of the app,
+ * and LayoutAnimation for smooth expand/collapse transitions.
  */
 
-import { View, Text, TouchableOpacity } from "react-native";
+import { useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { GlowCard } from "@/components/ui";
 import { BACKGROUND_ICONS } from "@/data/srd";
 import type { BackgroundData } from "@/data/srd";
 import { useTheme } from "@/hooks";
 import { formatSkillName } from "./compendiumUtils";
-import { cardStyles as styles } from "./compendiumStyles";
+import { cardStyles as s } from "./compendiumStyles";
+
+// Enable LayoutAnimation on Android
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const COLLAPSE_ANIM = {
+  duration: 280,
+  create: {
+    type: LayoutAnimation.Types.easeInEaseOut,
+    property: LayoutAnimation.Properties.opacity,
+  },
+  update: { type: LayoutAnimation.Types.easeInEaseOut },
+  delete: {
+    type: LayoutAnimation.Types.easeInEaseOut,
+    property: LayoutAnimation.Properties.opacity,
+  },
+};
 
 interface BackgroundCardProps {
   data: BackgroundData;
@@ -17,65 +50,89 @@ interface BackgroundCardProps {
   onToggle: () => void;
 }
 
-export function BackgroundCard({ data, isExpanded, onToggle }: BackgroundCardProps) {
+export function BackgroundCard({
+  data,
+  isExpanded,
+  onToggle,
+}: BackgroundCardProps) {
   const { colors } = useTheme();
   const icon =
-    BACKGROUND_ICONS[data.id as keyof typeof BACKGROUND_ICONS] || "document-text-outline";
+    BACKGROUND_ICONS[data.id as keyof typeof BACKGROUND_ICONS] ||
+    "document-text-outline";
   const personalityTraits = data.personality?.traits ?? [];
 
+  // Animated chevron rotation
+  const chevronAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
+  useEffect(() => {
+    Animated.spring(chevronAnim, {
+      toValue: isExpanded ? 1 : 0,
+      friction: 8,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  }, [isExpanded, chevronAnim]);
+
+  const chevronRotation = chevronAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "180deg"],
+  });
+
+  const handleToggle = () => {
+    LayoutAnimation.configureNext(COLLAPSE_ANIM);
+    onToggle();
+  };
+
+  const accentColor = colors.accentBlue;
+
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.cardBg, borderColor: colors.cardBorder },
-      ]}
+    <GlowCard
+      accentLine
+      accentPosition="left"
+      accentColors={[accentColor, `${accentColor}88`, `${accentColor}44`]}
+      pressScale={0.98}
+      onPress={handleToggle}
+      padding={14}
+      style={{ marginBottom: 12 }}
     >
-      <TouchableOpacity
-        onPress={onToggle}
-        style={styles.cardHeader}
-        activeOpacity={0.7}
-      >
+      {/* Header */}
+      <View style={s.cardHeader}>
         <View
           style={[
-            styles.cardIconBg,
-            { backgroundColor: `#22c55e${colors.iconBgAlpha}` },
+            s.cardIconBg,
+            { backgroundColor: `${accentColor}${colors.iconBgAlpha}` },
           ]}
         >
-          <Ionicons name={icon as any} size={24} color={"#22c55e"} />
+          <Ionicons name={icon as any} size={22} color={accentColor} />
         </View>
-        <View style={styles.cardInfo}>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
+        <View style={s.cardInfo}>
+          <Text style={[s.cardTitle, { color: colors.textPrimary }]}>
             {data.nombre}
           </Text>
           <Text
-            style={[styles.cardSubtitle, { color: colors.textSecondary }]}
+            style={[s.cardSubtitle, { color: colors.textSecondary }]}
             numberOfLines={1}
           >
             {data.skillProficiencies.length > 0
-              ? data.skillProficiencies.map((s) => formatSkillName(s)).join(", ")
+              ? data.skillProficiencies
+                  .map((sk) => formatSkillName(sk))
+                  .join(", ")
               : "Sin habilidades específicas"}
           </Text>
         </View>
-        <Ionicons
-          name={isExpanded ? "chevron-up" : "chevron-down"}
-          size={20}
-          color={colors.chevronColor}
-        />
-      </TouchableOpacity>
+        <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
+          <Ionicons name="chevron-down" size={20} color={colors.textMuted} />
+        </Animated.View>
+      </View>
 
+      {/* Expanded detail */}
       {isExpanded && (
         <View
-          style={[
-            styles.cardDetail,
-            { borderTopColor: colors.borderSeparator },
-          ]}
+          style={[s.cardDetail, { borderTopColor: colors.borderSeparator }]}
         >
           {/* Description */}
           {data.descripcion && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailText, { color: colors.textSecondary }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailText, { color: colors.textSecondary }]}>
                 {data.descripcion}
               </Text>
             </View>
@@ -83,18 +140,16 @@ export function BackgroundCard({ data, isExpanded, onToggle }: BackgroundCardPro
 
           {/* Skills */}
           {data.skillProficiencies.length > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Competencias en habilidades
               </Text>
-              <View style={styles.skillTagsRow}>
+              <View style={s.skillTagsRow}>
                 {data.skillProficiencies.map((skill) => (
                   <View
                     key={skill}
                     style={[
-                      styles.skillTag,
+                      s.skillTag,
                       {
                         backgroundColor: colors.tabBg,
                         borderColor: colors.tabBorder,
@@ -102,10 +157,7 @@ export function BackgroundCard({ data, isExpanded, onToggle }: BackgroundCardPro
                     ]}
                   >
                     <Text
-                      style={[
-                        styles.skillTagText,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={[s.skillTagText, { color: colors.textSecondary }]}
                     >
                       {formatSkillName(skill)}
                     </Text>
@@ -117,30 +169,22 @@ export function BackgroundCard({ data, isExpanded, onToggle }: BackgroundCardPro
 
           {/* Tools & Languages */}
           {data.toolProficiencies.length > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Herramientas
               </Text>
-              <Text
-                style={[styles.detailText, { color: colors.textSecondary }]}
-              >
+              <Text style={[s.detailText, { color: colors.textSecondary }]}>
                 {data.toolProficiencies.join(", ")}
               </Text>
             </View>
           )}
 
           {data.extraLanguages > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Idiomas
               </Text>
-              <Text
-                style={[styles.detailText, { color: colors.textSecondary }]}
-              >
+              <Text style={[s.detailText, { color: colors.textSecondary }]}>
                 {data.extraLanguages} idioma(s) a elegir
               </Text>
             </View>
@@ -148,16 +192,14 @@ export function BackgroundCard({ data, isExpanded, onToggle }: BackgroundCardPro
 
           {/* Equipment */}
           {data.equipment && data.equipment.length > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Equipamiento
               </Text>
               {data.equipment.map((eq, i) => (
                 <Text
                   key={i}
-                  style={[styles.equipItem, { color: colors.textSecondary }]}
+                  style={[s.equipItem, { color: colors.textSecondary }]}
                 >
                   • {eq}
                 </Text>
@@ -167,15 +209,11 @@ export function BackgroundCard({ data, isExpanded, onToggle }: BackgroundCardPro
 
           {/* Gold */}
           {data.startingGold > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Oro inicial
               </Text>
-              <Text
-                style={[styles.detailText, { color: colors.textSecondary }]}
-              >
+              <Text style={[s.detailText, { color: colors.textSecondary }]}>
                 {data.startingGold} po
               </Text>
             </View>
@@ -183,21 +221,15 @@ export function BackgroundCard({ data, isExpanded, onToggle }: BackgroundCardPro
 
           {/* Feature */}
           {data.featureName && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Rasgo especial
               </Text>
-              <View style={styles.traitItem}>
-                <Text
-                  style={[styles.traitName, { color: colors.textPrimary }]}
-                >
+              <View style={s.traitItem}>
+                <Text style={[s.traitName, { color: colors.textPrimary }]}>
                   {data.featureName}
                 </Text>
-                <Text
-                  style={[styles.traitDesc, { color: colors.textSecondary }]}
-                >
+                <Text style={[s.traitDesc, { color: colors.textSecondary }]}>
                   {data.featureDescription}
                 </Text>
               </View>
@@ -206,25 +238,20 @@ export function BackgroundCard({ data, isExpanded, onToggle }: BackgroundCardPro
 
           {/* Personality tables */}
           {personalityTraits.length > 0 && (
-            <View style={styles.detailSection}>
-              <Text
-                style={[styles.detailLabel, { color: colors.accentGold }]}
-              >
+            <View style={s.detailSection}>
+              <Text style={[s.detailLabel, { color: colors.accentGold }]}>
                 Rasgos de personalidad ({personalityTraits.length})
               </Text>
               {personalityTraits.slice(0, 3).map((trait: string, i: number) => (
                 <Text
                   key={i}
-                  style={[
-                    styles.personalityItem,
-                    { color: colors.textSecondary },
-                  ]}
+                  style={[s.personalityItem, { color: colors.textSecondary }]}
                 >
                   {i + 1}. {trait}
                 </Text>
               ))}
               {personalityTraits.length > 3 && (
-                <Text style={[styles.moreText, { color: colors.textMuted }]}>
+                <Text style={[s.moreText, { color: colors.textMuted }]}>
                   + {personalityTraits.length - 3} más...
                 </Text>
               )}
@@ -232,6 +259,6 @@ export function BackgroundCard({ data, isExpanded, onToggle }: BackgroundCardPro
           )}
         </View>
       )}
-    </View>
+    </GlowCard>
   );
 }

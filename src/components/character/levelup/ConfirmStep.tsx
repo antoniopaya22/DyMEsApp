@@ -4,19 +4,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks";
 import { withAlpha } from "@/utils/theme";
 import { getSpellById } from "@/data/srd/spells";
-import {
-  getSubclassFeaturesForLevel,
-} from "@/data/srd/subclassFeatures";
+import { getSubclassFeaturesForLevel } from "@/data/srd/subclassFeatures";
+import { getFeatById } from "@/data/srd/feats";
 import { METAMAGIC_NAMES, type MetamagicOption } from "@/types/spell";
 import {
   ABILITY_NAMES,
   ABILITY_ABBR,
   type AbilityKey,
+  type AbilityScores,
   type Character,
 } from "@/types/character";
 import type { LevelUpSummary } from "@/data/srd/leveling";
-
-const ABILITY_KEYS: AbilityKey[] = ["fue", "des", "con", "int", "sab", "car"];
+import { ABILITY_KEYS } from "@/constants/abilities";
 
 interface ConfirmStepProps {
   summary: LevelUpSummary;
@@ -45,6 +44,9 @@ interface ConfirmStepProps {
   selectedSubclassId: string | null;
   isCustomSubclass: boolean;
   featureChoices: Record<string, string[]>;
+  chooseFeat?: boolean;
+  selectedFeatId?: string | null;
+  featAsiChoices?: Partial<AbilityScores>;
 }
 
 export default function ConfirmStep({
@@ -74,6 +76,9 @@ export default function ConfirmStep({
   selectedSubclassId,
   isCustomSubclass,
   featureChoices,
+  chooseFeat = false,
+  selectedFeatId = null,
+  featAsiChoices = {},
 }: ConfirmStepProps) {
   const { colors } = useTheme();
 
@@ -119,17 +124,35 @@ export default function ConfirmStep({
     });
   }
 
-  // ASI
-  if (summary?.hasASI && totalASIUsed > 0) {
-    const asiDetails = ABILITY_KEYS.filter((k) => asiPoints[k] > 0)
-      .map((k) => `${ABILITY_ABBR[k]} +${asiPoints[k]}`)
-      .join(", ");
-    changes.push({
-      icon: "trending-up",
-      color: colors.accentRed,
-      label: "Mejora de Característica",
-      detail: asiDetails,
-    });
+  // ASI or Feat
+  if (summary?.hasASI) {
+    if (chooseFeat && selectedFeatId) {
+      const feat = getFeatById(selectedFeatId);
+      const featName = feat?.nombre ?? selectedFeatId;
+      const asiEntries = Object.entries(featAsiChoices).filter(
+        ([_, v]) => (v ?? 0) > 0,
+      );
+      const asiDetail =
+        asiEntries.length > 0
+          ? ` (${asiEntries.map(([k, v]) => `${ABILITY_ABBR[k as AbilityKey]} +${v}`).join(", ")})`
+          : "";
+      changes.push({
+        icon: "ribbon",
+        color: colors.accentRed,
+        label: "Dote",
+        detail: `${featName}${asiDetail}`,
+      });
+    } else if (totalASIUsed > 0) {
+      const asiDetails = ABILITY_KEYS.filter((k) => asiPoints[k] > 0)
+        .map((k) => `${ABILITY_ABBR[k]} +${asiPoints[k]}`)
+        .join(", ");
+      changes.push({
+        icon: "trending-up",
+        color: colors.accentRed,
+        label: "Mejora de Característica",
+        detail: asiDetails,
+      });
+    }
   }
 
   // Subclass
@@ -143,7 +166,11 @@ export default function ConfirmStep({
 
     // Subclass feature choices
     if (selectedSubclassId && !isCustomSubclass && character) {
-      const confirmBlock = getSubclassFeaturesForLevel(character.clase as any, selectedSubclassId, newLevel);
+      const confirmBlock = getSubclassFeaturesForLevel(
+        character.clase as any,
+        selectedSubclassId,
+        newLevel,
+      );
       if (confirmBlock) {
         // List gained features
         const featureNames = confirmBlock.rasgos.map((r) => r.nombre);
@@ -162,8 +189,10 @@ export default function ConfirmStep({
           if (rasgo.elecciones) {
             for (const eleccion of rasgo.elecciones) {
               const selectedIds = featureChoices[eleccion.id] ?? [];
-              const selectedNames = selectedIds
-                .map((sid) => eleccion.opciones.find((o) => o.id === sid)?.nombre ?? sid);
+              const selectedNames = selectedIds.map(
+                (sid) =>
+                  eleccion.opciones.find((o) => o.id === sid)?.nombre ?? sid,
+              );
               if (selectedNames.length > 0) {
                 choiceLabels.push(selectedNames.join(", "));
               }

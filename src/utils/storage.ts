@@ -270,7 +270,10 @@ export async function clearUserData(): Promise<void> {
     }
   } catch (error) {
     console.error("[Storage] Error al limpiar datos de usuario:", error);
-    throw new StorageError("No se pudieron limpiar los datos de usuario", error);
+    throw new StorageError(
+      "No se pudieron limpiar los datos de usuario",
+      error,
+    );
   }
 }
 
@@ -319,6 +322,38 @@ export async function getStorageSize(): Promise<{
   } catch {
     return { totalKeys: 0, approximateBytes: 0 };
   }
+}
+
+// ─── Utilidades de ordenación para stores ────────────────────────────
+
+/** Interfaz mínima para elementos con timestamp de actualización */
+interface HasTimestamp {
+  actualizadoEn: string;
+}
+
+/**
+ * Ordena elementos por fecha de último acceso (más reciente primero).
+ * Genérico para Campaign, CharacterSummary, o cualquier entidad con `actualizadoEn`.
+ */
+export function sortByLastAccess<T extends HasTimestamp>(items: T[]): T[] {
+  return [...items].sort(
+    (a, b) =>
+      new Date(b.actualizadoEn).getTime() - new Date(a.actualizadoEn).getTime(),
+  );
+}
+
+// ─── Utilidades de errores para stores ───────────────────────────────
+
+/**
+ * Extrae un mensaje legible de un error desconocido (catch blocks).
+ * @param err - El error capturado (unknown)
+ * @param fallback - Mensaje por defecto si err no es una instancia de Error
+ */
+export function extractErrorMessage(
+  err: unknown,
+  fallback = "Error desconocido",
+): string {
+  return err instanceof Error ? err.message : fallback;
 }
 
 // ─── Error personalizado ─────────────────────────────────────────────

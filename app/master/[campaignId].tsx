@@ -30,26 +30,7 @@ import { getCharacterAvatar } from "@/utils/avatar";
 import type { LobbyPlayer } from "@/types/master";
 import type { PersonajeRow } from "@/types/supabase";
 import type { Character, ClassId, RaceId } from "@/types/character";
-
-// ─── Helpers ─────────────────────────────────────────────────────────
-
-function getHpColor(current: number, max: number): string {
-  if (max === 0) return "#6B7280";
-  const ratio = current / max;
-  if (ratio > 0.5) return "#22C55E"; // green
-  if (ratio > 0.25) return "#F59E0B"; // amber
-  if (ratio > 0) return "#EF4444"; // red
-  return "#7C3AED"; // purple — unconscious
-}
-
-function getHpLabel(current: number, max: number): string {
-  if (max === 0) return "—";
-  const ratio = current / max;
-  if (current <= 0) return "Inconsciente";
-  if (ratio <= 0.25) return "Crítico";
-  if (ratio <= 0.5) return "Herido";
-  return "Sano";
-}
+import { getHpColor, getHpLabel } from "@/constants/colors";
 
 // ─── Component ───────────────────────────────────────────────────────
 
@@ -180,11 +161,7 @@ export default function MasterCampaignLobby() {
   };
 
   // ── Render Player Card ──
-  const renderPlayerCard = ({
-    item,
-  }: {
-    item: LobbyPlayer;
-  }) => {
+  const renderPlayerCard = ({ item }: { item: LobbyPlayer }) => {
     const charId = item.membership.personaje_id;
     const charRow = charId ? liveCharacters[charId] : null;
     const charData = charRow?.datos as unknown as Character | undefined;
@@ -198,10 +175,14 @@ export default function MasterCampaignLobby() {
     const nombre = charData?.nombre ?? "Sin personaje";
     const condiciones = charData?.conditions?.map((c) => c.condition) ?? [];
     const portraitSource = charData
-      ? getCharacterAvatar(charData.clase as ClassId, charData.raza as RaceId, charData.sexo)
+      ? getCharacterAvatar(
+          charData.clase as ClassId,
+          charData.raza as RaceId,
+          charData.sexo,
+        )
       : null;
 
-    const hpColor = getHpColor(pgCurrent, pgMax);
+    const hpColor = getHpColor(pgCurrent, pgMax, colors);
     const hpPercent = pgMax > 0 ? (pgCurrent / pgMax) * 100 : 0;
 
     const handlePressPlayer = () => {
@@ -251,21 +232,24 @@ export default function MasterCampaignLobby() {
             <View
               style={[
                 styles.playerAvatar,
-                { backgroundColor: hasCharacter ? `${colors.accentGold}18` : `${colors.accentBlue}20` },
+                {
+                  backgroundColor: hasCharacter
+                    ? `${colors.accentGold}18`
+                    : `${colors.accentBlue}20`,
+                },
               ]}
             >
               {hasCharacter ? (
                 <Ionicons
-                  name={(RACE_ICONS[charData!.raza as RaceId] ?? "person-outline") as any}
+                  name={
+                    (RACE_ICONS[charData!.raza as RaceId] ??
+                      "person-outline") as any
+                  }
                   size={20}
                   color={colors.accentGold}
                 />
               ) : (
-                <Ionicons
-                  name="person"
-                  size={20}
-                  color={colors.accentBlue}
-                />
+                <Ionicons name="person" size={20} color={colors.accentBlue} />
               )}
             </View>
           )}
@@ -312,10 +296,7 @@ export default function MasterCampaignLobby() {
                 PG
               </Text>
               <View
-                style={[
-                  styles.hpBarBg,
-                  { backgroundColor: colors.bgSubtle },
-                ]}
+                style={[styles.hpBarBg, { backgroundColor: colors.bgSubtle }]}
               >
                 <View
                   style={[
@@ -331,10 +312,7 @@ export default function MasterCampaignLobby() {
                 {pgCurrent}/{pgMax}
               </Text>
               <View
-                style={[
-                  styles.statusChip,
-                  { backgroundColor: `${hpColor}20` },
-                ]}
+                style={[styles.statusChip, { backgroundColor: `${hpColor}20` }]}
               >
                 <Text style={[styles.statusChipText, { color: hpColor }]}>
                   {getHpLabel(pgCurrent, pgMax)}
@@ -504,7 +482,9 @@ export default function MasterCampaignLobby() {
         activeOpacity={0.85}
       >
         <Ionicons name="person-add" size={20} color={colors.textInverted} />
-        <Text style={[styles.addPlayerBtnText, { color: colors.textInverted }]}>Añadir jugador</Text>
+        <Text style={[styles.addPlayerBtnText, { color: colors.textInverted }]}>
+          Añadir jugador
+        </Text>
       </TouchableOpacity>
 
       {/* Add Player Modal */}
@@ -527,11 +507,9 @@ export default function MasterCampaignLobby() {
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
               Añadir personaje
             </Text>
-            <Text
-              style={[styles.modalDesc, { color: colors.textSecondary }]}
-            >
-              Introduce el código del personaje (8 caracteres). El jugador
-              puede copiarlo desde Ajustes.
+            <Text style={[styles.modalDesc, { color: colors.textSecondary }]}>
+              Introduce el código del personaje (8 caracteres). El jugador puede
+              copiarlo desde Ajustes.
             </Text>
 
             <TextInput
@@ -554,20 +532,14 @@ export default function MasterCampaignLobby() {
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[
-                  styles.modalBtn,
-                  { backgroundColor: colors.bgSubtle },
-                ]}
+                style={[styles.modalBtn, { backgroundColor: colors.bgSubtle }]}
                 onPress={() => {
                   setShowAddPlayer(false);
                   setCharacterCode("");
                 }}
               >
                 <Text
-                  style={[
-                    styles.modalBtnText,
-                    { color: colors.textSecondary },
-                  ]}
+                  style={[styles.modalBtnText, { color: colors.textSecondary }]}
                 >
                   Cancelar
                 </Text>
@@ -587,7 +559,12 @@ export default function MasterCampaignLobby() {
                 {addingPlayer ? (
                   <ActivityIndicator size="small" color={colors.textInverted} />
                 ) : (
-                  <Text style={[styles.modalBtnText, { color: colors.textInverted }]}>
+                  <Text
+                    style={[
+                      styles.modalBtnText,
+                      { color: colors.textInverted },
+                    ]}
+                  >
                     Buscar y añadir
                   </Text>
                 )}
@@ -811,7 +788,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     elevation: 4,
-    shadowColor: "#000",
+    shadowColor: "#000", // static: theme-independent
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 6,

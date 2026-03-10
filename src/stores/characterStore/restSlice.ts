@@ -3,15 +3,12 @@
  * Rests touch combat, magic, and class resources simultaneously.
  */
 
-import type {
-  Character,
-  DeathSaves,
-} from "@/types/character";
+import type { Character, DeathSaves, Trait } from "@/types/character";
 import { STORAGE_KEYS } from "@/utils/storage";
 import { now } from "@/utils/providers";
+import { hitDieValue } from "@/utils/character";
 import {
   rollDie,
-  hitDieSides,
   safeSetItem,
   type InternalMagicState,
   type SlotInfo,
@@ -22,16 +19,98 @@ import type { CharacterStore, RestActions } from "./types";
 type SetState = (partial: Partial<CharacterStore>) => void;
 type GetState = () => CharacterStore;
 
-export function createRestSlice(
-  set: SetState,
-  get: GetState,
-): RestActions {
+// ─── Pure helpers ────────────────────────────────────────────────────
+
+type RechargeType = NonNullable<Trait["recharge"]>;
+
+/**
+ * Restore trait uses for traits whose recharge matches one of the given types.
+ */
+function restoreTraitUses(
+  traits: Trait[],
+  rechargeTypes: RechargeType[],
+): Trait[] {
+  const allowed = new Set(rechargeTypes);
+  return traits.map((t) => {
+    if (t.recharge && allowed.has(t.recharge) && t.maxUses !== null) {
+      return { ...t, currentUses: t.maxUses };
+    }
+    return t;
+  });
+}
+
+/**
+ * Restore class resources.
+ *
+ * @param resources   Current class resources record.
+ * @param recoveryFilter If provided, only restore resources with a matching
+ *                       recovery type. If omitted, restore ALL resources.
+ */
+function restoreClassResources(
+  resources: Record<string, ClassResourceInfo>,
+  recoveryFilter?: string,
+): Record<string, ClassResourceInfo> {
+  const restored: Record<string, ClassResourceInfo> = {};
+  for (const [id, res] of Object.entries(resources)) {
+    restored[id] =
+      !recoveryFilter || res.recovery === recoveryFilter
+        ? { ...res, current: res.max }
+        : { ...res };
+  }
+  return restored;
+}
+
+/**
+ * Restore all spell slots (and pact magic / sorcery points) for a long rest.
+ */
+function restoreMagicStateFull(
+  magicState: InternalMagicState,
+): InternalMagicState {
+  const restoredSlots: Record<number, SlotInfo> = {};
+  for (const [level, slot] of Object.entries(magicState.spellSlots)) {
+    if (slot) {
+      restoredSlots[Number(level)] = { total: slot.total, used: 0 };
+    }
+  }
+  return {
+    ...magicState,
+    spellSlots: restoredSlots,
+    pactMagicSlots: magicState.pactMagicSlots
+      ? { ...magicState.pactMagicSlots, used: 0 }
+      : undefined,
+    sorceryPoints: magicState.sorceryPoints
+      ? { ...magicState.sorceryPoints, current: magicState.sorceryPoints.max }
+      : undefined,
+  };
+}
+
+/**
+ * Persist rest-related state changes to AsyncStorage.
+ */
+async function persistRestState(
+  charId: string,
+  character: Character,
+  magicState: InternalMagicState | null,
+  classResources: { resources: Record<string, ClassResourceInfo> } | null,
+): Promise<void> {
+  await safeSetItem(STORAGE_KEYS.CHARACTER(charId), character);
+  if (magicState) {
+    await safeSetItem(STORAGE_KEYS.MAGIC_STATE(charId), magicState);
+  }
+  if (classResources) {
+    await safeSetItem(STORAGE_KEYS.CLASS_RESOURCES(charId), classResources);
+  }
+}
+
+// ─── Slice ───────────────────────────────────────────────────────────
+
+export function createRestSlice(set: SetState, get: GetState): RestActions {
   return {
     shortRest: async (hitDiceToUse: number) => {
       const { character, magicState, classResources } = get();
       if (!character) return { hpRestored: 0, diceUsed: 0 };
 
-      const sides = hitDieSides(character.hitDice.die);
+      const sides = hitDieValue(character.hitDice.die);
       const conMod = character.abilityScores.con.modifier;
 
       let totalHealed = 0;
@@ -51,13 +130,8 @@ export function createRestSlice(
         character.hp.current + totalHealed,
       );
 
-      // Restore short rest traits
-      const updatedTraits = character.traits.map((t) => {
-        if (t.recharge === "short_rest" && t.maxUses !== null) {
-          return { ...t, currentUses: t.maxUses };
-        }
-        return t;
-      });
+      // Restore short-rest recharge traits
+      const updatedTraits = restoreTraitUses(character.traits, ["short_rest"]);
 
       // Restore warlock pact slots
       let updatedMagicState: InternalMagicState | null = magicState;
@@ -68,25 +142,19 @@ export function createRestSlice(
       ) {
         updatedMagicState = {
           ...magicState,
-          pactMagicSlots: {
-            ...magicState.pactMagicSlots,
-            used: 0,
-          },
+          pactMagicSlots: { ...magicState.pactMagicSlots, used: 0 },
         };
       }
 
       // Restore short_rest class resources
-      let updatedClassResources = classResources;
-      if (classResources) {
-        const restoredResources: Record<string, ClassResourceInfo> = {};
-        for (const [id, res] of Object.entries(classResources.resources)) {
-          restoredResources[id] =
-            res.recovery === "short_rest"
-              ? { ...res, current: res.max }
-              : { ...res };
-        }
-        updatedClassResources = { resources: restoredResources };
-      }
+      const updatedClassResources = classResources
+        ? {
+            resources: restoreClassResources(
+              classResources.resources,
+              "short_rest",
+            ),
+          }
+        : classResources;
 
       const updatedChar: Character = {
         ...character,
@@ -101,19 +169,12 @@ export function createRestSlice(
         magicState: updatedMagicState,
         classResources: updatedClassResources,
       });
-      await safeSetItem(STORAGE_KEYS.CHARACTER(character.id), updatedChar);
-      if (updatedMagicState) {
-        await safeSetItem(
-          STORAGE_KEYS.MAGIC_STATE(character.id),
-          updatedMagicState,
-        );
-      }
-      if (updatedClassResources) {
-        await safeSetItem(
-          STORAGE_KEYS.CLASS_RESOURCES(character.id),
-          updatedClassResources,
-        );
-      }
+      await persistRestState(
+        character.id,
+        updatedChar,
+        updatedMagicState,
+        updatedClassResources,
+      );
 
       return { hpRestored: totalHealed, diceUsed };
     },
@@ -138,56 +199,22 @@ export function createRestSlice(
       // Reset death saves
       const newDeathSaves: DeathSaves = { successes: 0, failures: 0 };
 
-      // Restore all trait uses
-      const updatedTraits = character.traits.map((t) => {
-        if (
-          t.maxUses !== null &&
-          (t.recharge === "short_rest" ||
-            t.recharge === "long_rest" ||
-            t.recharge === "dawn")
-        ) {
-          return { ...t, currentUses: t.maxUses };
-        }
-        return t;
-      });
+      // Restore all recharge traits
+      const updatedTraits = restoreTraitUses(character.traits, [
+        "short_rest",
+        "long_rest",
+        "dawn",
+      ]);
 
       // Restore all spell slots
-      let updatedMagicState: InternalMagicState | null = magicState;
-      if (magicState) {
-        const restoredSlots: Record<number, SlotInfo> = {};
-        for (const [level, slot] of Object.entries(magicState.spellSlots)) {
-          if (slot) {
-            restoredSlots[Number(level)] = {
-              total: slot.total,
-              used: 0,
-            };
-          }
-        }
-
-        updatedMagicState = {
-          ...magicState,
-          spellSlots: restoredSlots,
-          pactMagicSlots: magicState.pactMagicSlots
-            ? { ...magicState.pactMagicSlots, used: 0 }
-            : undefined,
-          sorceryPoints: magicState.sorceryPoints
-            ? {
-                ...magicState.sorceryPoints,
-                current: magicState.sorceryPoints.max,
-              }
-            : undefined,
-        };
-      }
+      const updatedMagicState = magicState
+        ? restoreMagicStateFull(magicState)
+        : magicState;
 
       // Restore ALL class resources on long rest
-      let updatedClassResources = classResources;
-      if (classResources) {
-        const restoredResources: Record<string, ClassResourceInfo> = {};
-        for (const [id, res] of Object.entries(classResources.resources)) {
-          restoredResources[id] = { ...res, current: res.max };
-        }
-        updatedClassResources = { resources: restoredResources };
-      }
+      const updatedClassResources = classResources
+        ? { resources: restoreClassResources(classResources.resources) }
+        : classResources;
 
       const updatedChar: Character = {
         ...character,
@@ -205,19 +232,12 @@ export function createRestSlice(
         magicState: updatedMagicState,
         classResources: updatedClassResources,
       });
-      await safeSetItem(STORAGE_KEYS.CHARACTER(character.id), updatedChar);
-      if (updatedMagicState) {
-        await safeSetItem(
-          STORAGE_KEYS.MAGIC_STATE(character.id),
-          updatedMagicState,
-        );
-      }
-      if (updatedClassResources) {
-        await safeSetItem(
-          STORAGE_KEYS.CLASS_RESOURCES(character.id),
-          updatedClassResources,
-        );
-      }
+      await persistRestState(
+        character.id,
+        updatedChar,
+        updatedMagicState,
+        updatedClassResources,
+      );
     },
   };
 }

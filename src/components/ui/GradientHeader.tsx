@@ -22,7 +22,8 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { IconButton } from "./AnimatedPressable";
-import { useTheme } from "@/hooks";
+import { useTheme, useEntranceAnimation } from "@/hooks";
+import GradientBorder from "./GradientBorder";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -148,7 +149,6 @@ export default function GradientHeader({
     (isDark
       ? [colors.bgSecondary, colors.bgPrimary, colors.bgPrimary]
       : [colors.bgSecondary, colors.bgPrimary, colors.bgPrimary]);
-  const resolvedBorderColor = borderColor ?? colors.borderDefault;
   const titleColor = colors.textPrimary;
   const textureOpacity = isDark ? 0.02 : 0.01;
 
@@ -320,7 +320,9 @@ export default function GradientHeader({
                   <View
                     style={[styles.badge, { borderColor: colors.bgPrimary }]}
                   >
-                    <Text style={[styles.badgeText, { color: colors.textInverted }]}>
+                    <Text
+                      style={[styles.badgeText, { color: colors.textInverted }]}
+                    >
                       {action.badge > 99 ? "99+" : action.badge}
                     </Text>
                   </View>
@@ -341,22 +343,7 @@ export default function GradientHeader({
       </LinearGradient>
 
       {/* Bottom border with gradient fade */}
-      {showBorder && (
-        <View style={styles.borderContainer}>
-          <LinearGradient
-            colors={[
-              "transparent",
-              `${resolvedBorderColor}88`,
-              resolvedBorderColor,
-              `${resolvedBorderColor}88`,
-              "transparent",
-            ]}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={styles.borderGradient}
-          />
-        </View>
-      )}
+      {showBorder && <GradientBorder color={borderColor} />}
     </View>
   );
 }
@@ -425,23 +412,15 @@ export function HeroHeader({
 }: HeroHeaderProps) {
   const { colors, isDark } = useTheme();
   const resolvedAccentColor = accentColor ?? colors.accentRed;
-  const descOpacity = useRef(new Animated.Value(animated ? 0 : 1)).current;
+  const { opacity: descOpacity } = useEntranceAnimation({
+    active: animated,
+    delay: 300,
+  });
 
   // Resolve hero-specific gradient
   const heroGradient: [string, string, ...string[]] = isDark
     ? [colors.gradientMain[0], colors.bgSecondary, colors.bgPrimary]
     : [colors.bgSecondary, colors.bgPrimary, colors.bgPrimary];
-
-  useEffect(() => {
-    if (!animated) return;
-    Animated.timing(descOpacity, {
-      toValue: 1,
-      duration: 400,
-      delay: 300,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  }, [animated, descOpacity]);
 
   return (
     <GradientHeader
@@ -555,13 +534,6 @@ const styles = StyleSheet.create({
   },
   childrenContainer: {
     marginTop: 12,
-  },
-  borderContainer: {
-    height: 1,
-  },
-  borderGradient: {
-    height: 1,
-    width: "100%",
   },
 
   // Hero variant styles

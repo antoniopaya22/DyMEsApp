@@ -158,6 +158,8 @@ export type {
   Inventory,
   EquipmentPack,
   EquipmentPackId,
+  EncumbranceTier,
+  DetailedEncumbrance,
 } from "./item";
 
 export {
@@ -180,6 +182,7 @@ export {
   calcCarryingCapacity,
   isEncumbered,
   calcEncumbrancePercentage,
+  calcDetailedEncumbrance,
   calcTotalGoldValue,
   countActiveAttunements,
   canAttune,
@@ -194,6 +197,23 @@ export {
   createDefaultInventory,
   createEmptyItem,
 } from "./item";
+
+// ─── Trait effect types ──────────────────────────────────────────────
+export type {
+  ACFormula,
+  ACFormulaEffect,
+  ACBonusEffect,
+  SpeedBonusEffect,
+  DamageModifierEffect,
+  ProficiencyEffect,
+  SkillProficiencyEffect,
+  SavingThrowProficiencyEffect,
+  InitiativeBonusEffect,
+  HPBonusEffect,
+  DarkvisionEffect,
+  LimitedUseEffect,
+  TraitEffect,
+} from "./traitEffects";
 
 // ─── Notes types (HU-09) ────────────────────────────────────────────
 export type {
