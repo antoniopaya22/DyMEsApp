@@ -53,7 +53,7 @@ interface ClassCardProps {
 
 export function ClassCard({ data, isExpanded, onToggle }: ClassCardProps) {
   const { colors } = useTheme();
-  const icon = CLASS_ICONS[data.id as keyof typeof CLASS_ICONS] || "⚔️";
+  const icon = CLASS_ICONS[data.id as keyof typeof CLASS_ICONS] || "hammer-outline";
 
   // Animated chevron rotation
   const chevronAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
@@ -96,7 +96,7 @@ export function ClassCard({ data, isExpanded, onToggle }: ClassCardProps) {
             { backgroundColor: `${accentColor}${colors.iconBgAlpha}` },
           ]}
         >
-          <Text style={{ fontSize: 22 }}>{icon}</Text>
+          <Ionicons name={icon as any} size={22} color={accentColor} />
         </View>
         <View style={s.cardInfo}>
           <Text style={[s.cardTitle, { color: colors.textPrimary }]}>

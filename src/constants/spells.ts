@@ -30,14 +30,14 @@ export const MAGIC_SCHOOL_NAMES: Record<MagicSchool, string> = {
 };
 
 export const MAGIC_SCHOOL_ICONS: Record<MagicSchool, string> = {
-  abjuracion: "🛡️",
-  conjuracion: "✨",
-  adivinacion: "👁️",
-  encantamiento: "💫",
-  evocacion: "🔥",
-  ilusion: "🌀",
-  nigromancia: "💀",
-  transmutacion: "🔄",
+  abjuracion: "shield-outline",
+  conjuracion: "sparkles-outline",
+  adivinacion: "eye-outline",
+  encantamiento: "star-outline",
+  evocacion: "flame-outline",
+  ilusion: "color-filter-outline",
+  nigromancia: "skull-outline",
+  transmutacion: "sync-outline",
 };
 
 // ─── Niveles de hechizo ──────────────────────────────────────────────

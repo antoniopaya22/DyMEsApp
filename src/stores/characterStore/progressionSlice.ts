@@ -195,6 +195,17 @@ export function createProgressionSlice(
         );
       }
 
+      // ── Aplicar Pericia (expertise) elegida ──
+      if (options.expertiseChosen && options.expertiseChosen.length > 0) {
+        const updatedSkills = { ...updatedChar.skillProficiencies };
+        for (const sk of options.expertiseChosen) {
+          if (updatedSkills[sk]?.level === 'proficient') {
+            updatedSkills[sk] = { ...updatedSkills[sk], level: 'expertise', source: 'clase' };
+          }
+        }
+        updatedChar = { ...updatedChar, skillProficiencies: updatedSkills };
+      }
+
       set({ character: updatedChar });
 
       // ── Recalcular recursos de clase ──

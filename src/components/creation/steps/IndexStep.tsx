@@ -264,8 +264,9 @@ export default function IndexStep() {
             style={{ backgroundColor: colors.bgInput }}
           >
             <Animated.View
-              className="h-full bg-primary-500 rounded-full"
+              className="h-full rounded-full"
               style={{
+                backgroundColor: colors.accentRed,
                 width: progressBarAnim.interpolate({
                   inputRange: [0, 1],
                   outputRange: ["0%", "100%"],

@@ -509,7 +509,11 @@ export default function ConfirmDialog({
                     {/* Default (primary) button gets gradient */}
                     {isDefault && (
                       <LinearGradient
-                        colors={["#00D4E8", "#00BCD4", "#0097A7"]}
+                        colors={
+                          isDark
+                            ? ["#00D4E8", "#00BCD4", "#0097A7"]
+                            : ["#0E8AA0", "#0E7490", "#0C6580"]
+                        }
                         style={[StyleSheet.absoluteFill, { borderRadius: 11 }]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 0, y: 1 }}

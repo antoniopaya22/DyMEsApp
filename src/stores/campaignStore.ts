@@ -92,7 +92,7 @@ function syncCampaignToCloud(campaign: Campaign): void {
         console.warn("[CampaignStore] Cloud sync failed:", err),
       );
     })
-    .catch(() => {});
+    .catch((err) => console.warn("[CampaignStore] Auth check failed:", err));
 }
 
 /** Delete a campaign backup from Supabase in the background */
@@ -105,7 +105,7 @@ function deleteCampaignFromCloud(campaignId: string): void {
         console.warn("[CampaignStore] Cloud delete failed:", err),
       );
     })
-    .catch(() => {});
+    .catch((err) => console.warn("[CampaignStore] Auth check failed:", err));
 }
 
 // ─── Store ───────────────────────────────────────────────────────────

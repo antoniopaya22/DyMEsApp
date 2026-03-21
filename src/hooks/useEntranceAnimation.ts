@@ -50,7 +50,12 @@ export function useEntranceAnimation(options: EntranceAnimationOptions = {}) {
   const translateY = useRef(new Animated.Value(slide ? distance : 0)).current;
 
   useEffect(() => {
-    if (!active) return;
+    if (!active) {
+      // Not animating → make immediately visible
+      opacity.setValue(1);
+      if (slide) translateY.setValue(0);
+      return;
+    }
 
     const animations: Animated.CompositeAnimation[] = [
       Animated.timing(opacity, {

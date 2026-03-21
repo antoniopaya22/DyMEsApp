@@ -1503,21 +1503,21 @@ export function calcLevel1HP(classId: ClassId, conModifier: number): number {
 }
 
 /**
- * Iconos emoji representativos de cada clase.
+ * Iconos Ionicons representativos de cada clase.
  */
 export const CLASS_ICONS: Record<ClassId, string> = {
-  barbaro: "⚔️",
-  bardo: "🎵",
-  brujo: "👁️",
-  clerigo: "✝️",
-  druida: "🌿",
-  explorador: "🏹",
-  guerrero: "🛡️",
-  hechicero: "✨",
-  mago: "📖",
-  monje: "👊",
-  paladin: "☀️",
-  picaro: "🗡️",
+  barbaro: "hammer-outline",
+  bardo: "musical-notes-outline",
+  brujo: "eye-outline",
+  clerigo: "medkit-outline",
+  druida: "leaf-outline",
+  explorador: "compass-outline",
+  guerrero: "shield-outline",
+  hechicero: "sparkles-outline",
+  mago: "book-outline",
+  monje: "hand-left-outline",
+  paladin: "sunny-outline",
+  picaro: "cut-outline",
 };
 
 /**

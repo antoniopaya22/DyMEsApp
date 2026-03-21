@@ -741,7 +741,7 @@ export default function AbilitiesStep() {
                           <Text
                             style={[styles.allAssigned, themed.allAssigned]}
                           >
-                            ✓ Todos asignados
+                            <Ionicons name="checkmark-circle" size={14} />{" "}Todos asignados
                           </Text>
                         )}
                       </View>
@@ -926,7 +926,7 @@ export default function AbilitiesStep() {
                   {modalMethod === "dice_roll" && (
                     <View>
                       <TouchableOpacity
-                        style={styles.rollButton}
+                        style={[styles.rollButton, { backgroundColor: colors.accentRed }]}
                         onPress={handleModalRollAll}
                       >
                         <Ionicons
@@ -1134,7 +1134,7 @@ export default function AbilitiesStep() {
                     style={[
                       styles.modalSelectBtnText,
                       {
-                        color: isModalValid() ? "#0B1221" : colors.textMuted,
+                        color: isModalValid() ? colors.textInverted : colors.textMuted,
                       },
                     ]}
                   >

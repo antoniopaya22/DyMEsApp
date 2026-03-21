@@ -31,6 +31,7 @@ import {
   hitDieValue,
   type AbilityKey,
   type AbilityScores,
+  type SkillKey,
 } from "@/types/character";
 import { getFeatById } from "@/data/srd/feats";
 import { Ionicons } from "@expo/vector-icons";
@@ -44,6 +45,7 @@ export type StepId =
   | "summary"
   | "hp"
   | "asi"
+  | "expertise"
   | "spells"
   | "subclass"
   | "metamagic"
@@ -114,6 +116,9 @@ export function useLevelUpWizard(
 
   // ── Metamagic ──
   const [selectedMetamagic, setSelectedMetamagic] = useState<string[]>([]);
+
+  // ── Expertise (Pericia) ──
+  const [selectedExpertise, setSelectedExpertise] = useState<SkillKey[]>([]);
 
   // ── Custom spells (free text) ──
   const [customCantripName, setCustomCantripName] = useState("");
@@ -243,6 +248,14 @@ export function useLevelUpWizard(
         });
       }
 
+      if (s.expertiseChoices > 0) {
+        buildSteps.push({
+          id: "expertise",
+          title: "Pericia",
+          icon: "star-outline",
+        });
+      }
+
       buildSteps.push({
         id: "confirm",
         title: "Confirmar",
@@ -287,6 +300,7 @@ export function useLevelUpWizard(
       setCustomCantripName("");
       setCustomSpellName("");
       setSelectedMetamagic([]);
+      setSelectedExpertise([]);
       setExpandedSpellIds(new Set());
     }
   }, [visible, character]);
@@ -359,6 +373,10 @@ export function useLevelUpWizard(
       case "metamagic":
         return summary
           ? selectedMetamagic.length === summary.newMetamagicChoices
+          : false;
+      case "expertise":
+        return summary
+          ? selectedExpertise.length === summary.expertiseChoices
           : false;
       case "confirm":
         return true;
@@ -506,6 +524,8 @@ export function useLevelUpWizard(
             : undefined,
         metamagicChosen:
           selectedMetamagic.length > 0 ? selectedMetamagic : undefined,
+        expertiseChosen:
+          selectedExpertise.length > 0 ? selectedExpertise : undefined,
       };
 
       await levelUp(options);
@@ -612,6 +632,10 @@ export function useLevelUpWizard(
     // Metamagic
     selectedMetamagic,
     setSelectedMetamagic,
+
+    // Expertise
+    selectedExpertise,
+    setSelectedExpertise,
 
     // Processing & animation
     isProcessing,

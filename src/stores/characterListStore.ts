@@ -27,8 +27,12 @@ import {
 import { now } from "@/utils/providers";
 import { useCharacterStore } from "./characterStore";
 import { deleteCreationDraft } from "./creationStore";
-import { supabase } from "@/lib/supabase";
-import { deleteCharacterFromCloud } from "@/services/supabaseService";
+import { useAuthStore } from "./authStore";
+import {
+  deleteCharacterFromCloud,
+  fetchUserCharacters,
+  upsertCharacter,
+} from "@/services/supabaseService";
 
 // ─── Tipos ───────────────────────────────────────────────────────────
 
@@ -83,6 +87,8 @@ interface CharacterListActions {
   getCharacterById: (id: string) => CharacterSummary | undefined;
   /** Actualiza la fecha de último acceso */
   touchCharacter: (id: string) => Promise<void>;
+  /** Sincroniza personajes desde la nube y actualiza local storage */
+  syncFromCloud: () => Promise<number>;
   /** Limpia el error */
   clearError: () => void;
 }
@@ -309,6 +315,112 @@ export const useCharacterListStore = create<CharacterListStore>((set, get) => ({
       console.warn(
         "[CharacterListStore] touchCharacter: no se pudo actualizar",
       );
+    }
+  },
+
+  syncFromCloud: async () => {
+    const user = useAuthStore.getState().user;
+    if (!user) {
+      console.log("[Sync] no user, skipping");
+      return 0;
+    }
+
+    try {
+      const cloudRows = await fetchUserCharacters(user.id);
+      const cloudMap = new Map(cloudRows.map((r) => [r.id, r]));
+
+      const { characters } = get();
+      const localMap = new Map(characters.map((c) => [c.id, c]));
+      let changed = 0;
+
+      // ── 1. Pull: cloud → local (new or newer in cloud) ──
+      for (const row of cloudRows) {
+        const datos = row.datos as Record<string, unknown> & {
+          _magicState?: unknown;
+          _classResources?: unknown;
+          _inventory?: unknown;
+          _notes?: unknown;
+        };
+
+        const {
+          _magicState,
+          _classResources,
+          _inventory,
+          _notes,
+          ...characterData
+        } = datos;
+
+        const char = characterData as unknown as Character;
+        const charId = row.id;
+
+        const localSummary = localMap.get(charId);
+        if (localSummary) {
+          const cloudTime = new Date(row.actualizado_en).getTime();
+          const localTime = new Date(localSummary.actualizadoEn).getTime();
+          if (localTime >= cloudTime) continue;
+        }
+
+        await setItem(STORAGE_KEYS.CHARACTER(charId), char);
+        if (_magicState) await setItem(STORAGE_KEYS.MAGIC_STATE(charId), _magicState);
+        if (_classResources) await setItem(STORAGE_KEYS.CLASS_RESOURCES(charId), _classResources);
+        if (_inventory) await setItem(STORAGE_KEYS.INVENTORY(charId), _inventory);
+        if (_notes && Array.isArray(_notes) && _notes.length > 0) {
+          await setItem(STORAGE_KEYS.NOTES(charId), _notes);
+        }
+
+        if (!localSummary) {
+          localMap.set(charId, toCharacterSummary(char));
+        }
+        changed++;
+      }
+
+      // ── 2. Push: local → cloud (local-only or newer locally) ──
+      for (const summary of characters) {
+        const cloudRow = cloudMap.get(summary.id);
+
+        // Skip if cloud is same or newer
+        if (cloudRow) {
+          const cloudTime = new Date(cloudRow.actualizado_en).getTime();
+          const localTime = new Date(summary.actualizadoEn).getTime();
+          if (cloudTime >= localTime) continue;
+        }
+
+        // Read full character + sub-state from local storage
+        const char = await getItem<Character>(STORAGE_KEYS.CHARACTER(summary.id));
+        if (!char) continue;
+
+        const payload: Record<string, unknown> = { ...char };
+        const magic = await getItem<unknown>(STORAGE_KEYS.MAGIC_STATE(summary.id));
+        if (magic) payload._magicState = magic;
+        const res = await getItem<unknown>(STORAGE_KEYS.CLASS_RESOURCES(summary.id));
+        if (res) payload._classResources = res;
+        const inv = await getItem<unknown>(STORAGE_KEYS.INVENTORY(summary.id));
+        if (inv) payload._inventory = inv;
+        const notes = await getItem<unknown[]>(STORAGE_KEYS.NOTES(summary.id));
+        if (notes && notes.length > 0) payload._notes = notes;
+
+        try {
+          await upsertCharacter(summary.id, user.id, payload);
+          changed++;
+          console.log("[Sync] pushed", summary.id, "to cloud");
+        } catch (pushErr) {
+          console.warn("[Sync] failed to push", summary.id, pushErr);
+        }
+      }
+
+      // ── 3. Persist & reload ──
+      if (changed > 0) {
+        const updatedList = sortByLastAccess([...localMap.values()]);
+        await persistList(updatedList);
+        await get().loadCharacters();
+        console.log("[Sync]", changed, "changes synced");
+      }
+
+      return changed;
+    } catch (err) {
+      const message = extractErrorMessage(err, "Error al sincronizar");
+      console.error("[Sync]", message);
+      return 0;
     }
   },
 

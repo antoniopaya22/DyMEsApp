@@ -51,16 +51,27 @@ function getRedirectUri(): string {
     if (globalThis.window === undefined) return "";
     return globalThis.location.origin;
   }
-  return makeRedirectUri();
+  
+  // Expo requires the /--/ path suffix for deep linking to intercept callbacks properly in Expo Go
+  // This explicitly generates exp://IP:PORT/--/ instead of just exp://IP:PORT
+  const baseUri = makeRedirectUri();
+  
+  // Add /--/ safely if we're in Expo Go and it wasn't added automatically
+  if (baseUri.startsWith('exp://') && !baseUri.includes('/--/')) {
+     const separator = baseUri.endsWith('/') ? '--/' : '/--/';
+     return `${baseUri}${separator}`;
+  }
+  
+  return baseUri;
 }
 const REDIRECT_URI = getRedirectUri();
 
 /**
  * Parse an OAuth callback URL and establish a Supabase session.
  * Handles both PKCE (?code=xxx) and implicit (#access_token=xxx) flows.
- * Returns true if a session was successfully established.
+ * Returns the session if successfully established.
  */
-async function extractAndSetSession(callbackUrl: string): Promise<boolean> {
+async function extractAndSetSession(callbackUrl: string): Promise<Session | null> {
   try {
     const url = new URL(callbackUrl);
 
@@ -68,15 +79,15 @@ async function extractAndSetSession(callbackUrl: string): Promise<boolean> {
     const code = url.searchParams.get("code");
     if (code) {
       console.log("[AuthStore] PKCE code detected, exchanging for session...");
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) {
         console.error(
           "[AuthStore] exchangeCodeForSession failed:",
           error.message,
         );
-        return false;
+        return null;
       }
-      return true;
+      return data.session;
     }
 
     // Implicit flow: #access_token=xxx&refresh_token=xxx
@@ -87,15 +98,15 @@ async function extractAndSetSession(callbackUrl: string): Promise<boolean> {
       const refreshToken = params.get("refresh_token");
       if (accessToken && refreshToken) {
         console.log("[AuthStore] Implicit tokens detected, setting session...");
-        const { error } = await supabase.auth.setSession({
+        const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
         if (error) {
           console.error("[AuthStore] setSession failed:", error.message);
-          return false;
+          return null;
         }
-        return true;
+        return data.session;
       }
     }
 
@@ -103,10 +114,10 @@ async function extractAndSetSession(callbackUrl: string): Promise<boolean> {
       "[AuthStore] Callback URL had no code or tokens:",
       callbackUrl.substring(0, 100),
     );
-    return false;
+    return null;
   } catch (err) {
     console.error("[AuthStore] extractAndSetSession error:", err);
-    return false;
+    return null;
   }
 }
 
@@ -345,11 +356,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       }
 
       if (callbackUrl) {
-        const sessionEstablished = await extractAndSetSession(callbackUrl);
-        if (sessionEstablished) {
-          // Don't call fetchProfile here — the deferred onAuthStateChange
-          // callback (setTimeout) handles it after setSession's lock is released.
-          set({ loading: false });
+        const establishedSession = await extractAndSetSession(callbackUrl);
+        if (establishedSession) {
+          // Immediately set the session to avoid a race condition with Expo Router
+          // _layout.tsx needs the session populated before loading becomes false.
+          set({
+            session: establishedSession,
+            user: establishedSession.user,
+            loading: false,
+          });
           return;
         }
       }

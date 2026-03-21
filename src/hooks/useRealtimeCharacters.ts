@@ -7,8 +7,10 @@
  */
 
 import { useEffect, useRef, useCallback, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import type { RealtimeChannel } from "@supabase/supabase-js";
+import {
+  createCharactersRealtimeChannel,
+  removeRealtimeChannel,
+} from "@/services/supabaseService";
 import type { PersonajeRow } from "@/types/supabase";
 
 interface UseRealtimeCharactersOptions {
@@ -32,19 +34,14 @@ export function useRealtimeCharacters({
   onDelete,
   enabled = true,
 }: UseRealtimeCharactersOptions) {
-  const channelRef = useRef<RealtimeChannel | null>(null);
+  const channelRef = useRef<unknown | null>(null);
   const [status, setStatus] = useState<"idle" | "connected" | "error">("idle");
 
-  const handlePayload = useCallback(
-    (payload: { eventType: string; new: PersonajeRow | null; old: { id: string } | null }) => {
-      if (payload.eventType === "DELETE" && payload.old?.id) {
-        onDelete?.(payload.old.id);
-      } else if (payload.new) {
-        onUpdate(payload.new);
-      }
-    },
-    [onUpdate, onDelete],
-  );
+  // Use refs for callbacks to avoid subscription churn when callers pass inline fns
+  const onUpdateRef = useRef(onUpdate);
+  const onDeleteRef = useRef(onDelete);
+  onUpdateRef.current = onUpdate;
+  onDeleteRef.current = onDelete;
 
   useEffect(() => {
     if (!enabled || characterIds.length === 0) {
@@ -64,34 +61,34 @@ export function useRealtimeCharacters({
     }
     const channelName = `rt-chars-${Math.abs(hashCode).toString(36)}`;
 
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "personajes",
-          filter,
-        },
-        (payload) => handlePayload(payload as unknown as { eventType: string; new: PersonajeRow | null; old: { id: string } | null }),
-      )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
+    const channel = createCharactersRealtimeChannel(
+      channelName,
+      filter,
+      (payload) => {
+        const p = payload as { eventType: string; new: PersonajeRow | null; old: { id: string } | null };
+        if (p.eventType === "DELETE" && p.old?.id) {
+          onDeleteRef.current?.(p.old.id);
+        } else if (p.new) {
+          onUpdateRef.current(p.new);
+        }
+      },
+      (subStatus) => {
+        if (subStatus === "SUBSCRIBED") {
           setStatus("connected");
-        } else if (status === "CHANNEL_ERROR") {
+        } else if (subStatus === "CHANNEL_ERROR") {
           setStatus("error");
         }
-      });
+      },
+    );
 
     channelRef.current = channel;
 
     return () => {
-      channel.unsubscribe();
+      removeRealtimeChannel(channel);
       channelRef.current = null;
       setStatus("idle");
     };
-  }, [characterIds, enabled, handlePayload]);
+  }, [characterIds, enabled]);
 
   return { status };
 }

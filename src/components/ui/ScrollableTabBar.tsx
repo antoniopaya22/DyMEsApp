@@ -68,7 +68,7 @@ export default function ScrollableTabBar({
         toValue: layout.x,
         friction: 20,
         tension: 170,
-        useNativeDriver: true,
+        useNativeDriver: false, // must match indicatorW since both drive the same View
       }),
       Animated.spring(indicatorW, {
         toValue: layout.width,
@@ -236,7 +236,7 @@ export type { TabItem };
 const s = StyleSheet.create({
   container: {
     marginHorizontal: 16,
-    marginVertical: 6,
+    marginVertical: 4,
     borderRadius: 14,
     borderWidth: 1,
     overflow: "hidden",

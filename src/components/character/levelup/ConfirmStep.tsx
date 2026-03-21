@@ -12,10 +12,12 @@ import {
   ABILITY_ABBR,
   type AbilityKey,
   type AbilityScores,
+  type SkillKey,
   type Character,
 } from "@/types/character";
 import type { LevelUpSummary } from "@/data/srd/leveling";
 import { ABILITY_KEYS } from "@/constants/abilities";
+import { SKILLS } from "@/constants/character";
 
 interface ConfirmStepProps {
   summary: LevelUpSummary;
@@ -47,6 +49,7 @@ interface ConfirmStepProps {
   chooseFeat?: boolean;
   selectedFeatId?: string | null;
   featAsiChoices?: Partial<AbilityScores>;
+  selectedExpertise?: SkillKey[];
 }
 
 export default function ConfirmStep({
@@ -79,6 +82,7 @@ export default function ConfirmStep({
   chooseFeat = false,
   selectedFeatId = null,
   featAsiChoices = {},
+  selectedExpertise = [],
 }: ConfirmStepProps) {
   const { colors } = useTheme();
 
@@ -269,6 +273,18 @@ export default function ConfirmStep({
       label: "Metamagia",
       detail: selectedMetamagic
         .map((id) => METAMAGIC_NAMES[id as MetamagicOption] ?? id)
+        .join(", "),
+    });
+  }
+
+  // Expertise
+  if (selectedExpertise.length > 0) {
+    changes.push({
+      icon: "star",
+      color: colors.accentRed,
+      label: "Pericia",
+      detail: selectedExpertise
+        .map((sk) => SKILLS[sk]?.nombre ?? sk)
         .join(", "),
     });
   }

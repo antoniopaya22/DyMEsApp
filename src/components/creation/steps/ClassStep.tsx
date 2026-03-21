@@ -128,8 +128,8 @@ export default function ClassSelectionStep() {
           style={{ backgroundColor: colors.bgInput }}
         >
           <View
-            className="h-full bg-primary-500 rounded-full"
-            style={{ width: `${progressPercent}%` }}
+            className="h-full rounded-full"
+            style={{ width: `${progressPercent}%`, backgroundColor: colors.accentRed }}
           />
         </View>
       </View>

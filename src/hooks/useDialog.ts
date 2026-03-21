@@ -58,6 +58,7 @@ export function useDialog() {
   /** Close the dialog */
   const closeDialog = useCallback(() => {
     setDialog((prev) => ({ ...prev, visible: false }));
+    resolveRef.current?.(false);
     resolveRef.current = null;
   }, []);
 

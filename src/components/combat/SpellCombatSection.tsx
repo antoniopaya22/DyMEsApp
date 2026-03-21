@@ -139,6 +139,8 @@ export function SpellCombatSection() {
     restoreAllSpellSlots,
     usePactSlot,
     restoreAllPactSlots,
+    useSorceryPoints,
+    restoreSorceryPoints,
   } = useCharacterStore();
 
   const [showAllSpells, setShowAllSpells] = useState(false);
@@ -448,6 +450,18 @@ export function SpellCombatSection() {
 
     const { max, current } = magicState.sorceryPoints;
 
+    const handleSpend = async (amount: number) => {
+      const success = await useSorceryPoints(amount);
+      if (success) showToast(`−${amount} punto${amount > 1 ? "s" : ""} de hechicería`);
+      else showToast("No tienes suficientes puntos de hechicería");
+    };
+
+    const handleRestore = async (amount: number) => {
+      const success = await restoreSorceryPoints(amount);
+      if (success) showToast(`+${amount} punto${amount > 1 ? "s" : ""} de hechicería`);
+      else showToast("Los puntos de hechicería ya están al máximo");
+    };
+
     return (
       <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
         <View className="flex-row items-center justify-between mb-3">
@@ -462,6 +476,27 @@ export function SpellCombatSection() {
           </Text>
         </View>
 
+        {/* Interactive dot tracker */}
+        <View className="flex-row flex-wrap justify-center mb-2" style={{ gap: 6 }}>
+          {Array.from({ length: max }).map((_, i) => {
+            const isFilled = i < current;
+            return (
+              <TouchableOpacity
+                key={i}
+                onPress={() => (isFilled ? handleSpend(1) : handleRestore(1))}
+                activeOpacity={0.6}
+              >
+                <Ionicons
+                  name={isFilled ? "sparkles" : "sparkles-outline"}
+                  size={20}
+                  color={isFilled ? classColor : withAlpha(colors.textMuted, 0.35)}
+                />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Progress bar */}
         <View
           className="h-2.5 rounded-full overflow-hidden"
           style={{ backgroundColor: colors.bgSecondary }}
@@ -475,9 +510,22 @@ export function SpellCombatSection() {
           />
         </View>
 
-        <Text className="text-[10px] mt-1.5" style={{ color: colors.textMuted }}>
-          Se recuperan en descanso largo
-        </Text>
+        <View className="flex-row items-center justify-between mt-2">
+          <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+            Toca una estrella para gastar o recuperar
+          </Text>
+          {current < max && (
+            <TouchableOpacity
+              className="rounded-lg px-2.5 py-1 active:opacity-70"
+              style={{ backgroundColor: withAlpha(classColor, 0.15) }}
+              onPress={() => handleRestore(max - current)}
+            >
+              <Text className="text-[10px] font-semibold" style={{ color: classColor }}>
+                Restaurar todos
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     );
   };
@@ -489,40 +537,96 @@ export function SpellCombatSection() {
     const chosen = magicState?.metamagicChosen ?? [];
     if (chosen.length === 0) return null;
 
+    const currentPH = magicState?.sorceryPoints?.current ?? 0;
+
+    const handleUseMetamagic = async (id: string) => {
+      const cost = METAMAGIC_COSTS[id as MetamagicOption];
+      if (cost === undefined) return;
+
+      if (currentPH < cost) {
+        showToast(`Necesitas ${cost} PH — solo tienes ${currentPH}`);
+        return;
+      }
+
+      const name = METAMAGIC_NAMES[id as MetamagicOption] ?? id;
+      showConfirm(
+        "Usar Metamagia",
+        `¿Usar ${name} por ${cost} punto${cost > 1 ? "s" : ""} de hechicería?`,
+        async () => {
+          const success = await useSorceryPoints(cost);
+          if (success) showToast(`${name} activado (−${cost} PH)`);
+          else showToast("No tienes suficientes puntos de hechicería");
+        },
+        { confirmText: "Usar", cancelText: "Cancelar", type: "info" },
+      );
+    };
+
     return (
       <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
-        <View className="flex-row items-center mb-3">
+        <View className="flex-row items-center mb-1">
           <Ionicons name="color-wand" size={20} color={colors.accentRed} />
           <Text className="text-sm font-bold ml-2" style={{ color: colors.textPrimary }}>
             Metamagia
           </Text>
         </View>
 
+        <Text className="text-[10px] mb-3" style={{ color: colors.textMuted }}>
+          Toca una opción para gastar sus puntos de hechicería
+        </Text>
+
         <View style={{ gap: 8 }}>
           {chosen.map((id) => {
             const name = METAMAGIC_NAMES[id as MetamagicOption] ?? id;
             const cost = METAMAGIC_COSTS[id as MetamagicOption];
             const desc = METAMAGIC_DESCRIPTIONS[id as MetamagicOption];
+            const canAfford = cost !== undefined && currentPH >= cost;
 
             return (
-              <View
+              <TouchableOpacity
                 key={id}
+                activeOpacity={canAfford ? 0.6 : 0.9}
+                onPress={() => handleUseMetamagic(id)}
                 className="rounded-xl border p-3"
                 style={{
-                  backgroundColor: withAlpha(colors.accentRed, isDark ? 0.08 : 0.05),
-                  borderColor: withAlpha(colors.accentRed, isDark ? 0.2 : 0.15),
+                  backgroundColor: withAlpha(
+                    colors.accentRed,
+                    isDark ? 0.08 : 0.05,
+                  ),
+                  borderColor: withAlpha(
+                    colors.accentRed,
+                    isDark ? 0.2 : 0.15,
+                  ),
+                  opacity: canAfford ? 1 : 0.5,
                 }}
               >
                 <View className="flex-row items-center justify-between mb-1">
-                  <Text className="text-sm font-bold" style={{ color: colors.accentRed }}>
-                    {name}
-                  </Text>
+                  <View className="flex-row items-center flex-1" style={{ gap: 6 }}>
+                    <Ionicons
+                      name="color-wand-outline"
+                      size={14}
+                      color={canAfford ? colors.accentRed : colors.textMuted}
+                    />
+                    <Text
+                      className="text-sm font-bold"
+                      style={{ color: canAfford ? colors.accentRed : colors.textMuted }}
+                    >
+                      {name}
+                    </Text>
+                  </View>
                   {cost !== undefined && (
                     <View
                       className="rounded-lg px-2 py-0.5"
-                      style={{ backgroundColor: withAlpha(colors.accentRed, 0.15) }}
+                      style={{
+                        backgroundColor: withAlpha(
+                          canAfford ? colors.accentRed : colors.textMuted,
+                          0.15,
+                        ),
+                      }}
                     >
-                      <Text className="text-[11px] font-bold" style={{ color: colors.accentRed }}>
+                      <Text
+                        className="text-[11px] font-bold"
+                        style={{ color: canAfford ? colors.accentRed : colors.textMuted }}
+                      >
                         {cost} PH
                       </Text>
                     </View>
@@ -533,7 +637,7 @@ export function SpellCombatSection() {
                     {desc}
                   </Text>
                 )}
-              </View>
+              </TouchableOpacity>
             );
           })}
         </View>

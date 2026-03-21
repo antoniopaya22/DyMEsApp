@@ -9,6 +9,7 @@ import type {
   SkillKey,
   Personality,
   Appearance,
+  Proficiencies,
 } from "@/types/character";
 import { SKILLS } from "@/types/character";
 import { now } from "@/utils/providers";
@@ -25,6 +26,7 @@ import {
 import {
   createDefaultMagicState,
   createDefaultClassResources,
+  safeSetItem,
   type InternalMagicState,
   type ClassResourcesState,
 } from "./helpers";
@@ -61,7 +63,7 @@ export function createCharacterCrudSlice(
       set({ loading: true, error: null });
       try {
         const charKey = STORAGE_KEYS.CHARACTER(characterId);
-        const character = await getItem<Character>(charKey);
+        let character = await getItem<Character>(charKey);
 
         if (!character) {
           set({ loading: false, error: "Personaje no encontrado" });
@@ -70,7 +72,7 @@ export function createCharacterCrudSlice(
 
         // ── Data migration: tiefling sin subraza → tiefling_infernal ──
         if (character.raza === "tiefling" && !character.subraza) {
-          character.subraza = "tiefling_infernal";
+          character = { ...character, subraza: "tiefling_infernal" };
           await setItem(charKey, character);
         }
 
@@ -378,32 +380,40 @@ export function createCharacterCrudSlice(
       const { character } = get();
       if (!character) return;
       const updated = { ...character, personality, actualizadoEn: now() };
-      await setItem(STORAGE_KEYS.CHARACTER(character.id), updated);
       set({ character: updated });
+      await safeSetItem(STORAGE_KEYS.CHARACTER(character.id), updated);
     },
 
     updateAppearance: async (appearance: Appearance) => {
       const { character } = get();
       if (!character) return;
       const updated = { ...character, appearance, actualizadoEn: now() };
-      await setItem(STORAGE_KEYS.CHARACTER(character.id), updated);
       set({ character: updated });
+      await safeSetItem(STORAGE_KEYS.CHARACTER(character.id), updated);
     },
 
     updateAlignment: async (alineamiento: Character["alineamiento"]) => {
       const { character } = get();
       if (!character) return;
       const updated = { ...character, alineamiento, actualizadoEn: now() };
-      await setItem(STORAGE_KEYS.CHARACTER(character.id), updated);
       set({ character: updated });
+      await safeSetItem(STORAGE_KEYS.CHARACTER(character.id), updated);
     },
 
     updateName: async (nombre: string) => {
       const { character } = get();
       if (!character) return;
       const updated = { ...character, nombre, actualizadoEn: now() };
-      await setItem(STORAGE_KEYS.CHARACTER(character.id), updated);
       set({ character: updated });
+      await safeSetItem(STORAGE_KEYS.CHARACTER(character.id), updated);
+    },
+
+    updateProficiencies: async (proficiencies: Proficiencies) => {
+      const { character } = get();
+      if (!character) return;
+      const updated = { ...character, proficiencies, actualizadoEn: now() };
+      set({ character: updated });
+      await safeSetItem(STORAGE_KEYS.CHARACTER(character.id), updated);
     },
   };
 }

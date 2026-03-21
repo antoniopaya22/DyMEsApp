@@ -107,7 +107,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "En cuanto elijo un objetivo, me obsesiono tanto con él que ignoro los demás aspectos de mi vida.",
       ],
     },
-    icon: "⛪",
+    icon: "library-outline",
   },
 
   // ─── CHARLATÁN ─────────────────────────────────────────────────────
@@ -164,7 +164,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "Escapo ante la primera señal de problemas.",
       ],
     },
-    icon: "🎭",
+    icon: "eye-off-outline",
   },
 
   // ─── CRIMINAL ──────────────────────────────────────────────────────
@@ -231,7 +231,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "Me resulta imposible ignorar un secreto.",
       ],
     },
-    icon: "🗡️",
+    icon: "lock-closed-outline",
   },
 
   // ─── ARTISTA ───────────────────────────────────────────────────────
@@ -307,7 +307,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "En secreto, creo que nadie está a la altura de mi grandeza.",
       ],
     },
-    icon: "🎭",
+    icon: "musical-notes-outline",
   },
 
   // ─── HÉROE DEL PUEBLO ──────────────────────────────────────────────
@@ -382,7 +382,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "Tengo problemas para confiar en mis aliados.",
       ],
     },
-    icon: "🦸",
+    icon: "people-outline",
   },
 
   // ─── ARTESANO GREMIAL ──────────────────────────────────────────────
@@ -456,7 +456,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "Soy terriblemente celoso de cualquiera que supere mi trabajo. Haré lo que sea para superar a un rival.",
       ],
     },
-    icon: "🔨",
+    icon: "build-outline",
   },
 
   // ─── ERMITAÑO ──────────────────────────────────────────────────────
@@ -514,7 +514,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "Me gusta guardar secretos y no los comparto con nadie.",
       ],
     },
-    icon: "🏔️",
+    icon: "trail-sign-outline",
   },
 
   // ─── NOBLE ─────────────────────────────────────────────────────────
@@ -582,7 +582,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "Con mis palabras y acciones a menudo avergüenzo a mi familia.",
       ],
     },
-    icon: "👑",
+    icon: "trophy-outline",
   },
 
   // ─── FORASTERO ─────────────────────────────────────────────────────
@@ -653,7 +653,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "Soy lento para confiar en los miembros de otras razas, tribus y sociedades.",
       ],
     },
-    icon: "🌲",
+    icon: "compass-outline",
   },
 
   // ─── SABIO ─────────────────────────────────────────────────────────
@@ -712,7 +712,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "No puedo guardar un secreto aunque mi vida dependa de ello.",
       ],
     },
-    icon: "📚",
+    icon: "school-outline",
   },
 
   // ─── MARINERO ──────────────────────────────────────────────────────
@@ -778,7 +778,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "No puedo resistirme a una cara bonita.",
       ],
     },
-    icon: "⚓",
+    icon: "boat-outline",
   },
 
   // ─── SOLDADO ───────────────────────────────────────────────────────
@@ -842,7 +842,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "Preferiría comer mi armadura antes que admitir que estoy equivocado.",
       ],
     },
-    icon: "⚔️",
+    icon: "shield-outline",
   },
 
   // ─── HUÉRFANO ──────────────────────────────────────────────────────
@@ -901,7 +901,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "Las personas que no pueden cuidar de sí mismas no merecen que las ayuden.",
       ],
     },
-    icon: "🏚️",
+    icon: "home-outline",
   },
   // ─── PEÓN DE BRUJALUZ (Expansión — El Brujaluz Más Allá) ─────────
   peon_brujaluz: {
@@ -961,7 +961,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "Confío demasiado en las apariencias y me engañan con facilidad.",
       ],
     },
-    icon: "🎪",
+    icon: "bonfire-outline",
   },
   // ─── EXTRAVIADO FEÉRICO (Expansión — El Brujaluz Más Allá) ────────
   extraviado_feerico: {
@@ -1019,7 +1019,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
         "Mi vínculo con el Feywild me hace parecer extraño e inquietante ante los demás.",
       ],
     },
-    icon: "🦋",
+    icon: "planet-outline",
   },
   // ─── PERSONALIZADA (placeholder, datos reales vienen del editor) ───
   personalizada: {
@@ -1034,7 +1034,7 @@ export const BACKGROUNDS: Record<BackgroundId, BackgroundData> = {
     featureName: "",
     featureDescription: "",
     personality: { traits: [], ideals: [], bonds: [], flaws: [] },
-    icon: "✏️",
+    icon: "create-outline",
   },
 };
 
@@ -1058,7 +1058,7 @@ export function buildBackgroundDataFromCustom(
     featureName: config.featureName,
     featureDescription: config.featureDescription,
     personality: { traits: [], ideals: [], bonds: [], flaws: [] },
-    icon: "✏️",
+    icon: "create-outline",
   };
 }
 

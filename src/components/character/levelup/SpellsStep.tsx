@@ -244,7 +244,7 @@ export default function SpellsStep({
               {spell.nivel > 0
                 ? ` — ${SPELL_LEVEL_NAMES[spell.nivel as SpellLevel]}`
                 : " — Truco"}
-              {desc ? `  ·  ⏱ ${desc.tiempo}` : ""}
+              {desc ? `  ·  ${desc.tiempo}` : ""}
             </Text>
           </View>
           {/* Expand/collapse */}
@@ -286,17 +286,20 @@ export default function SpellsStep({
             >
               {desc.alcance ? (
                 <Text style={{ color: colors.textMuted, fontSize: 11 }}>
-                  📏 {formatAlcanceRaw(desc.alcance, unidades)}
+                  <Ionicons name="resize-outline" size={11} color={colors.textMuted} />{" "}
+                  {formatAlcanceRaw(desc.alcance, unidades)}
                 </Text>
               ) : null}
               {desc.duracion ? (
                 <Text style={{ color: colors.textMuted, fontSize: 11 }}>
-                  · ⏳ {desc.duracion}
+                  · <Ionicons name="hourglass-outline" size={11} color={colors.textMuted} />{" "}
+                  {desc.duracion}
                 </Text>
               ) : null}
               {desc.componentes ? (
                 <Text style={{ color: colors.textMuted, fontSize: 11 }}>
-                  · 🧩 {desc.componentes}
+                  · <Ionicons name="cube-outline" size={11} color={colors.textMuted} />{" "}
+                  {desc.componentes}
                 </Text>
               ) : null}
             </View>

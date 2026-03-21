@@ -36,6 +36,7 @@ import { getBackgroundData } from "@/data/srd/backgrounds";
 import ExperienceSection from "./ExperienceSection";
 import LevelUpModal from "./LevelUpModal";
 import PersonalityAppearanceEditor from "./PersonalityAppearanceEditor";
+import ProficiencyEditor from "./ProficiencyEditor";
 import { useTheme, useDialog } from "@/hooks";
 import { withAlpha } from "@/utils/theme";
 import { useUnidadesActuales } from "@/stores/settingsStore";
@@ -72,6 +73,7 @@ export default function OverviewTab() {
     updateAppearance,
     updateAlignment,
     updateName,
+    updateProficiencies,
   } = useCharacterStore();
   const { startRecreation } = useCreationStore();
   const [expandedSection, setExpandedSection] = useState<string | null>(
@@ -79,6 +81,7 @@ export default function OverviewTab() {
   );
   const [showLevelUpModal, setShowLevelUpModal] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
+  const [showProficiencyEditor, setShowProficiencyEditor] = useState(false);
   const [editorTab, setEditorTab] = useState<"personality" | "appearance">(
     "personality",
   );
@@ -108,17 +111,17 @@ export default function OverviewTab() {
       const notes: string[] = [];
       if (modifiers?.minimum) {
         notes.push(
-          `⚡ ${modifiers.minimum.featureName}: mínimo ${modifiers.minimum.minDieValue} en el d20`,
+          `${modifiers.minimum.featureName}: mínimo ${modifiers.minimum.minDieValue} en el d20`,
         );
       }
       if (modifiers?.rerollNat1) {
         notes.push(
-          `🍀 ${modifiers.rerollNat1.featureName}: re-tirar 1 natural`,
+          `${modifiers.rerollNat1.featureName}: re-tirar 1 natural`,
         );
       }
       for (const pb of modifiers?.passiveBonuses ?? []) {
         if (!pb.includedInBase) {
-          notes.push(`✦ ${pb.featureName}: +${pb.bonus}`);
+          notes.push(`${pb.featureName}: +${pb.bonus}`);
         }
       }
       const noteStr = notes.length > 0 ? `\n${notes.join("\n")}` : "";
@@ -131,7 +134,7 @@ export default function OverviewTab() {
         buttons: [
           { text: "Cancelar", style: "cancel" },
           {
-            text: "🎲 Tirar",
+            text: "Tirar",
             style: "default",
             onPress: () => {
               let result = rollD20(mod);
@@ -143,7 +146,7 @@ export default function OverviewTab() {
                 const rerolled = rollD20(mod);
                 const newDie = rerolled.rolls[0].value;
                 extras.push(
-                  `🍀 ${modifiers.rerollNat1.featureName}: 1 → ${newDie}`,
+                  `${modifiers.rerollNat1.featureName}: 1 → ${newDie}`,
                 );
                 result = rerolled;
                 rawDie = newDie;
@@ -159,22 +162,22 @@ export default function OverviewTab() {
 
               let emoji = "";
               if (result.isCritical) {
-                emoji = " ✨";
+                emoji = " ¡CRÍTICO!";
                 extras.unshift("¡CRÍTICO NATURAL!");
               } else if (result.isFumble && !minApplied) {
-                emoji = " 💀";
+                emoji = " ¡PIFIA!";
                 extras.unshift("¡PIFIA!");
               }
               if (minApplied) {
                 extras.push(
-                  `⚡ ${dieMinimum.featureName}: ${rawDie} → ${effectiveDie}`,
+                  `${dieMinimum.featureName}: ${rawDie} → ${effectiveDie}`,
                 );
               }
 
               // 3. Anotar bonificadores pasivos extra (no incluidos en el mod base)
               for (const pb of modifiers?.passiveBonuses ?? []) {
                 if (!pb.includedInBase) {
-                  extras.push(`✦ ${pb.featureName}: +${pb.bonus}`);
+                  extras.push(`${pb.featureName}: +${pb.bonus}`);
                 }
               }
 
@@ -192,7 +195,7 @@ export default function OverviewTab() {
                       ? "danger"
                       : "info",
                   title: `${label}${emoji}`,
-                  message: `🎲 d20 [${dieDisplay}] ${fullModStr} = ${finalTotal}${extraStr}`,
+                  message: `d20 [${dieDisplay}] ${fullModStr} = ${finalTotal}${extraStr}`,
                   buttons: [{ text: "OK", style: "default" }],
                   customIconContent: createElement(
                     Text,
@@ -619,6 +622,15 @@ export default function OverviewTab() {
       icon="construct"
       isExpanded={expandedSection === "proficiencies"}
       onToggle={() => toggleSection("proficiencies")}
+      rightElement={
+        <TouchableOpacity
+          onPress={() => setShowProficiencyEditor(true)}
+          hitSlop={8}
+          style={{ marginRight: 4 }}
+        >
+          <Ionicons name="pencil-outline" size={18} color={colors.accentGold} />
+        </TouchableOpacity>
+      }
     >
       {character.proficiencies.armors.length > 0 && (
         <ProficiencyGroup
@@ -941,6 +953,15 @@ export default function OverviewTab() {
           onSaveAlignment={updateAlignment}
           onSaveName={updateName}
           initialTab={editorTab}
+        />
+      )}
+
+      {character && (
+        <ProficiencyEditor
+          visible={showProficiencyEditor}
+          onClose={() => setShowProficiencyEditor(false)}
+          proficiencies={character.proficiencies}
+          onSave={updateProficiencies}
         />
       )}
     </>

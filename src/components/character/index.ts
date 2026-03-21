@@ -7,6 +7,7 @@ export { default as LevelUpModal } from "./LevelUpModal";
 export { default as NotesTab } from "./NotesTab";
 export { default as OverviewTab } from "./OverviewTab";
 export { default as PersonalityAppearanceEditor } from "./PersonalityAppearanceEditor";
+export { default as ProficiencyEditor } from "./ProficiencyEditor";
 export { TraitCard } from "./TraitCard";
 
 // Character sheet shared components

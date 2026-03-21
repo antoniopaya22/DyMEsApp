@@ -153,6 +153,8 @@ interface CreationActions {
   setCustomBackgroundData: (data: CustomBackgroundConfig) => void;
   /** Paso 6: Habilidades */
   setSkillChoices: (skills: SkillKey[]) => void;
+  /** Paso 6: Pericia/expertise (pícaro/bardo) */
+  setExpertiseChoices: (skills: SkillKey[]) => void;
   /** Paso 7: Hechizos */
   setSpellChoices: (choices: {
     cantrips: string[];
@@ -332,6 +334,7 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
   setAbilityScores: (scores) =>
     get()._updateDraft({ abilityScoresBase: scores }),
   setSkillChoices: (skills) => get()._updateDraft({ skillChoices: skills }),
+  setExpertiseChoices: (skills) => get()._updateDraft({ expertiseChoices: skills }),
   setSpellChoices: (choices) => get()._updateDraft({ spellChoices: choices }),
   setEquipmentChoices: (choices) =>
     get()._updateDraft({ equipmentChoices: choices }),
@@ -599,6 +602,7 @@ export const useCreationStore = create<CreationStore>((set, get) => ({
       backgroundSkills: backgroundData.skillProficiencies,
       raceSkills: raceData.skillProficiencies,
       playerChoices: draft.skillChoices,
+      expertiseChoices: draft.expertiseChoices,
     });
 
     // ── Tiradas de salvación ──

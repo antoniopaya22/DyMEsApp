@@ -33,19 +33,9 @@ import { useTheme } from "@/hooks";
 import { withAlpha } from "@/utils/theme";
 import { useUnidadesActuales } from "@/stores/settingsStore";
 import { etiquetaPeso } from "@/utils/units";
+import { ITEM_CATEGORY_OPTIONS } from "@/constants/items";
 
-const CATEGORY_OPTIONS: { value: ItemCategory; label: string }[] = [
-  { value: "arma", label: "Arma" },
-  { value: "armadura", label: "Armadura" },
-  { value: "escudo", label: "Escudo" },
-  { value: "equipo_aventurero", label: "Equipo de aventurero" },
-  { value: "herramienta", label: "Herramienta" },
-  { value: "consumible", label: "Consumible" },
-  { value: "municion", label: "Munición" },
-  { value: "objeto_magico", label: "Objeto mágico" },
-  { value: "montura_vehiculo", label: "Montura / Vehículo" },
-  { value: "otro", label: "Otro" },
-];
+const CATEGORY_OPTIONS = ITEM_CATEGORY_OPTIONS;
 
 const WEAPON_TYPE_OPTIONS: { value: WeaponType; label: string }[] = [
   { value: "sencilla_cuerpo", label: "Sencilla (cuerpo)" },
@@ -614,7 +604,7 @@ export function AddItemModal({
                               : colors.textSecondary,
                           }}
                         >
-                          {isSelected ? "✓ " : ""}
+                          {isSelected ? <><Ionicons name="checkmark" size={11} color={colors.accentRed} />{" "}</> : null}
                           {opt.label}
                         </Text>
                       </TouchableOpacity>

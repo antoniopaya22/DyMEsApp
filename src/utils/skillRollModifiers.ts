@@ -147,8 +147,10 @@ function collectPassiveBonuses(
     character.nivel >= 3 &&
     CHA_SKILLS.has(skill)
   ) {
-    const bonus = Math.max(1, character.abilityScores.sab.modifier);
-    bonuses.push({ bonus, featureName: "Encanto Sobrenatural", includedInBase: false });
+    const bonus = character.abilityScores.sab.modifier;
+    if (bonus !== 0) {
+      bonuses.push({ bonus, featureName: "Encanto Sobrenatural", includedInBase: false });
+    }
   }
 
   // Guerrero — Samurái: Cortesano Elegante (nv 7) — +SAB a Persuasión

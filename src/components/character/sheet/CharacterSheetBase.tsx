@@ -112,6 +112,13 @@ export default function CharacterSheetBase({
   const [codeCopied, setCodeCopied] = useState(false);
   const codeCopyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Clean up copy timer on unmount
+  useEffect(() => {
+    return () => {
+      if (codeCopyTimerRef.current) clearTimeout(codeCopyTimerRef.current);
+    };
+  }, []);
+
   const resolvedTab =
     initialTab && VALID_TABS.has(initialTab) ? initialTab : "overview";
   const [activeTab, setActiveTab] = useState<TabId>(resolvedTab);

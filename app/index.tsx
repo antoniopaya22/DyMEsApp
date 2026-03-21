@@ -39,7 +39,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 export default function HomeScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
-  const { characters, loadCharacters, deleteCharacter } =
+  const { characters, loadCharacters, deleteCharacter, syncFromCloud } =
     useCharacterListStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -214,7 +214,7 @@ export default function HomeScreen() {
       </View>
 
       {/* Header */}
-      <AppHeader showBack>
+      <AppHeader showBack onBack={() => router.replace('/mode-select')}>
         {characters.length > 0 && (
           <SearchBar
             value={searchQuery}
@@ -247,6 +247,7 @@ export default function HomeScreen() {
             refreshing={refreshing}
             onRefresh={async () => {
               setRefreshing(true);
+              await syncFromCloud();
               await loadCharacters();
               setRefreshing(false);
             }}

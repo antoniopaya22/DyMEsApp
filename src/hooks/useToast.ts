@@ -13,7 +13,7 @@
  *   showSuccess("Done!");
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type { ToastType, ToastProps } from "@/components/ui/Toast";
 
 // ─── Toast State ─────────────────────────────────────────────────────
@@ -42,6 +42,7 @@ const DEFAULT_TOAST_STATE: ToastState = {
 
 export function useToast() {
   const [toast, setToast] = useState<ToastState>({ ...DEFAULT_TOAST_STATE });
+  const pendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /** Dismiss the current toast */
   const dismissToast = useCallback(() => {
@@ -68,8 +69,14 @@ export function useToast() {
         return prev;
       });
 
+      // Clear any pending timer from a previous showToast call
+      if (pendingTimerRef.current) {
+        clearTimeout(pendingTimerRef.current);
+      }
+
       // Small delay so the previous toast can animate out
-      setTimeout(() => {
+      pendingTimerRef.current = setTimeout(() => {
+        pendingTimerRef.current = null;
         setToast({
           visible: true,
           type: options.type || "info",

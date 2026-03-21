@@ -124,6 +124,8 @@ export interface CharacterCreationDraft {
   /** Datos del trasfondo personalizado (solo cuando trasfondo === "personalizada") */
   customBackgroundData?: CustomBackgroundConfig;
   skillChoices?: SkillKey[];
+  /** Habilidades elegidas para Pericia/expertise (pícaro/bardo nivel 1) */
+  expertiseChoices?: SkillKey[];
   spellChoices?: {
     cantrips: string[];
     spells: string[];

@@ -27,6 +27,12 @@ export const ITEM_CATEGORY_NAMES: Record<ItemCategory, string> = {
   otro: "Otro",
 };
 
+/** Pre-built picker options derived from ITEM_CATEGORY_NAMES */
+export const ITEM_CATEGORY_OPTIONS: { value: ItemCategory; label: string }[] =
+  (Object.entries(ITEM_CATEGORY_NAMES) as [ItemCategory, string][]).map(
+    ([value, label]) => ({ value, label }),
+  );
+
 export const ITEM_CATEGORY_ICONS: Record<ItemCategory, string> = {
   arma: "hammer",
   armadura: "shield-half",
@@ -115,11 +121,11 @@ export const COIN_ABBR: Record<CoinType, string> = {
 };
 
 export const COIN_ICONS: Record<CoinType, string> = {
-  mc: "🟤",
-  mp: "⚪",
-  me: "🔵",
-  mo: "🟡",
-  mpl: "⚜️",
+  mc: "ellipse",
+  mp: "ellipse",
+  me: "ellipse",
+  mo: "ellipse",
+  mpl: "diamond-outline",
 };
 
 export const COIN_TO_GOLD_RATE: Record<CoinType, number> = {

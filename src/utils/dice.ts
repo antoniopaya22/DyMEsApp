@@ -191,7 +191,7 @@ export function roll(
   }
 
   const subtotal = rolls.reduce((sum, r) => sum + r.value, 0);
-  const total = Math.max(0, subtotal + modifier);
+  const total = subtotal + modifier;
 
   // Detectar crítico/pifia solo para 1d20
   const isSingleD20 = count === 1 && die === "d20";
@@ -396,14 +396,14 @@ export function rollDeathSave(): DeathSaveRollResult {
  * Realiza una tirada de dado de golpe para recuperar vida en un descanso corto.
  * @param die - Tipo de dado de golpe de la clase (d6, d8, d10, d12)
  * @param conModifier - Modificador de Constitución
- * @returns Puntos de vida recuperados (mínimo 0)
+ * @returns Puntos de vida recuperados (mínimo 1 per PHB p.186)
  */
 export function rollHitDie(
   die: DieType,
   conModifier: number,
 ): { roll: number; modifier: number; total: number } {
   const rollValue = rollDie(die);
-  const total = Math.max(0, rollValue + conModifier);
+  const total = Math.max(1, rollValue + conModifier);
 
   return {
     roll: rollValue,
@@ -665,7 +665,7 @@ export function executeFormula(
 
 /**
  * Formatea un resultado de tirada para mostrar al usuario.
- * Ejemplo: "🎲 2d6+3 → [4, 5] + 3 = 12"
+ * Ejemplo: "2d6+3 → [4, 5] + 3 = 12"
  */
 export function formatRollResult(result: RollResult): string {
   const diceValues = result.rolls.map((r) => r.value).join(", ");
@@ -676,12 +676,12 @@ export function formatRollResult(result: RollResult): string {
         ? ` - ${Math.abs(result.modifier)}`
         : "";
 
-  let text = `🎲 ${result.expression} → [${diceValues}]${modStr} = ${result.total}`;
+  let text = `${result.expression} → [${diceValues}]${modStr} = ${result.total}`;
 
   if (result.isCritical) {
-    text += " ✨ ¡CRÍTICO!";
+    text += " ¡CRÍTICO!";
   } else if (result.isFumble) {
-    text += " 💀 ¡PIFIA!";
+    text += " ¡PIFIA!";
   }
 
   return text;
@@ -698,15 +698,15 @@ export function formatAbilityRoll(result: AbilityRollResult): string {
 
 /**
  * Formatea un resultado de tirada de ataque.
- * Ejemplo: "⚔️ Ataque: 1d20+5 → 18 (13+5) | Daño: 1d8+3 → 7 cortante"
+ * Ejemplo: "Ataque: 1d20+5 → 18 (13+5) | Daño: 1d8+3 → 7 cortante"
  */
 export function formatAttackResult(result: AttackRollResult): string {
-  let text = `⚔️ Ataque: d20${result.attackModifier >= 0 ? "+" : ""}${result.attackModifier} → ${result.attackTotal} (${result.d20Roll}${result.attackModifier >= 0 ? "+" : ""}${result.attackModifier})`;
+  let text = `Ataque: d20${result.attackModifier >= 0 ? "+" : ""}${result.attackModifier} → ${result.attackTotal} (${result.d20Roll}${result.attackModifier >= 0 ? "+" : ""}${result.attackModifier})`;
 
   if (result.isCritical) {
-    text += " ✨ ¡CRÍTICO!";
+    text += " ¡CRÍTICO!";
   } else if (result.isFumble) {
-    text += " 💀 ¡PIFIA!";
+    text += " ¡PIFIA!";
   }
 
   if (result.damageRoll) {
@@ -732,15 +732,15 @@ export function formatAttackResult(result: AttackRollResult): string {
  */
 export function formatDeathSaveResult(result: DeathSaveRollResult): string {
   if (result.isCritical) {
-    return `💚 ¡20 natural! Tu personaje recupera 1 PG y vuelve en sí.`;
+    return `¡20 natural! Tu personaje recupera 1 PG y vuelve en sí.`;
   }
   if (result.isFumble) {
-    return `💀 ¡1 natural! Cuenta como 2 fracasos.`;
+    return `¡1 natural! Cuenta como 2 fracasos.`;
   }
   if (result.isSuccess) {
-    return `✅ Éxito (${result.roll}) — Tirada de salvación contra muerte superada.`;
+    return `Éxito (${result.roll}) — Tirada de salvación contra muerte superada.`;
   }
-  return `❌ Fracaso (${result.roll}) — Tirada de salvación contra muerte fallida.`;
+  return `Fracaso (${result.roll}) — Tirada de salvación contra muerte fallida.`;
 }
 
 // ─── Constantes útiles ───────────────────────────────────────────────

@@ -257,7 +257,7 @@ export function buildSubclassTraits(
               return opt ? `${opt.nombre}: ${opt.descripcion}` : sid;
             })
             .join("\n");
-          descripcionFinal += `\n\n🎯 Elegido — ${eleccion.nombre}:\n${selectedNames}`;
+          descripcionFinal += `\n\nElegido — ${eleccion.nombre}:\n${selectedNames}`;
         }
       }
     }

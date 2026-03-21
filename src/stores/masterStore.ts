@@ -144,7 +144,10 @@ export const useMasterStore = create<MasterStore>((set, get) => ({
     set({ loadingPlayers: true, error: null });
     try {
       const players = await fetchCampaignPlayers(campaignId);
-      set({ players, loadingPlayers: false });
+      // Only apply if the campaign is still the active one
+      if (get().activeCampaignId === campaignId) {
+        set({ players, loadingPlayers: false });
+      }
     } catch (err) {
       const msg = extractErrorMessage(err, "Error al cargar jugadores");
       console.error("[MasterStore] loadPlayers:", msg);

@@ -48,7 +48,8 @@ export function AboutSection({ onOpenSRDLink }: AboutSectionProps) {
         ]}
       >
         <Text style={[styles.aboutSubtitle, { color: colors.textPrimary }]}>
-          📜 Licencia SRD
+          <Ionicons name="document-text-outline" size={15} color={colors.textPrimary} />{" "}
+          Licencia SRD
         </Text>
         <Text style={[styles.aboutText, { color: colors.sectionDescColor }]}>
           {APP_INFO.licenciaSRD}
@@ -69,7 +70,8 @@ export function AboutSection({ onOpenSRDLink }: AboutSectionProps) {
         ]}
       >
         <Text style={[styles.aboutSubtitle, { color: colors.textPrimary }]}>
-          🛠️ Tecnologías
+          <Ionicons name="build-outline" size={15} color={colors.textPrimary} />{" "}
+          Tecnologías
         </Text>
         <View style={styles.techGrid}>
           {APP_INFO.tecnologias.map((tech) => (
@@ -94,7 +96,8 @@ export function AboutSection({ onOpenSRDLink }: AboutSectionProps) {
       {/* Credits */}
       <View style={[styles.aboutBlock, { borderBottomWidth: 0 }]}>
         <Text style={[styles.aboutSubtitle, { color: colors.textPrimary }]}>
-          👤 Créditos
+          <Ionicons name="person-outline" size={15} color={colors.textPrimary} />{" "}
+          Créditos
         </Text>
         <Text style={[styles.aboutText, { color: colors.sectionDescColor }]}>
           Desarrollado por {APP_INFO.desarrollador}

@@ -39,6 +39,8 @@ export interface SkillDataSources {
   backgroundSkills: SkillKey[];
   raceSkills?: SkillKey[];
   playerChoices?: SkillKey[];
+  /** Skills chosen for expertise (Pícaro/Bardo level 1) */
+  expertiseChoices?: SkillKey[];
 }
 
 /** A single trait coming from a data source (race, subrace, class, etc.). */
@@ -176,6 +178,15 @@ export function buildSkillProficiencies(
     for (const sk of sources.playerChoices) {
       if (skillProficiencies[sk].level === "none") {
         skillProficiencies[sk] = { level: "proficient", source: "clase" };
+      }
+    }
+  }
+
+  // Pericia (expertise): upgrade proficient → expertise
+  if (sources.expertiseChoices) {
+    for (const sk of sources.expertiseChoices) {
+      if (skillProficiencies[sk]?.level === "proficient") {
+        skillProficiencies[sk] = { ...skillProficiencies[sk], level: "expertise", source: "clase" };
       }
     }
   }

@@ -45,6 +45,7 @@ import {
 
 import type { ThemeColors } from "@/utils/theme";
 import { COIN_ICON_COLORS, COIN_ORDER } from "@/constants/colors";
+import { ITEM_CATEGORY_OPTIONS } from "@/constants/items";
 
 // Extracted sub-components
 import {
@@ -53,28 +54,11 @@ import {
   CoinTransactionModal,
 } from "@/components/inventory";
 
-function getCoinColors(colors: ThemeColors): Record<CoinType, string> {
-  return {
-    mc: colors.accentRed,
-    mp: colors.accentRed,
-    me: colors.accentRed,
-    mo: colors.accentRed,
-    mpl: colors.accentRed,
-  };
+function getCoinColors(_colors: ThemeColors): Record<CoinType, string> {
+  return { ...COIN_ICON_COLORS };
 }
 
-const CATEGORY_OPTIONS: { value: ItemCategory; label: string }[] = [
-  { value: "arma", label: "Arma" },
-  { value: "armadura", label: "Armadura" },
-  { value: "escudo", label: "Escudo" },
-  { value: "equipo_aventurero", label: "Equipo de aventurero" },
-  { value: "herramienta", label: "Herramienta" },
-  { value: "consumible", label: "Consumible" },
-  { value: "municion", label: "Munición" },
-  { value: "objeto_magico", label: "Objeto mágico" },
-  { value: "montura_vehiculo", label: "Montura / Vehículo" },
-  { value: "otro", label: "Otro" },
-];
+const CATEGORY_OPTIONS = ITEM_CATEGORY_OPTIONS;
 
 // ─── Main Component ──────────────────────────────────────────────────
 

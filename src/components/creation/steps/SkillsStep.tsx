@@ -11,7 +11,13 @@ import {
 import { SKILLS, ABILITY_NAMES, type SkillKey } from "@/types/character";
 import { useTheme, useScrollToTop, useCreationNavigation } from "@/hooks";
 import { getCreationThemeOverrides } from "@/utils/creationStepTheme";
+import { withAlpha } from "@/utils/theme";
 import WizardStepLayout from "@/components/creation/WizardStepLayout";
+
+/** Classes that get expertise at level 1 and how many choices */
+const CREATION_EXPERTISE: Record<string, number> = {
+  picaro: 2,
+};
 
 const CURRENT_STEP = 6;
 
@@ -21,9 +27,10 @@ export default function SkillsStep() {
   const themed = getCreationThemeOverrides(colors);
   const { campaignId, pushStep, goBack } = useCreationNavigation();
 
-  const { draft, setSkillChoices, saveDraft, loadDraft } = useCreationStore();
+  const { draft, setSkillChoices, setExpertiseChoices, saveDraft, loadDraft } = useCreationStore();
 
   const [selectedSkills, setSelectedSkills] = useState<SkillKey[]>([]);
+  const [selectedExpertise, setSelectedExpertise] = useState<SkillKey[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -35,6 +42,12 @@ export default function SkillsStep() {
           currentDraft.skillChoices.length > 0
         ) {
           setSelectedSkills([...currentDraft.skillChoices]);
+        }
+        if (
+          currentDraft?.expertiseChoices &&
+          currentDraft.expertiseChoices.length > 0
+        ) {
+          setSelectedExpertise([...currentDraft.expertiseChoices]);
         }
       };
       init();
@@ -57,11 +70,18 @@ export default function SkillsStep() {
   // How many skills the player must choose
   const requiredCount = getRequiredSkillCount(classId, raceId);
 
-  const isValid = selectedSkills.length === requiredCount;
+  // Expertise: how many picks this class gets at level 1
+  const expertiseCount = classId ? (CREATION_EXPERTISE[classId] ?? 0) : 0;
+
+  const isValid =
+    selectedSkills.length === requiredCount &&
+    (expertiseCount === 0 || selectedExpertise.length === expertiseCount);
 
   const handleToggleSkill = (skill: SkillKey) => {
     setSelectedSkills((prev) => {
       if (prev.includes(skill)) {
+        // Also remove from expertise if de-selected
+        setSelectedExpertise((e) => e.filter((s) => s !== skill));
         return prev.filter((s) => s !== skill);
       }
       if (prev.length >= requiredCount) {
@@ -71,9 +91,24 @@ export default function SkillsStep() {
     });
   };
 
+  const handleToggleExpertise = (skill: SkillKey) => {
+    setSelectedExpertise((prev) => {
+      if (prev.includes(skill)) {
+        return prev.filter((s) => s !== skill);
+      }
+      if (prev.length >= expertiseCount) {
+        return prev;
+      }
+      return [...prev, skill];
+    });
+  };
+
   const handleNext = async () => {
     if (!isValid) return;
     setSkillChoices(selectedSkills);
+    if (expertiseCount > 0) {
+      setExpertiseChoices(selectedExpertise);
+    }
     await saveDraft();
     pushStep("spells");
   };
@@ -81,6 +116,9 @@ export default function SkillsStep() {
   const handleBack = () => {
     if (selectedSkills.length > 0) {
       setSkillChoices(selectedSkills);
+    }
+    if (expertiseCount > 0 && selectedExpertise.length > 0) {
+      setExpertiseChoices(selectedExpertise);
     }
     goBack();
   };
@@ -225,7 +263,7 @@ export default function SkillsStep() {
                       style={[
                         styles.skillName,
                         themed.textPrimary,
-                        isSelected && styles.skillNameSelected,
+                        isSelected && { color: colors.accentRed },
                       ]}
                     >
                       {def.nombre}
@@ -240,6 +278,94 @@ export default function SkillsStep() {
           })
         )}
       </View>
+
+      {/* Expertise section (Pícaro level 1) */}
+      {expertiseCount > 0 && selectedSkills.length === requiredCount && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, themed.sectionTitle]}>
+            Pericia (Expertise)
+          </Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 12 }}>
+            Elige {expertiseCount} habilidad{expertiseCount !== 1 ? 'es' : ''} con competencia.
+            Tu bonificador de competencia se duplicará para ellas.
+          </Text>
+
+          {/* Counter */}
+          <View style={styles.counterRow}>
+            <View style={[styles.counterBadge, themed.card]}>
+              <Text
+                style={[
+                  styles.counterText,
+                  themed.counterText,
+                  selectedExpertise.length === expertiseCount && [styles.counterTextValid, themed.counterTextValid],
+                ]}
+              >
+                {selectedExpertise.length} / {expertiseCount} Pericia
+              </Text>
+            </View>
+          </View>
+
+          {/* Eligible skills: proficient ones (granted + chosen) */}
+          {[...grantedSkills, ...selectedSkills].map((sk) => {
+            const def = SKILLS[sk];
+            if (!def) return null;
+            const isSelected = selectedExpertise.includes(sk);
+            const isDisabled = !isSelected && selectedExpertise.length >= expertiseCount;
+
+            return (
+              <TouchableOpacity
+                key={sk}
+                style={[
+                  styles.skillCard,
+                  themed.cardElevated,
+                  isSelected && {
+                    borderColor: withAlpha(colors.accentGold, 0.5),
+                    backgroundColor: withAlpha(colors.accentGold, 0.08),
+                  },
+                  isDisabled && styles.skillCardDisabled,
+                ]}
+                onPress={() => handleToggleExpertise(sk)}
+                disabled={isDisabled && !isSelected}
+              >
+                <View style={styles.skillCardRow}>
+                  <View
+                    style={[
+                      styles.checkbox,
+                      { borderColor: colors.accentGold },
+                      isSelected && {
+                        borderColor: colors.accentGold,
+                        backgroundColor: colors.accentGold,
+                      },
+                    ]}
+                  >
+                    {isSelected && (
+                      <Ionicons
+                        name="star"
+                        size={14}
+                        color={colors.textInverted}
+                      />
+                    )}
+                  </View>
+                  <View style={styles.skillInfo}>
+                    <Text
+                      style={[
+                        styles.skillName,
+                        themed.textPrimary,
+                        isSelected && { color: colors.accentGold, fontWeight: '700' },
+                      ]}
+                    >
+                      {def.nombre}
+                    </Text>
+                    <Text style={[styles.skillAbility, themed.textMuted]}>
+                      {ABILITY_NAMES[def.habilidad]} · ×2 competencia
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
 
       {/* All skills reference (collapsed) */}
       <View style={styles.section}>

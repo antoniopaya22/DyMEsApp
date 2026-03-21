@@ -1,11 +1,9 @@
 /**
- * Master Character View — Read-only full character sheet (HU-10.8)
+ * Master Character View — Full character sheet with editing powers (HU-10.8)
  *
  * Shows the complete character data of a player in the master's campaign.
- * All sections are read-only — the master can only observe, not edit.
- *
- * Receives character data via route params (characterId) and reads from
- * the liveCharacters cache or directly from Supabase.
+ * The master can edit: HP, conditions, inventory (items & coins), and traits.
+ * Changes are persisted to Supabase in real-time via mergeCharacterDatos.
  */
 
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
@@ -25,7 +23,12 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks";
-import { supabase } from "@/lib/supabase";
+import {
+  fetchCharacterDatos,
+  createSingleCharacterChannel,
+  removeRealtimeChannel,
+  mergeCharacterDatos,
+} from "@/services/supabaseService";
 import { useUnidadesActuales } from "@/stores/settingsStore";
 import { formatDistancia } from "@/utils/units";
 import { getRaceData, getSubraceData } from "@/data/srd/races";
@@ -64,6 +67,7 @@ import type {
 } from "@/stores/characterStore/classResourceTypes";
 import { UNLIMITED_RESOURCE } from "@/stores/characterStore/classResourceTypes";
 import type { Inventory, InventoryItem, CoinType, Coins } from "@/types/item";
+import type { Condition, Trait } from "@/types/character";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -133,7 +137,19 @@ export default function MasterCharacterView() {
     mpl: "0",
   });
   const [addItemName, setAddItemName] = useState("");
-  const [addItemQty, setAddItemQty] = useState("1");
+  const [addItemQty, setAddItemQty] = useState("");
+
+  // HP editing
+  const [editingHp, setEditingHp] = useState(false);
+  const [hpDraft, setHpDraft] = useState({ current: "0", max: "0", temp: "0" });
+
+  // Conditions editing
+  const [showConditionPicker, setShowConditionPicker] = useState(false);
+
+  // Traits editing
+  const [editingTraitId, setEditingTraitId] = useState<string | null>(null);
+  const [traitDraft, setTraitDraft] = useState({ nombre: "", descripcion: "", origen: "manual" as Trait["origen"] });
+  const [addingTrait, setAddingTrait] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -144,16 +160,10 @@ export default function MasterCharacterView() {
     const fetch = async () => {
       try {
         setLoading(true);
-        const { data, error: dbError } = await supabase
-          .from("personajes")
-          .select("datos")
-          .eq("id", characterId)
-          .single<{ datos: Record<string, unknown> }>();
+        const datos = await fetchCharacterDatos(characterId);
+        if (!datos) throw new Error("Sin datos de personaje");
 
-        if (dbError) throw new Error(dbError.message);
-        if (!data?.datos) throw new Error("Sin datos de personaje");
-
-        const syncedData = data.datos as unknown as SyncedCharacterData;
+        const syncedData = datos as unknown as SyncedCharacterData;
         const { _magicState, _classResources, _inventory, ...charData } =
           syncedData;
         setCharacter(charData as Character);
@@ -170,33 +180,21 @@ export default function MasterCharacterView() {
     fetch();
 
     // Subscribe to real-time updates
-    const channel = supabase
-      .channel(`master-char-${characterId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "personajes",
-          filter: `id=eq.${characterId}`,
-        },
-        (payload) => {
-          const newData = payload.new as { datos: unknown };
-          if (newData?.datos) {
-            const syncedData = newData.datos as unknown as SyncedCharacterData;
-            const { _magicState, _classResources, _inventory, ...charData } =
-              syncedData;
-            setCharacter(charData as Character);
-            setMagicState(_magicState ?? null);
-            setClassResources(_classResources ?? null);
-            setInventory(_inventory ?? null);
-          }
-        },
-      )
-      .subscribe();
+    const channel = createSingleCharacterChannel(
+      characterId,
+      (datos) => {
+        const syncedData = datos as unknown as SyncedCharacterData;
+        const { _magicState, _classResources, _inventory, ...charData } =
+          syncedData;
+        setCharacter(charData as Character);
+        setMagicState(_magicState ?? null);
+        setClassResources(_classResources ?? null);
+        setInventory(_inventory ?? null);
+      },
+    );
 
     return () => {
-      supabase.removeChannel(channel);
+      removeRealtimeChannel(channel);
     };
   }, [characterId]);
 
@@ -226,17 +224,7 @@ export default function MasterCharacterView() {
     async (patch: Record<string, unknown>) => {
       if (!characterId) return;
       try {
-        const { data: current } = await supabase
-          .from("personajes")
-          .select("datos")
-          .eq("id", characterId)
-          .single<{ datos: Record<string, unknown> }>();
-        if (!current?.datos) return;
-        const merged = { ...current.datos, ...patch };
-        await (supabase as any)
-          .from("personajes")
-          .update({ datos: merged })
-          .eq("id", characterId);
+        await mergeCharacterDatos(characterId, patch);
       } catch (err) {
         console.error("[MasterCharView] updateDatos:", err);
       }
@@ -303,6 +291,142 @@ export default function MasterCharacterView() {
       await updateDatos({ _inventory: updatedInv });
     },
     [inventory, updateDatos],
+  );
+
+  const handleUpdateItemQty = useCallback(
+    async (itemId: string, delta: number) => {
+      if (!inventory) return;
+      const updatedItems = inventory.items
+        .map((i) => (i.id === itemId ? { ...i, cantidad: Math.max(0, i.cantidad + delta) } : i))
+        .filter((i) => i.cantidad > 0);
+      const updatedInv = { ...inventory, items: updatedItems };
+      setInventory(updatedInv);
+      await updateDatos({ _inventory: updatedInv });
+    },
+    [inventory, updateDatos],
+  );
+
+  // ── HP editing ──
+  const startEditingHp = useCallback(() => {
+    if (!character) return;
+    setHpDraft({
+      current: String(character.hp.current),
+      max: String(character.hp.max),
+      temp: String(character.hp.temp),
+    });
+    setEditingHp(true);
+  }, [character]);
+
+  const saveHp = useCallback(async () => {
+    if (!character) return;
+    const newMax = Math.max(1, parseInt(hpDraft.max, 10) || 1);
+    const newCurrent = Math.max(0, Math.min(newMax, parseInt(hpDraft.current, 10) || 0));
+    const newTemp = Math.max(0, parseInt(hpDraft.temp, 10) || 0);
+    const newHp = { max: newMax, current: newCurrent, temp: newTemp };
+    setCharacter({ ...character, hp: newHp });
+    setEditingHp(false);
+    await updateDatos({ hp: newHp });
+  }, [character, hpDraft, updateDatos]);
+
+  const handleQuickHpChange = useCallback(
+    async (delta: number) => {
+      if (!character) return;
+      const hp = character.hp;
+      let newCurrent: number;
+      if (delta < 0) {
+        // Damage: absorb with temp HP first
+        let remaining = Math.abs(delta);
+        let newTemp = hp.temp;
+        if (newTemp > 0) {
+          if (remaining >= newTemp) { remaining -= newTemp; newTemp = 0; }
+          else { newTemp -= remaining; remaining = 0; }
+        }
+        newCurrent = Math.max(0, hp.current - remaining);
+        const newHp = { max: hp.max, current: newCurrent, temp: newTemp };
+        setCharacter({ ...character, hp: newHp });
+        await updateDatos({ hp: newHp });
+      } else {
+        newCurrent = Math.min(hp.max, hp.current + delta);
+        const newHp = { ...hp, current: newCurrent };
+        setCharacter({ ...character, hp: newHp });
+        await updateDatos({ hp: newHp });
+      }
+    },
+    [character, updateDatos],
+  );
+
+  // ── Conditions editing ──
+  const handleAddCondition = useCallback(
+    async (condition: Condition) => {
+      if (!character) return;
+      if (character.conditions.some((c) => c.condition === condition)) return;
+      const updated = [...character.conditions, { condition }];
+      setCharacter({ ...character, conditions: updated });
+      setShowConditionPicker(false);
+      await updateDatos({ conditions: updated });
+    },
+    [character, updateDatos],
+  );
+
+  const handleRemoveCondition = useCallback(
+    async (condition: Condition) => {
+      if (!character) return;
+      const updated = character.conditions.filter((c) => c.condition !== condition);
+      setCharacter({ ...character, conditions: updated });
+      await updateDatos({ conditions: updated });
+    },
+    [character, updateDatos],
+  );
+
+  // ── Traits editing ──
+  const handleStartAddTrait = useCallback(() => {
+    setTraitDraft({ nombre: "", descripcion: "", origen: "manual" });
+    setAddingTrait(true);
+    setEditingTraitId(null);
+  }, []);
+
+  const handleStartEditTrait = useCallback((trait: Trait) => {
+    setTraitDraft({ nombre: trait.nombre, descripcion: trait.descripcion, origen: trait.origen });
+    setEditingTraitId(trait.id);
+    setAddingTrait(false);
+  }, []);
+
+  const handleSaveTrait = useCallback(async () => {
+    if (!character || !traitDraft.nombre.trim()) return;
+    let updatedTraits: Trait[];
+    if (editingTraitId) {
+      updatedTraits = character.traits.map((t) =>
+        t.id === editingTraitId
+          ? { ...t, nombre: traitDraft.nombre.trim(), descripcion: traitDraft.descripcion.trim(), origen: traitDraft.origen }
+          : t,
+      );
+    } else {
+      const newTrait: Trait = {
+        id: `master-${Date.now()}`,
+        nombre: traitDraft.nombre.trim(),
+        descripcion: traitDraft.descripcion.trim(),
+        origen: traitDraft.origen,
+        maxUses: null,
+        currentUses: null,
+        recharge: null,
+      };
+      updatedTraits = [...character.traits, newTrait];
+    }
+    setCharacter({ ...character, traits: updatedTraits });
+    setEditingTraitId(null);
+    setAddingTrait(false);
+    await updateDatos({ traits: updatedTraits });
+  }, [character, traitDraft, editingTraitId, updateDatos]);
+
+  const handleDeleteTrait = useCallback(
+    async (traitId: string) => {
+      if (!character) return;
+      const updatedTraits = character.traits.filter((t) => t.id !== traitId);
+      setCharacter({ ...character, traits: updatedTraits });
+      setEditingTraitId(null);
+      await updateDatos({ traits: updatedTraits });
+    },
+    [character, updateDatos],
   );
 
   // ── Derived data ──
@@ -463,55 +587,150 @@ export default function MasterCharacterView() {
 
           {/* HP compact */}
           <View style={styles.summaryHp}>
-            <Text style={[styles.hpBigValue, { color: hpColor }]}>
-              {character.hp.current}
-              <Text style={[styles.hpBigMax, { color: colors.textMuted }]}>
-                /{character.hp.max}
-              </Text>
-            </Text>
-            <View
-              style={[styles.hpBarBg, { backgroundColor: colors.bgSubtle }]}
-            >
-              <View
-                style={[
-                  styles.hpBarFill,
-                  { backgroundColor: hpColor, width: `${hpPct}%` },
-                ]}
-              />
-            </View>
-            <Text style={[styles.hpStatusLabel, { color: hpColor }]}>
-              {getHpLabel(character.hp.current, character.hp.max)}
-            </Text>
-            {character.hp.temp > 0 && (
-              <Text style={[styles.hpTemp, { color: colors.accentBlue }]}>
-                +{character.hp.temp} temp
-              </Text>
+            {!editingHp ? (
+              <>
+                <TouchableOpacity onPress={startEditingHp} activeOpacity={0.7}>
+                  <Text style={[styles.hpBigValue, { color: hpColor }]}>
+                    {character.hp.current}
+                    <Text style={[styles.hpBigMax, { color: colors.textMuted }]}>
+                      /{character.hp.max}
+                    </Text>
+                  </Text>
+                </TouchableOpacity>
+                <View
+                  style={[styles.hpBarBg, { backgroundColor: colors.bgSubtle }]}
+                >
+                  <View
+                    style={[
+                      styles.hpBarFill,
+                      { backgroundColor: hpColor, width: `${hpPct}%` },
+                    ]}
+                  />
+                </View>
+                <View style={styles.hpQuickButtons}>
+                  <TouchableOpacity
+                    style={[styles.hpQuickBtn, { backgroundColor: withAlpha(colors.accentDanger, 0.15) }]}
+                    onPress={() => handleQuickHpChange(-1)}
+                    hitSlop={4}
+                  >
+                    <Ionicons name="remove" size={14} color={colors.accentDanger} />
+                  </TouchableOpacity>
+                  <Text style={[styles.hpStatusLabel, { color: hpColor }]}>
+                    {getHpLabel(character.hp.current, character.hp.max)}
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.hpQuickBtn, { backgroundColor: withAlpha(colors.accentGreen, 0.15) }]}
+                    onPress={() => handleQuickHpChange(1)}
+                    hitSlop={4}
+                  >
+                    <Ionicons name="add" size={14} color={colors.accentGreen} />
+                  </TouchableOpacity>
+                </View>
+                {character.hp.temp > 0 && (
+                  <Text style={[styles.hpTemp, { color: colors.accentBlue }]}>
+                    +{character.hp.temp} temp
+                  </Text>
+                )}
+              </>
+            ) : (
+              <View style={styles.hpEditContainer}>
+                <View style={styles.hpEditRow}>
+                  <Text style={[styles.hpEditLabel, { color: colors.textMuted }]}>Act</Text>
+                  <TextInput
+                    style={[styles.hpEditInput, { color: colors.textPrimary, borderColor: colors.borderSubtle }]}
+                    keyboardType="numeric"
+                    value={hpDraft.current}
+                    onChangeText={(v) => setHpDraft((p) => ({ ...p, current: v }))}
+                    selectTextOnFocus
+                  />
+                  <Text style={[styles.hpEditLabel, { color: colors.textMuted }]}>Máx</Text>
+                  <TextInput
+                    style={[styles.hpEditInput, { color: colors.textPrimary, borderColor: colors.borderSubtle }]}
+                    keyboardType="numeric"
+                    value={hpDraft.max}
+                    onChangeText={(v) => setHpDraft((p) => ({ ...p, max: v }))}
+                    selectTextOnFocus
+                  />
+                  <Text style={[styles.hpEditLabel, { color: colors.textMuted }]}>Tmp</Text>
+                  <TextInput
+                    style={[styles.hpEditInput, { color: colors.textPrimary, borderColor: colors.borderSubtle }]}
+                    keyboardType="numeric"
+                    value={hpDraft.temp}
+                    onChangeText={(v) => setHpDraft((p) => ({ ...p, temp: v }))}
+                    selectTextOnFocus
+                  />
+                </View>
+                <View style={styles.hpEditActions}>
+                  <TouchableOpacity onPress={() => setEditingHp(false)} hitSlop={8}>
+                    <Ionicons name="close" size={18} color={colors.accentDanger} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={saveHp} hitSlop={8}>
+                    <Ionicons name="checkmark" size={18} color={colors.accentGreen} />
+                  </TouchableOpacity>
+                </View>
+              </View>
             )}
           </View>
         </View>
 
         {/* Conditions */}
-        {character.conditions.length > 0 && (
-          <View style={styles.conditionsRow}>
-            {character.conditions.map((c, i) => (
-              <View
-                key={`${c.condition}-${i}`}
-                style={[
-                  styles.conditionChip,
-                  { backgroundColor: `${colors.accentAmber}20` },
-                ]}
+        <View style={styles.conditionsRow}>
+          {character.conditions.map((c, i) => (
+            <TouchableOpacity
+              key={`${c.condition}-${i}`}
+              style={[
+                styles.conditionChip,
+                { backgroundColor: `${colors.accentAmber}20` },
+              ]}
+              onPress={() => handleRemoveCondition(c.condition)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="warning-outline"
+                size={10}
+                color={colors.accentAmber}
+              />
+              <Text
+                style={[styles.conditionText, { color: colors.accentAmber }]}
               >
-                <Ionicons
-                  name="warning-outline"
-                  size={10}
-                  color={colors.accentAmber}
-                />
-                <Text
-                  style={[styles.conditionText, { color: colors.accentAmber }]}
-                >
-                  {CONDITION_NAMES[c.condition] ?? c.condition}
+                {CONDITION_NAMES[c.condition] ?? c.condition}
+              </Text>
+              <Ionicons name="close-circle" size={12} color={colors.accentAmber} />
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity
+            style={[
+              styles.conditionChip,
+              { backgroundColor: withAlpha(colors.accentGold, 0.12), borderWidth: 1, borderColor: withAlpha(colors.accentGold, 0.25), borderStyle: "dashed" },
+            ]}
+            onPress={() => setShowConditionPicker(!showConditionPicker)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name={showConditionPicker ? "close" : "add"} size={12} color={colors.accentGold} />
+            <Text style={[styles.conditionText, { color: colors.accentGold }]}>
+              {showConditionPicker ? "Cerrar" : "Condición"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Condition picker */}
+        {showConditionPicker && (
+          <View style={[styles.conditionPickerWrap, { backgroundColor: withAlpha(colors.bgSubtle, 0.6) }]}>
+            {(Object.keys(CONDITION_NAMES) as Condition[]).filter(
+              (cond) => !character.conditions.some((ac) => ac.condition === cond),
+            ).map((cond) => (
+              <TouchableOpacity
+                key={cond}
+                style={[
+                  styles.conditionPickerChip,
+                  { backgroundColor: withAlpha(colors.accentAmber, 0.1), borderColor: withAlpha(colors.accentAmber, 0.2) },
+                ]}
+                onPress={() => handleAddCondition(cond)}
+              >
+                <Text style={[styles.conditionPickerText, { color: colors.accentAmber }]}>
+                  {CONDITION_NAMES[cond]}
                 </Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
@@ -1425,16 +1644,6 @@ export default function MasterCharacterView() {
                         {item.nombre}
                       </Text>
                       <View style={styles.inventoryItemMeta}>
-                        {item.cantidad > 1 && (
-                          <Text
-                            style={[
-                              styles.inventoryItemQty,
-                              { color: colors.textMuted },
-                            ]}
-                          >
-                            x{item.cantidad}
-                          </Text>
-                        )}
                         {item.equipado && (
                           <View
                             style={[
@@ -1458,6 +1667,25 @@ export default function MasterCharacterView() {
                           </View>
                         )}
                       </View>
+                    </View>
+                    <View style={styles.itemQtyControls}>
+                      <TouchableOpacity
+                        onPress={() => handleUpdateItemQty(item.id, -1)}
+                        hitSlop={4}
+                        style={[styles.itemQtyBtn, { backgroundColor: withAlpha(colors.accentDanger, 0.12) }]}
+                      >
+                        <Ionicons name="remove" size={12} color={colors.accentDanger} />
+                      </TouchableOpacity>
+                      <Text style={[styles.itemQtyText, { color: colors.textPrimary }]}>
+                        {item.cantidad}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => handleUpdateItemQty(item.id, 1)}
+                        hitSlop={4}
+                        style={[styles.itemQtyBtn, { backgroundColor: withAlpha(colors.accentGreen, 0.12) }]}
+                      >
+                        <Ionicons name="add" size={12} color={colors.accentGreen} />
+                      </TouchableOpacity>
                     </View>
                     <TouchableOpacity
                       onPress={() => handleRemoveItem(item.id)}
@@ -1538,63 +1766,138 @@ export default function MasterCharacterView() {
         )}
 
         {/* â•â•â• Traits â•â•â• */}
-        {character.traits.length > 0 && (
-          <Section
-            title="Rasgos y capacidades"
-            icon="ribbon-outline"
-            expanded={expandedSections.has("traits")}
-            onToggle={() => toggleSection("traits")}
-            colors={colors}
-          >
-            {character.traits.map((trait) => (
-              <View
-                key={trait.id}
-                style={[
-                  styles.traitRow,
-                  { borderBottomColor: colors.borderSeparator },
-                ]}
-              >
-                <View style={styles.traitHeader}>
-                  <Text
-                    style={[styles.traitName, { color: colors.textPrimary }]}
-                  >
-                    {trait.nombre}
-                  </Text>
-                  <Text
-                    style={[styles.traitSource, { color: colors.textMuted }]}
-                  >
-                    {trait.origen}
-                  </Text>
-                </View>
-                <Text
-                  style={[styles.traitDesc, { color: colors.textSecondary }]}
-                  numberOfLines={3}
-                >
-                  {trait.descripcion}
-                </Text>
-                {trait.maxUses !== null && (
-                  <View style={styles.traitUsesRow}>
-                    <Text
-                      style={[styles.traitUses, { color: colors.accentGold }]}
-                    >
-                      Usos: {trait.currentUses ?? 0}/{trait.maxUses}
-                    </Text>
-                    {trait.recharge && (
-                      <Text
-                        style={[
-                          styles.traitRecharge,
-                          { color: colors.textMuted },
-                        ]}
-                      >
-                        ({getRechargeLabel(trait.recharge)})
-                      </Text>
-                    )}
+        <Section
+          title="Rasgos y capacidades"
+          icon="ribbon-outline"
+          expanded={expandedSections.has("traits")}
+          onToggle={() => toggleSection("traits")}
+          colors={colors}
+        >
+          {character.traits.map((trait) => (
+            <View
+              key={trait.id}
+              style={[
+                styles.traitRow,
+                { borderBottomColor: colors.borderSeparator },
+              ]}
+            >
+              {editingTraitId === trait.id ? (
+                <View style={styles.traitEditForm}>
+                  <TextInput
+                    style={[styles.traitEditInput, { color: colors.textPrimary, borderColor: colors.borderSubtle, backgroundColor: colors.bgSubtle }]}
+                    placeholder="Nombre..."
+                    placeholderTextColor={colors.textMuted}
+                    value={traitDraft.nombre}
+                    onChangeText={(v) => setTraitDraft((p) => ({ ...p, nombre: v }))}
+                  />
+                  <TextInput
+                    style={[styles.traitEditInput, styles.traitEditDescInput, { color: colors.textPrimary, borderColor: colors.borderSubtle, backgroundColor: colors.bgSubtle }]}
+                    placeholder="Descripción..."
+                    placeholderTextColor={colors.textMuted}
+                    value={traitDraft.descripcion}
+                    onChangeText={(v) => setTraitDraft((p) => ({ ...p, descripcion: v }))}
+                    multiline
+                  />
+                  <View style={styles.traitEditActions}>
+                    <TouchableOpacity onPress={() => setEditingTraitId(null)} hitSlop={8}>
+                      <Ionicons name="close" size={18} color={colors.accentDanger} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDeleteTrait(trait.id)} hitSlop={8}>
+                      <Ionicons name="trash-outline" size={18} color={colors.accentDanger} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleSaveTrait} hitSlop={8}>
+                      <Ionicons name="checkmark" size={18} color={colors.accentGreen} />
+                    </TouchableOpacity>
                   </View>
-                )}
+                </View>
+              ) : (
+                <>
+                  <TouchableOpacity onPress={() => handleStartEditTrait(trait)} activeOpacity={0.7}>
+                    <View style={styles.traitHeader}>
+                      <Text
+                        style={[styles.traitName, { color: colors.textPrimary }]}
+                      >
+                        {trait.nombre}
+                      </Text>
+                      <View style={styles.traitHeaderRight}>
+                        <Text
+                          style={[styles.traitSource, { color: colors.textMuted }]}
+                        >
+                          {trait.origen}
+                        </Text>
+                        <Ionicons name="pencil-outline" size={12} color={colors.textMuted} />
+                      </View>
+                    </View>
+                    <Text
+                      style={[styles.traitDesc, { color: colors.textSecondary }]}
+                      numberOfLines={3}
+                    >
+                      {trait.descripcion}
+                    </Text>
+                  </TouchableOpacity>
+                  {trait.maxUses !== null && (
+                    <View style={styles.traitUsesRow}>
+                      <Text
+                        style={[styles.traitUses, { color: colors.accentGold }]}
+                      >
+                        Usos: {trait.currentUses ?? 0}/{trait.maxUses}
+                      </Text>
+                      {trait.recharge && (
+                        <Text
+                          style={[
+                            styles.traitRecharge,
+                            { color: colors.textMuted },
+                          ]}
+                        >
+                          ({getRechargeLabel(trait.recharge)})
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
+          ))}
+
+          {/* Add trait form */}
+          {addingTrait ? (
+            <View style={[styles.traitEditForm, { marginTop: 8 }]}>
+              <TextInput
+                style={[styles.traitEditInput, { color: colors.textPrimary, borderColor: colors.borderSubtle, backgroundColor: colors.bgSubtle }]}
+                placeholder="Nombre del rasgo..."
+                placeholderTextColor={colors.textMuted}
+                value={traitDraft.nombre}
+                onChangeText={(v) => setTraitDraft((p) => ({ ...p, nombre: v }))}
+                autoFocus
+              />
+              <TextInput
+                style={[styles.traitEditInput, styles.traitEditDescInput, { color: colors.textPrimary, borderColor: colors.borderSubtle, backgroundColor: colors.bgSubtle }]}
+                placeholder="Descripción..."
+                placeholderTextColor={colors.textMuted}
+                value={traitDraft.descripcion}
+                onChangeText={(v) => setTraitDraft((p) => ({ ...p, descripcion: v }))}
+                multiline
+              />
+              <View style={styles.traitEditActions}>
+                <TouchableOpacity onPress={() => setAddingTrait(false)} hitSlop={8}>
+                  <Ionicons name="close" size={18} color={colors.accentDanger} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleSaveTrait} hitSlop={8} disabled={!traitDraft.nombre.trim()}>
+                  <Ionicons name="checkmark" size={18} color={traitDraft.nombre.trim() ? colors.accentGreen : colors.textMuted} />
+                </TouchableOpacity>
               </View>
-            ))}
-          </Section>
-        )}
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.addTraitBtn, { borderColor: withAlpha(colors.accentGold, 0.25) }]}
+              onPress={handleStartAddTrait}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add" size={16} color={colors.accentGold} />
+              <Text style={[styles.addTraitText, { color: colors.accentGold }]}>Añadir rasgo</Text>
+            </TouchableOpacity>
+          )}
+        </Section>
 
         {/* â•â•â• Proficiencies â•â•â• */}
         <Section
@@ -1805,6 +2108,46 @@ const styles = StyleSheet.create({
   },
   hpTemp: { fontSize: 10, fontWeight: "600", marginTop: 1 },
 
+  // HP editing
+  hpQuickButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 4,
+  },
+  hpQuickBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hpEditContainer: {
+    alignItems: "flex-end",
+    gap: 6,
+  },
+  hpEditRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  hpEditLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  hpEditInput: {
+    fontSize: 14,
+    fontWeight: "700",
+    textAlign: "center",
+    borderBottomWidth: 1,
+    paddingVertical: 2,
+    width: 36,
+  },
+  hpEditActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+
   conditionsRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1820,6 +2163,23 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   conditionText: { fontSize: 11, fontWeight: "600" },
+
+  // Condition picker
+  conditionPickerWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 8,
+    padding: 8,
+    borderRadius: 10,
+  },
+  conditionPickerChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  conditionPickerText: { fontSize: 11, fontWeight: "600" },
 
   concentrationRow: {
     flexDirection: "row",
@@ -2031,6 +2391,44 @@ const styles = StyleSheet.create({
   traitUses: { fontSize: 12, fontWeight: "700" },
   traitRecharge: { fontSize: 11 },
 
+  // Trait editing
+  traitHeaderRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  traitEditForm: {
+    gap: 8,
+  },
+  traitEditInput: {
+    fontSize: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  traitEditDescInput: {
+    minHeight: 60,
+    textAlignVertical: "top",
+  },
+  traitEditActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 16,
+  },
+  addTraitBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 10,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderStyle: "dashed",
+  },
+  addTraitText: { fontSize: 13, fontWeight: "700" },
+
   // Proficiencies
   profGroup: { marginBottom: 10 },
   profGroupLabel: {
@@ -2145,6 +2543,27 @@ const styles = StyleSheet.create({
   },
   equippedText: { fontSize: 10, fontWeight: "700" },
   removeItemBtn: { padding: 6 },
+
+  // Item quantity controls
+  itemQtyControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginRight: 8,
+  },
+  itemQtyBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  itemQtyText: {
+    fontSize: 13,
+    fontWeight: "700",
+    minWidth: 20,
+    textAlign: "center",
+  },
   emptyText: { fontSize: 13, fontStyle: "italic", paddingVertical: 8 },
   addItemRow: {
     flexDirection: "row",

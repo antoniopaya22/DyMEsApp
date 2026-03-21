@@ -14,6 +14,7 @@ import type {
   Personality,
   Appearance,
   SpeedInfo,
+  Proficiencies,
 } from "@/types/character";
 import type {
   Inventory,
@@ -67,6 +68,8 @@ export interface LevelUpOptions {
   featChosen?: string;
   /** Distribución de ASI elegida para la dote (ej. { fue: 1 } o { fue: 1, des: 1 }) */
   featAsiChoices?: Partial<AbilityScores>;
+  /** Habilidades elegidas para Pericia/expertise (pícaro/bardo) */
+  expertiseChosen?: SkillKey[];
 }
 
 // ─── Character CRUD State ────────────────────────────────────────────
@@ -94,6 +97,7 @@ export interface CharacterCrudActions {
   updateAppearance: (appearance: Appearance) => Promise<void>;
   updateAlignment: (alignment: Character["alineamiento"]) => Promise<void>;
   updateName: (nombre: string) => Promise<void>;
+  updateProficiencies: (proficiencies: Proficiencies) => Promise<void>;
 }
 
 // ─── Combat State ────────────────────────────────────────────────────
@@ -144,6 +148,8 @@ export interface MagicActions {
   restoreAllPactSlots: () => Promise<void>;
   getMagicState: () => InternalMagicState | null;
   togglePreparedSpell: (spellId: string) => Promise<boolean>;
+  useSorceryPoints: (amount: number) => Promise<boolean>;
+  restoreSorceryPoints: (amount: number) => Promise<boolean>;
 }
 
 // ─── Class Resources State ───────────────────────────────────────────

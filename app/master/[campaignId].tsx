@@ -116,7 +116,7 @@ export default function MasterCampaignLobby() {
     }
   }, [campaignId, loadPlayers]);
 
-  // Also seed live cache from initial load
+  // Also seed live cache from initial load (fresh data takes priority)
   useEffect(() => {
     const initial: Record<string, PersonajeRow> = {};
     for (const p of players) {
@@ -124,7 +124,7 @@ export default function MasterCampaignLobby() {
         initial[p.character.id] = p.character;
       }
     }
-    setLiveCharacters((prev) => ({ ...initial, ...prev }));
+    setLiveCharacters((prev) => ({ ...prev, ...initial }));
   }, [players]);
 
   // ── Add Player ──
@@ -285,9 +285,12 @@ export default function MasterCampaignLobby() {
               >
                 {nombre}
               </Text>
-              <Text style={[styles.charClass, { color: colors.textSecondary }]}>
-                {CLASS_ICONS[clase as ClassId] ?? ""} {clase} Nv.{nivel}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name={(CLASS_ICONS[clase as ClassId] ?? 'shield-outline') as any} size={14} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                <Text style={[styles.charClass, { color: colors.textSecondary }]}>
+                  {clase} Nv.{nivel}
+                </Text>
+              </View>
             </View>
 
             {/* HP Bar */}

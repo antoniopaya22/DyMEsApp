@@ -1693,6 +1693,8 @@ export interface LevelUpSummary {
   spellLearning: SpellLearningInfo | null;
   /** Número de opciones de Metamagia nuevas que se eligen (solo hechicero) */
   newMetamagicChoices: number;
+  /** Número de habilidades para Pericia (expertise) que se eligen en este nivel (pícaro/bardo) */
+  expertiseChoices: number;
 }
 
 /**
@@ -1730,6 +1732,11 @@ export function getLevelUpSummary(
     else if (newLevel === 10 || newLevel === 17) newMetamagicChoices = 2;
   }
 
+  // Pericia (expertise): pícaro nivel 1 y 6, bardo nivel 2 y 9
+  let expertiseChoices = 0;
+  if (classId === "picaro" && (newLevel === 1 || newLevel === 6)) expertiseChoices = 2;
+  if (classId === "bardo" && (newLevel === 2 || newLevel === 9)) expertiseChoices = 2;
+
   return {
     newLevel,
     features: getFeaturesForLevel(classId, newLevel),
@@ -1739,6 +1746,7 @@ export function getLevelUpSummary(
     xpThreshold: XP_THRESHOLDS[newLevel],
     spellLearning: getSpellLearningInfo(classId, newLevel),
     newMetamagicChoices,
+    expertiseChoices,
   };
 }
 

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -63,8 +63,12 @@ export default function SpellsStep() {
 
   const [selectedCantrips, setSelectedCantrips] = useState<string[]>([]);
   const [selectedSpells, setSelectedSpells] = useState<string[]>([]);
-  const [autoSkipped, setAutoSkipped] = useState(false);
   const hasAutoSkipped = useRef(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -92,10 +96,11 @@ export default function SpellsStep() {
 
           if (shouldSkip) {
             hasAutoSkipped.current = true;
-            setAutoSkipped(true);
             setSpellChoices({ cantrips: [], spells: [] });
             await saveDraft();
-            pushStep("equipment");
+            if (isMountedRef.current) {
+              pushStep("equipment");
+            }
           }
         }
       };
@@ -183,7 +188,7 @@ export default function SpellsStep() {
   const progressPercent = (CURRENT_STEP / TOTAL_STEPS) * 100;
 
   // If auto-skipping, show nothing (brief flash)
-  if (autoSkipped) {
+  if (hasAutoSkipped.current) {
     return (
       <View style={[styles.container, themed.container]}>
         <View style={styles.skipContainer}>
@@ -226,7 +231,7 @@ export default function SpellsStep() {
           </View>
           <View style={[styles.progressBar, themed.progressBar]}>
             <View
-              style={[styles.progressFill, { width: `${progressPercent}%` }]}
+              style={[styles.progressFill, { width: `${progressPercent}%`, backgroundColor: colors.accentRed }]}
             />
           </View>
         </View>
@@ -533,7 +538,6 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#00BCD4",
     borderRadius: 3,
   },
   titleSection: {

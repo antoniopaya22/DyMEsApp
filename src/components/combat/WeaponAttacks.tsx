@@ -95,7 +95,7 @@ export function WeaponAttacks() {
       buttons: [
         { text: "Cancelar", style: "cancel" },
         {
-          text: "🎲 Tirar",
+          text: "Tirar",
           style: "default",
           onPress: () => {
             const result = rollD20(attackBonus);
@@ -103,10 +103,10 @@ export function WeaponAttacks() {
             let emoji = "";
             let extra = "";
             if (result.isCritical) {
-              emoji = " ✨";
+              emoji = " ¡CRÍTICO!";
               extra = "\n\n¡CRÍTICO NATURAL!";
             } else if (result.isFumble) {
-              emoji = " 💀";
+              emoji = " ¡PIFIA!";
               extra = "\n\n¡PIFIA!";
             }
             setTimeout(() => {
@@ -117,7 +117,7 @@ export function WeaponAttacks() {
                     ? "danger"
                     : "info",
                 title: `Ataque: ${weapon.nombre}${emoji}`,
-                message: `🎲 d20 [${dieValue}] ${modStr} = ${result.total}${extra}`,
+                message: `d20 [${dieValue}] ${modStr} = ${result.total}${extra}`,
                 buttons: [{ text: "OK", style: "default" }],
                 customIconContent: createElement(
                   Text,
@@ -157,7 +157,7 @@ export function WeaponAttacks() {
       buttons: [
         { text: "Cancelar", style: "cancel" },
         {
-          text: "🎲 Tirar",
+          text: "Tirar",
           style: "default",
           onPress: () => {
             // Roll main damage
@@ -173,7 +173,7 @@ export function WeaponAttacks() {
                 : "";
 
             let totalDamage = mainResult.total;
-            let resultMsg = `🎲 ${wd.damage.dice}${mainModStr} → [${mainDice}]${mainModStr} = ${mainResult.total} ${wd.damage.damageType}`;
+            let resultMsg = `${wd.damage.dice}${mainModStr} → [${mainDice}]${mainModStr} = ${mainResult.total} ${wd.damage.damageType}`;
 
             // Roll bonus damage separately if present
             if (wd.bonusDamage) {
@@ -184,7 +184,7 @@ export function WeaponAttacks() {
                   .map((r) => r.value)
                   .join(", ");
                 totalDamage += bonusResult.total;
-                resultMsg += `\n🎲 +${wd.bonusDamage.dice} → [${bonusDice}] = ${bonusResult.total} ${wd.bonusDamage.damageType}`;
+                resultMsg += `\n+${wd.bonusDamage.dice} → [${bonusDice}] = ${bonusResult.total} ${wd.bonusDamage.damageType}`;
               }
             }
 

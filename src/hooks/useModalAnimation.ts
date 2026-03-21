@@ -85,8 +85,13 @@ export function useModalAnimation(options: ModalAnimationOptions) {
     }
   }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const isDismissingRef = useRef(false);
+
   const dismiss = useCallback(
     (callback?: () => void) => {
+      if (isDismissingRef.current) return;
+      isDismissingRef.current = true;
+
       Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 0,
@@ -107,6 +112,7 @@ export function useModalAnimation(options: ModalAnimationOptions) {
           useNativeDriver: true,
         }),
       ]).start(() => {
+        isDismissingRef.current = false;
         (callback ?? onDismiss)?.();
       });
     },

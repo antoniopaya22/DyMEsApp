@@ -656,7 +656,7 @@ export function InventoryItemCard({
                             : colors.textSecondary,
                         }}
                       >
-                        {isSel ? "✓ " : ""}
+                        {isSel ? <><Ionicons name="checkmark" size={10} color={colors.accentRed} />{" "}</> : null}
                         {opt.label}
                       </Text>
                     </TouchableOpacity>

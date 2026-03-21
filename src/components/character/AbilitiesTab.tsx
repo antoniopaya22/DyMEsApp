@@ -339,6 +339,13 @@ export default function AbilitiesTab() {
           currentPreparedCount={currentPreparedCount}
           isPreparedCaster={isPreparedCaster}
         />
+        <ClassResourceSlots
+          classResources={classResources}
+          classTheme={classTheme}
+          onRestoreAll={handleRestoreAllClassResources}
+          onUse={handleUseClassResource}
+          onRestore={handleRestoreClassResource}
+        />
         <CharacterTraitsSection
           traits={character.traits}
           onUseCharge={handleUseTraitCharge}

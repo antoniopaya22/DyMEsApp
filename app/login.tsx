@@ -48,13 +48,6 @@ export default function LoginScreen() {
     clearSuccess,
   } = useAuthStore();
 
-  // ── Redirect away from login when authenticated ──
-  useEffect(() => {
-    if (session) {
-      router.replace("/mode-select");
-    }
-  }, [session, router]);
-
   const [tab, setTab] = useState<AuthTab>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -136,10 +129,9 @@ export default function LoginScreen() {
         >
           {/* ─── Logo ─── */}
           <View style={styles.logoContainer}>
-            <DndLogo size="lg" animated showRunicRing />
+            <DndLogo size="lg" animated />
           </View>
 
-          <Text style={[styles.title, { color: colors.accentRed }]}>DyMEs</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Gestiona tus partidas y personajes
           </Text>

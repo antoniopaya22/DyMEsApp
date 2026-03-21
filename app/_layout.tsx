@@ -163,7 +163,7 @@ function ErrorScreen({ error }: { error: Error | null }) {
 function InnerLayout() {
   const { colors, isDark } = useTheme();
   const { loaded, loadSettings } = useSettingsStore();
-  const { initialize, initialized, session } = useAuthStore();
+  const { initialize, initialized, session, loading } = useAuthStore();
   const { setColorScheme } = useColorScheme();
   const [appReady, setAppReady] = useState(false);
   const router = useRouter();
@@ -179,7 +179,7 @@ function InnerLayout() {
   // Redirect to login when not authenticated,
   // or away from login when already authenticated.
   useEffect(() => {
-    if (!initialized || !appReady) return;
+    if (!initialized || !appReady || loading) return;
 
     const firstSegment = segments[0] ?? "";
     const onLoginScreen = firstSegment === "login";
@@ -191,7 +191,7 @@ function InnerLayout() {
       // Authenticated → leave login screen
       router.replace("/mode-select");
     }
-  }, [session, initialized, appReady, segments, router]);
+  }, [session, initialized, appReady, loading, segments, router]);
 
   // Load settings on mount so the theme is available immediately
   useEffect(() => {

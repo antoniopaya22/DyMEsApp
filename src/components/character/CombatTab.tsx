@@ -31,7 +31,10 @@ import {
   HitDiceSection,
   ConditionsSection,
   WeaponAttacks,
+  SneakAttackSection,
   SpellCombatSection,
+  ClassResourcesCombatSection,
+  CombatAbilitiesSection,
 } from "@/components/combat";
 
 // ─── Main Component ──────────────────────────────────────────────────
@@ -40,7 +43,7 @@ export default function CombatTab() {
   const { colors } = useTheme();
   const unidades = useUnidadesActuales();
   const { onScroll } = useHeaderScroll();
-  const { dialogProps, showAlert, showConfirm } = useDialog();
+  const { dialogProps, showAlert, showConfirm, showDialog } = useDialog();
   const {
     toastProps,
     showSuccess: toastSuccess,
@@ -118,19 +121,12 @@ export default function CombatTab() {
       });
     }
 
-    showConfirm(
-      "Descanso Corto",
-      `Tienes ${hitDice.remaining} dado(s) de golpe disponibles. ¿Cuántos quieres usar?`,
-      async () => {
-        await shortRest(0);
-        toastSuccess("Descanso corto completado");
-      },
-      {
-        confirmText: "Descansar sin dados",
-        cancelText: "Cancelar",
-        type: "info",
-      },
-    );
+    showDialog({
+      type: 'info',
+      title: 'Descanso Corto',
+      message: `Tienes ${hitDice.remaining} dado(s) de golpe disponibles. ¿Cuántos quieres usar?`,
+      buttons,
+    });
   };
 
   const handleLongRest = () => {
@@ -430,12 +426,15 @@ export default function CombatTab() {
         {renderStatsRow()}
         {renderDamageModifiers()}
         <WeaponAttacks />
+        <SneakAttackSection />
+        <CombatAbilitiesSection />
         <DeathSavesTracker
           onShowAlert={showAlert}
           onShowConfirm={showConfirm}
         />
         {renderConcentration()}
         <SpellCombatSection />
+        <ClassResourcesCombatSection />
         <HitDiceSection onShowToast={showToast} />
         <ConditionsSection
           onShowToast={showToast}

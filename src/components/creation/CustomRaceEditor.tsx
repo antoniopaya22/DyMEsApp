@@ -475,9 +475,9 @@ export default function CustomRaceEditor({
 
           {/* Optional speeds: fly, swim, climb */}
           {[
-            { key: "flySpeed" as const, label: "Vuelo", icon: "🪽" },
-            { key: "swimSpeed" as const, label: "Nado", icon: "🏊" },
-            { key: "climbSpeed" as const, label: "Trepar", icon: "🧗" },
+            { key: "flySpeed" as const, label: "Vuelo", icon: "airplane-outline" as const },
+            { key: "swimSpeed" as const, label: "Nado", icon: "water-outline" as const },
+            { key: "climbSpeed" as const, label: "Trepar", icon: "trending-up-outline" as const },
           ].map(({ key, label, icon }) => {
             const value = data[key];
             const enabled = value !== undefined && value > 0;
@@ -492,7 +492,7 @@ export default function CustomRaceEditor({
                   }}
                 >
                   <View className="flex-row items-center">
-                    <Text className="text-base mr-2">{icon}</Text>
+                    <Ionicons name={icon} size={18} color={colors.textPrimary} style={{ marginRight: 8 }} />
                     <Text
                       className="text-sm font-semibold"
                       style={{ color: colors.textPrimary }}
@@ -578,7 +578,7 @@ export default function CustomRaceEditor({
             }}
           >
             <View className="flex-row items-center">
-              <Text className="text-lg mr-2">👁️</Text>
+              <Ionicons name="eye-outline" size={20} color={colors.textPrimary} style={{ marginRight: 8 }} />
               <Text
                 className="text-sm font-semibold"
                 style={{ color: colors.textPrimary }}

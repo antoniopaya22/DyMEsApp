@@ -157,7 +157,7 @@ export default function ModeSelectionScreen() {
             { transform: [{ translateY: heroSlide }] },
           ]}
         >
-          <DndLogo size="lg" animated showRunicRing showDragonAccents />
+          <DndLogo size="lg" animated />
 
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             Elige tu camino

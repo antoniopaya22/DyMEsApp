@@ -13,13 +13,12 @@
  */
 
 import { useState, useMemo, useCallback } from "react";
-import { useTheme, useEntranceAnimation } from "@/hooks";
+import { useTheme } from "@/hooks";
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
-  Animated,
   TouchableOpacity,
   ScrollView,
 } from "react-native";
@@ -466,9 +465,6 @@ export default function CompendiumScreen() {
     setSpellClassFilter(null);
   }, []);
 
-  // ── Entrance animation ──
-  const { opacity: contentFade } = useEntranceAnimation({ delay: 120 });
-
   // ── Main Render ──
 
   const bookIconBadge = (
@@ -719,7 +715,7 @@ export default function CompendiumScreen() {
       />
 
       {/* Content */}
-      <Animated.View style={{ flex: 1, opacity: contentFade }}>
+      <View style={{ flex: 1 }}>
         <FlatList
           data={currentData}
           renderItem={renderItem}
@@ -729,14 +725,11 @@ export default function CompendiumScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          removeClippedSubviews
-          // Performance: large lists benefit from estimated item size
-          getItemLayout={undefined}
           maxToRenderPerBatch={12}
           windowSize={7}
           initialNumToRender={10}
         />
-      </Animated.View>
+      </View>
     </ScreenContainer>
   );
 }
@@ -753,12 +746,12 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 8,
-    paddingTop: 4,
+    paddingBottom: 4,
   },
   scrollContent: {
     paddingHorizontal: 16,
     paddingBottom: 40,
+    flexGrow: 1,
   },
   countText: {
     fontSize: 13,

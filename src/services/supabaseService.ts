@@ -528,3 +528,110 @@ export async function restoreFromCloud(userId: string): Promise<number> {
     return 0;
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Realtime Subscriptions
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Create a Supabase Realtime channel that listens for changes on `personajes`
+ * filtered by the given character IDs.
+ * Caller is responsible for unsubscribing via `supabase.removeChannel(channel)`.
+ */
+export function createCharactersRealtimeChannel(
+  channelName: string,
+  filter: string,
+  onPayload: (payload: unknown) => void,
+  onStatus: (status: string) => void,
+) {
+  return supabase
+    .channel(channelName)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'personajes', filter },
+      onPayload,
+    )
+    .subscribe(onStatus);
+}
+
+/**
+ * Remove a Realtime channel. Safe to call with null.
+ */
+export function removeRealtimeChannel(channel: ReturnType<typeof supabase.channel> | null) {
+  if (channel) supabase.removeChannel(channel);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Single Character Data (Master View)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Fetch a character's `datos` blob by its row ID.
+ */
+export async function fetchCharacterDatos(
+  characterId: string,
+): Promise<Record<string, unknown> | null> {
+  const { data, error } = await supabase
+    .from('personajes')
+    .select('datos')
+    .eq('id', characterId)
+    .single<{ datos: Record<string, unknown> }>();
+
+  if (error) throw new Error(error.message);
+  return data?.datos ?? null;
+}
+
+/**
+ * Create a Realtime channel for a single character.
+ * Used by master view AND player sync to receive live updates.
+ * Caller is responsible for cleanup via `removeRealtimeChannel`.
+ */
+export function createSingleCharacterChannel(
+  characterId: string,
+  onPayload: (datos: Record<string, unknown>) => void,
+  channelPrefix = 'master-char',
+) {
+  return supabase
+    .channel(`${channelPrefix}-${characterId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'personajes',
+        filter: `id=eq.${characterId}`,
+      },
+      (payload) => {
+        const newData = payload.new as { datos: unknown };
+        if (newData?.datos) {
+          onPayload(newData.datos as Record<string, unknown>);
+        }
+      },
+    )
+    .subscribe();
+}
+
+/**
+ * Merge-update a character's `datos` blob with a partial patch.
+ * Reads current datos, merges, then writes — NOT atomic, but centralised.
+ */
+export async function mergeCharacterDatos(
+  characterId: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  const { data: current } = await supabase
+    .from('personajes')
+    .select('datos')
+    .eq('id', characterId)
+    .single<{ datos: Record<string, unknown> }>();
+
+  if (!current?.datos) return;
+
+  const merged = { ...current.datos, ...patch };
+  const { error } = await supabase
+    .from('personajes')
+    .update({ datos: merged })
+    .eq('id', characterId);
+
+  if (error) throw new Error(error.message);
+}

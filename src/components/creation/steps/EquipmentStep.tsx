@@ -101,7 +101,10 @@ export default function EquipmentStep() {
                       style={[
                         styles.optionCard,
                         themed.cardElevated,
-                        isSelected && styles.optionCardSelected,
+                        isSelected && {
+                          borderColor: colors.accentRed,
+                          backgroundColor: `${colors.accentRed}14`,
+                        },
                       ]}
                       onPress={() => handleSelect(ec.id, option.id)}
                     >
@@ -110,10 +113,17 @@ export default function EquipmentStep() {
                           style={[
                             styles.radio,
                             themed.radio,
-                            isSelected && styles.radioSelected,
+                            isSelected && { borderColor: colors.accentRed },
                           ]}
                         >
-                          {isSelected && <View style={styles.radioInner} />}
+                          {isSelected && (
+                            <View
+                              style={[
+                                styles.radioInner,
+                                { backgroundColor: colors.accentRed },
+                              ]}
+                            />
+                          )}
                         </View>
                         <View style={styles.optionInfo}>
                           <Text
@@ -249,8 +259,7 @@ const styles = StyleSheet.create({
     borderColor: "#2A3A52",
   },
   optionCardSelected: {
-    borderColor: "#00BCD4",
-    backgroundColor: "rgba(0,188,212,0.08)",
+    // kept for reference; overridden inline with theme color
   },
   optionRow: {
     flexDirection: "row",
@@ -267,13 +276,12 @@ const styles = StyleSheet.create({
     marginRight: 14,
   },
   radioSelected: {
-    borderColor: "#00BCD4",
+    // kept for reference; overridden inline with theme color
   },
   radioInner: {
     height: 12,
     width: 12,
     borderRadius: 6,
-    backgroundColor: "#00BCD4",
   },
   optionInfo: {
     flex: 1,

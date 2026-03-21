@@ -173,7 +173,7 @@ export default function WizardStepLayout({
           style={[
             s.nextButton,
             { backgroundColor: colors.accentRed },
-            disabled && {
+            disabled && !isLoading && {
               backgroundColor: colors.bgSecondary,
               opacity: 0.5,
             },

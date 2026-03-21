@@ -31,17 +31,17 @@ export const CAMPAIGN_IMAGES: CampaignImageEntry[] = [
   },
   {
     id: "campana3",
-    label: "Mazmorra",
+    label: "Pueblo",
     source: require("../../assets/images/campanas/Campana3.png"),
   },
   {
     id: "campana4",
-    label: "Pueblo",
+    label: "Montaña",
     source: require("../../assets/images/campanas/Campana4.png"),
   },
   {
     id: "campana5",
-    label: "Montaña",
+    label: "Mazmorra",
     source: require("../../assets/images/campanas/Campana5.png"),
   },
 ];

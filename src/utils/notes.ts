@@ -77,8 +77,8 @@ export function createQuickNote(
     visibleParaMaster: false,
     enviadaPorMaster: false,
     masterRemitenteId: null,
-    fechaCreacion: currentDate.toISOString(),
-    fechaModificacion: currentDate.toISOString(),
+    fechaCreacion: now(),
+    fechaModificacion: now(),
   };
 }
 
@@ -160,13 +160,13 @@ export function sortNotes(notes: Note[], options: NoteSortOptions): Note[] {
     switch (options.field) {
       case "fechaModificacion":
         comparison =
-          new Date(a.fechaModificacion).getTime() -
-          new Date(b.fechaModificacion).getTime();
+          (new Date(a.fechaModificacion).getTime() || 0) -
+          (new Date(b.fechaModificacion).getTime() || 0);
         break;
       case "fechaCreacion":
         comparison =
-          new Date(a.fechaCreacion).getTime() -
-          new Date(b.fechaCreacion).getTime();
+          (new Date(a.fechaCreacion).getTime() || 0) -
+          (new Date(b.fechaCreacion).getTime() || 0);
         break;
       case "titulo":
         comparison = a.titulo.localeCompare(b.titulo, "es");

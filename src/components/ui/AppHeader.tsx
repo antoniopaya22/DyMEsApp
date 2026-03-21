@@ -38,6 +38,8 @@ import GradientBorder from "./GradientBorder";
 export interface AppHeaderProps {
   /** Show a back button before the logo (default: false) */
   showBack?: boolean;
+  /** Custom back handler; when omitted, defaults to router.back() */
+  onBack?: () => void;
   /** Extra action buttons rendered to the left of compendium, settings & avatar */
   rightActions?: React.ReactNode;
   /** Content rendered below the header row (e.g. SearchBar) */
@@ -52,6 +54,7 @@ export interface AppHeaderProps {
 
 export default function AppHeader({
   showBack = false,
+  onBack,
   rightActions,
   children,
   animated = true,
@@ -102,7 +105,7 @@ export default function AppHeader({
                   marginRight: 8,
                 },
               ]}
-              onPress={() => router.back()}
+              onPress={onBack ?? (() => router.back())}
               activeOpacity={0.7}
             >
               <Ionicons

@@ -29,6 +29,7 @@ import { useLevelUpWizard } from "./levelup/useLevelUpWizard";
 import SummaryStep from "./levelup/SummaryStep";
 import HPStep from "./levelup/HPStep";
 import ASIStep from "./levelup/ASIStep";
+import ExpertiseStep from "./levelup/ExpertiseStep";
 import SpellsStep from "./levelup/SpellsStep";
 import SubclassStep from "./levelup/SubclassStep";
 import MetamagicStep from "./levelup/MetamagicStep";
@@ -167,6 +168,15 @@ export default function LevelUpModal({
             getMagicState={w.getMagicState}
           />
         );
+      case "expertise":
+        return (
+          <ExpertiseStep
+            summary={w.summary!}
+            character={w.character!}
+            selectedExpertise={w.selectedExpertise}
+            setSelectedExpertise={w.setSelectedExpertise}
+          />
+        );
       case "confirm":
         return (
           <ConfirmStep
@@ -199,6 +209,7 @@ export default function LevelUpModal({
             chooseFeat={w.chooseFeat}
             selectedFeatId={w.selectedFeatId}
             featAsiChoices={w.featAsiChoices}
+            selectedExpertise={w.selectedExpertise}
           />
         );
       default:

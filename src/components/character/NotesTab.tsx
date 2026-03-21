@@ -120,8 +120,10 @@ export default function NotesTab() {
 
   const handleTogglePin = async (noteId: string) => {
     await togglePinNote(noteId);
-    const note = notes.find((n) => n.id === noteId);
-    showToast(note?.fijada ? "Nota desanclada" : "Nota fijada");
+    // Read fresh state after toggle to avoid stale closure
+    const freshNotes = useCharacterStore.getState().notes;
+    const note = freshNotes.find((n) => n.id === noteId);
+    showToast(note?.fijada ? "Nota fijada" : "Nota desanclada");
   };
 
   const handleQuickNote = async (content: string) => {
@@ -175,7 +177,65 @@ export default function NotesTab() {
     return null;
   };
 
-  const NotesEmptyState = () => {
+  const renderStatsBar = () => (
+    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
+      <View className="flex-row justify-between">
+        <StatBadge
+          icon="document-text"
+          label="Total"
+          value={String(notes.length)}
+          color={colors.accentRed}
+        />
+        <StatBadge
+          icon="journal"
+          label="Diario"
+          value={String(notes.filter((n) => n.tipo === "diario").length)}
+          color={colors.accentRed}
+        />
+        <StatBadge
+          icon="pin"
+          label="Fijadas"
+          value={String(notes.filter((n) => n.fijada).length)}
+          color={colors.accentRed}
+        />
+        <StatBadge
+          icon="today"
+          label="Sesiones"
+          value={String(
+            new Set(
+              notes
+                .filter((n) => n.tipo === "diario" && n.numeroSesion !== null)
+                .map((n) => n.numeroSesion),
+            ).size,
+          )}
+          color={colors.accentRed}
+        />
+      </View>
+    </View>
+  );
+
+  const notesListHeader = useMemo(() => (
+    <>
+      {renderStatsBar()}
+      <QuickNoteBar onSubmit={handleQuickNote} onShowToast={showToast} />
+      {renderActionButtons()}
+      <NoteFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        typeFilter={typeFilter}
+        onTypeFilterChange={setTypeFilter}
+        sortOptions={sortOptions}
+        onSortChange={setSortOptions}
+        activeTagFilter={activeTagFilter}
+        onTagFilterChange={setActiveTagFilter}
+        showSortOptions={showSortOptions}
+        onToggleSortOptions={() => setShowSortOptions(!showSortOptions)}
+      />
+      {renderNotesList()}
+    </>
+  ), [searchQuery, typeFilter, sortOptions, activeTagFilter, showSortOptions, notes, colors, handleQuickNote, showToast]);
+
+  const notesEmptyState = useMemo(() => {
     const hasFilters =
       searchQuery.trim().length > 0 ||
       activeTagFilter !== null ||
@@ -225,7 +285,7 @@ export default function NotesTab() {
         )}
       </View>
     );
-  };
+  }, [searchQuery, activeTagFilter, typeFilter, colors]);
 
   const renderNoteItem = useCallback(({ item: note }: { item: Note }) => (
     <NoteCard
@@ -246,72 +306,14 @@ export default function NotesTab() {
 
   const noteKeyExtractor = useCallback((note: Note) => note.id, []);
 
-  const NotesListHeader = () => (
-    <>
-      {renderStatsBar()}
-      <QuickNoteBar onSubmit={handleQuickNote} onShowToast={showToast} />
-      {renderActionButtons()}
-      <NoteFilterBar
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        typeFilter={typeFilter}
-        onTypeFilterChange={setTypeFilter}
-        sortOptions={sortOptions}
-        onSortChange={setSortOptions}
-        activeTagFilter={activeTagFilter}
-        onTagFilterChange={setActiveTagFilter}
-        showSortOptions={showSortOptions}
-        onToggleSortOptions={() => setShowSortOptions(!showSortOptions)}
-      />
-      {renderNotesList()}
-    </>
-  );
-
-  const renderStatsBar = () => (
-    <View className="rounded-card border p-4 mb-4" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderDefault }}>
-      <View className="flex-row justify-between">
-        <StatBadge
-          icon="document-text"
-          label="Total"
-          value={String(notes.length)}
-          color={colors.accentRed}
-        />
-        <StatBadge
-          icon="journal"
-          label="Diario"
-          value={String(notes.filter((n) => n.tipo === "diario").length)}
-          color={colors.accentRed}
-        />
-        <StatBadge
-          icon="pin"
-          label="Fijadas"
-          value={String(notes.filter((n) => n.fijada).length)}
-          color={colors.accentRed}
-        />
-        <StatBadge
-          icon="today"
-          label="Sesiones"
-          value={String(
-            new Set(
-              notes
-                .filter((n) => n.tipo === "diario" && n.numeroSesion !== null)
-                .map((n) => n.numeroSesion),
-            ).size,
-          )}
-          color={colors.accentRed}
-        />
-      </View>
-    </View>
-  );
-
   return (
     <View className="flex-1">
       <FlatList
         data={processedNotes}
         renderItem={renderNoteItem}
         keyExtractor={noteKeyExtractor}
-        ListHeaderComponent={NotesListHeader}
-        ListEmptyComponent={NotesEmptyState}
+        ListHeaderComponent={notesListHeader}
+        ListEmptyComponent={notesEmptyState}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

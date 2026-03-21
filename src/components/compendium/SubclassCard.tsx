@@ -89,7 +89,7 @@ export function SubclassCard({
 }: SubclassCardProps) {
   const { colors } = useTheme();
   const classIcon =
-    CLASS_ICONS[data.classId as keyof typeof CLASS_ICONS] || "⚔️";
+    CLASS_ICONS[data.classId as keyof typeof CLASS_ICONS] || "hammer-outline";
   const accentColor = CLASS_COLORS[data.classId] ?? colors.accentDeepPurple;
   const className = CLASS_DISPLAY_NAMES[data.classId] ?? data.classId;
 
@@ -137,7 +137,7 @@ export function SubclassCard({
             { backgroundColor: `${accentColor}${colors.iconBgAlpha}` },
           ]}
         >
-          <Text style={{ fontSize: 22 }}>{classIcon}</Text>
+          <Ionicons name={classIcon as any} size={22} color={accentColor} />
         </View>
         <View style={s.cardInfo}>
           <Text style={[s.cardTitle, { color: colors.textPrimary }]}>

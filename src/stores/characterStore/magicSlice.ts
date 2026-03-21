@@ -123,6 +123,45 @@ export function createMagicSlice(
       return get().magicState;
     },
 
+    useSorceryPoints: async (amount: number) => {
+      const { character, magicState } = get();
+      if (!character || !magicState || !magicState.sorceryPoints) return false;
+      if (amount <= 0 || magicState.sorceryPoints.current < amount) return false;
+
+      const updatedMagicState: InternalMagicState = {
+        ...magicState,
+        sorceryPoints: {
+          ...magicState.sorceryPoints,
+          current: magicState.sorceryPoints.current - amount,
+        },
+      };
+
+      set({ magicState: updatedMagicState });
+      await safeSetItem(STORAGE_KEYS.MAGIC_STATE(character.id), updatedMagicState);
+      return true;
+    },
+
+    restoreSorceryPoints: async (amount: number) => {
+      const { character, magicState } = get();
+      if (!character || !magicState || !magicState.sorceryPoints) return false;
+      if (amount <= 0) return false;
+
+      const { current, max } = magicState.sorceryPoints;
+      if (current >= max) return false;
+
+      const updatedMagicState: InternalMagicState = {
+        ...magicState,
+        sorceryPoints: {
+          ...magicState.sorceryPoints,
+          current: Math.min(current + amount, max),
+        },
+      };
+
+      set({ magicState: updatedMagicState });
+      await safeSetItem(STORAGE_KEYS.MAGIC_STATE(character.id), updatedMagicState);
+      return true;
+    },
+
     togglePreparedSpell: async (spellId: string) => {
       const { character, magicState } = get();
       if (!character || !magicState) return false;

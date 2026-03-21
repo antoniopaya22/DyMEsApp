@@ -727,7 +727,7 @@ export default function DiceRoller({
               ]}
             >
               <Text style={[st.resultBadgeText, { color: colors.accentGold }]}>
-                ✨ ¡CRÍTICO! ✨
+                <Ionicons name="sparkles-outline" size={14} color={colors.accentGold} />{" "}¡CRÍTICO!{" "}<Ionicons name="sparkles-outline" size={14} color={colors.accentGold} />
               </Text>
             </View>
           )}
@@ -741,7 +741,7 @@ export default function DiceRoller({
               <Text
                 style={[st.resultBadgeText, { color: colors.accentDanger }]}
               >
-                💀 ¡PIFIA! 💀
+                <Ionicons name="skull-outline" size={14} color={colors.accentDanger} />{" "}¡PIFIA!{" "}<Ionicons name="skull-outline" size={14} color={colors.accentDanger} />
               </Text>
             </View>
           )}
